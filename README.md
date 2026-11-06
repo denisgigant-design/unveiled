@@ -1,5 +1,7 @@
 # Unveiled
 
+**[Open the live Unveiled website](https://denisgigant-design.github.io/unveiled/)**
+
 A responsive website for Scripture, music, Bible games, prayer, history and outreach.
 
 ## Hosting and control

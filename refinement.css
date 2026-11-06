@@ -194,3 +194,9 @@ body[data-page="bible"] .topbar{height:66px}
 #reader-workspace .paper-page{aspect-ratio:1/1.09}
 @media(max-width:850px){#reader-workspace{max-width:480px}}
 @media(max-width:480px){body[data-page="bible"] #main{padding-top:19px}.reader-heading h1{font-size:32px}#reader-workspace .reader-toolbar{padding:12px}#reader-workspace .book-heading{padding:0;margin:15px 4px 12px}#reader-workspace .paper-page{aspect-ratio:1/1.09}}
+
+/* Team cards keep their icons in the text flow at every screen width. */
+.team-values .team-value.rhythm-card{padding:24px}
+.team-values .team-value>.tile-icon{position:static;inset:auto;flex-shrink:0;margin:0 0 18px}
+.team-values .team-value>h3{margin:0 0 10px;max-width:100%;overflow-wrap:anywhere}
+.team-values .team-value>p{margin:0 0 24px}

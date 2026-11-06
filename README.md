@@ -12,6 +12,10 @@ This repository belongs to **denisgigant-design**. The public website is served 
 
 The supplied Unveiled badge is used unchanged, with a palm-and-cross wordmark, veil-inspired colours and a dedicated team page. Bible sheets keep a compact, near-square shape; text is measured against the available space and flows into additional pages as font size increases. Reading anchors survive text-size changes. Long verses continue across sheets without losing text. Page turns use a layered 3D animation. Background motion and control effects can be paused with the star button; reduced-motion preferences are respected.
 
+## Music player and appearance
+
+YouTube embeds open in a navy Unveiled player with the original badge, palm-and-cross wordmark, gold trim and a subtle animated veil-colour border. The frame surrounds the embed and leaves YouTube controls intact. The topbar moon/sun button switches the entire site between light and dark appearances, including the default Bible paper, dialogs, forms, maps and cards. It follows device appearance until a visitor chooses a mode, then saves that choice on this browser. The existing motion switch also pauses the player border animation.
+
 ## Included
 
 - Complete 66-book Bible reader: KJV, ASV 1901 and Polish Biblia Gdańska 1881.

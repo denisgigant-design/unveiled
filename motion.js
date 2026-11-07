@@ -14,7 +14,7 @@ export function initMotion(ctx) {
     observer=new IntersectionObserver(entries=>entries.forEach(entry=>{
       if(entry.isIntersecting){entry.target.classList.add('is-revealed');observer.unobserve(entry.target);}
     }),{threshold:.07});
-    root.querySelectorAll('.rhythm-card,.gallery-card,.game-feature,.team-value,.mission-card,.resource-card,.home-bottom-grid,.team-intro').forEach((el,i)=>{
+    root.querySelectorAll('.rhythm-card,.gallery-card,.game-feature,.team-value,.mission-card,.resource-card,.home-bottom-grid,.team-intro,.members-spread,.home-reflection,.identity-spread,.outreach-story,.outreach-photo-pair').forEach((el,i)=>{
       el.classList.add('reveal-item');el.style.setProperty('--reveal-delay',Math.min(i%3*75,150)+'ms');observer.observe(el);
     });
   }

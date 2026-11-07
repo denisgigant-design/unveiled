@@ -1,0 +1,89 @@
+/* A rose-coloured room within the site’s dark palette. */
+.fellowship-sanctuary{
+  --rose-text:#ffeaf0;--rose-muted:#dfbacd;--rose-accent:#ffc2d7;
+  position:relative;isolation:isolate;min-width:0;padding:clamp(28px,5vw,68px) clamp(8px,2vw,27px) 50px;
+  color:var(--rose-text);border:1px solid #7b4364;border-radius:20px;
+  background:radial-gradient(ellipse at 50% 25%,#8d3b64 0,#49233f 31%,#25152e 69%,#180f22 100%);
+}
+.fellowship-sanctuary h1,.fellowship-sanctuary h2{color:var(--rose-text)}
+.fellowship-sanctuary .eyebrow,.fellowship-sanctuary .plain-link{color:var(--rose-accent)}
+.fellowship-sanctuary .button.outline{color:var(--rose-text);border-color:#a55e83;background:#50223f}
+.fellowship-sanctuary .button.outline:hover{background:#64314e}
+.garden-drapes{
+  position:absolute;inset:0 0 auto;width:100%;height:clamp(340px,55vw,700px);
+  opacity:.92;pointer-events:none;z-index:-1;border-radius:inherit
+}
+.garden-mist{
+  position:absolute;inset:13% 3% 29%;z-index:-2;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 31%,#ffb5a642,transparent 67%);
+  animation:garden-glimmer 8s ease-in-out infinite alternate
+}
+@keyframes garden-glimmer{to{opacity:.35;transform:scale(.93)}}
+.fellowship-header{
+  display:grid;justify-items:center;gap:12px;text-align:center;margin:0 auto clamp(19px,4vw,39px);padding-inline:12px
+}
+.fellowship-emblem{
+  width:clamp(75px,10vw,124px);height:auto;aspect-ratio:1;object-fit:cover;border-radius:50%;
+  box-shadow:0 0 29px #e778ba70,0 0 0 1px #fd9ec888;margin-bottom:7px
+}
+.fellowship-header h1{font-size:clamp(30px,5.3vw,70px);line-height:1.06;text-wrap:balance}
+.fellowship-header p:last-child{font-size:clamp(12px,1.8vw,17px);color:var(--rose-muted);line-height:1.55}
+.fellowship-garden{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.55fr) minmax(0,1fr);
+  gap:clamp(4px,1.1vw,15px);align-items:start;max-width:1000px;margin:0 auto
+}
+.garden-companion{
+  position:sticky;top:clamp(105px,23vh,230px);align-self:start;min-width:0;pointer-events:none;
+  filter:drop-shadow(0 10px 16px #21081bb3)
+}
+.garden-centre{min-width:0;text-align:center}
+.garden-art{display:block;width:100%;height:auto;overflow:hidden}
+.garden-left{clip-path:polygon(0 0,95% 0,91% 61%,100% 100%,0 100%)}
+.garden-right{clip-path:polygon(17% 0,100% 0,100% 100%,0 100%,14% 69%)}
+.garden-tree-crown{clip-path:polygon(0 0,100% 0,100% 69%,91% 100%,6% 100%,0 69%)}
+.garden-tree{margin:0 auto 25px;max-width:540px;filter:drop-shadow(0 0 30px #ffb96937)}
+.garden-tree figcaption{margin-top:12px;color:#ffd2ae;font-size:9px;letter-spacing:.22em}
+.fellowship-reflection{
+  display:grid;justify-items:center;gap:13px;padding:clamp(14px,3vw,32px) clamp(8px,2.4vw,29px);
+  margin:20px 0;border:1px solid #b76a8b61;border-radius:14px;background:#2b162db8
+}
+.fellowship-reflection h2{font-size:clamp(22px,3.6vw,39px);line-height:1.14;text-wrap:balance}
+.fellowship-reflection p:not(.eyebrow){font-size:13px;line-height:1.7;color:var(--rose-muted)}
+.fellowship-reflection blockquote{margin:0;color:#f7dbe5;font:italic clamp(15px,2.3vw,22px)/1.45 Georgia,serif}
+.fellowship-reflection :is(.plain-link,.button){text-align:center;justify-content:center;white-space:normal}
+.fellowship-reflection .button{padding:10px 12px;font-size:12px}
+.fellowship-reflection .button .icon{flex:none}
+
+.fellowship-feature{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:clamp(12px,3vw,26px);
+  margin:28px 0;padding:clamp(13px,3vw,24px);border:1px solid #844568;border-radius:14px;
+  color:#ffe5ef;text-decoration:none;background:linear-gradient(105deg,#361c36,#26182f);
+  transition:background .25s,box-shadow .25s
+}
+.fellowship-feature:hover{background:#3c213d;box-shadow:0 0 30px #c0689f23}
+.fellowship-feature img{width:clamp(58px,10vw,84px);height:auto;border-radius:50%}
+.fellowship-feature>span{display:grid;gap:5px}
+.fellowship-feature strong{font:clamp(20px,3vw,32px)/1.2 Georgia,serif}
+.fellowship-feature .eyebrow,.fellowship-feature>span>span:last-child{color:#e8bdd2}
+.fellowship-feature>span>span:last-child{font-size:12px;line-height:1.5}
+.fellowship-feature>.icon{width:19px;height:19px}
+
+.opening-veil[data-veil-theme="fellowship"] .opening-panel{
+  background:repeating-linear-gradient(93deg,#34142c 0,#863c62 5%,#4b203e 10%,#b75680 14%,#541c42 20%)
+}
+.opening-veil[data-veil-theme="fellowship"] .opening-left{animation-name:fellowship-veil-left}
+.opening-veil[data-veil-theme="fellowship"] .opening-right{animation-name:fellowship-veil-right}
+.opening-veil[data-veil-theme="fellowship"] .opening-light{background:#ffafd588}
+.opening-veil[data-veil-theme="fellowship"] .opening-identity img{border-radius:50%;box-shadow:0 0 32px #ffb3da6b}
+.opening-veil[data-veil-theme="fellowship"] .opening-identity>span:last-child{font-size:10px;color:#ffe0ec}
+.opening-veil[data-veil-theme="fellowship"] .skip-opening{background:#2c1329dd;color:#ffe3ee;border-color:#dd8eb5}
+@keyframes fellowship-veil-left{0%,15%{transform:translateX(0) rotateY(0)}80%,100%{transform:translateX(-105%) rotateY(32deg)}}
+@keyframes fellowship-veil-right{0%,15%{transform:translateX(0) rotateY(0)}80%,100%{transform:translateX(105%) rotateY(-32deg)}}
+@media(max-width:480px){
+  .fellowship-sanctuary{padding-bottom:18px}
+  .fellowship-garden{grid-template-columns:minmax(0,1fr) minmax(0,3fr) minmax(0,1fr)}
+  .garden-companion{top:100px}
+  .fellowship-reflection{gap:9px;margin:13px 0}
+  .fellowship-reflection .eyebrow{font-size:8px;letter-spacing:.11em}
+  .fellowship-reflection p:not(.eyebrow){font-size:12px}
+}

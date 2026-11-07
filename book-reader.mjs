@@ -28,23 +28,49 @@ export async function animateBookTurn(spread,oldPages,count,dir) {
   const overlay=document.createElement('div');
   overlay.className=`book-flip ${dir>0?'forward':'backward'} ${count===1?'single':''}`;
   overlay.setAttribute('aria-hidden','true');overlay.inert=true;
-  const front=oldPages[dir>0?count-1:0];
-  const back=spread.querySelectorAll(':scope > .paper-page')[dir>0?0:count-1].cloneNode(true);
-  front.classList.add('flip-front');back.classList.add('flip-back');
-  overlay.append(front,back);
+  const nextPages=spread.querySelectorAll(':scope > .paper-page');
+  const turningIndex=dir>0?count-1:0;
+  const landingIndex=dir>0?0:count-1;
+  const front=count===1&&dir<0?nextPages[0].cloneNode(true):oldPages[turningIndex];
+  front.classList.add('flip-front');
+  overlay.append(front);
+
+  // On a spread the underside becomes the page on the opposite side of the spine.
+  // On one-page layouts the leaf lifts away and reveals the page underneath it.
   let still;
-  if(count===2) {
-    still=oldPages[dir>0?0:1];still.classList.add('flip-still',dir>0?'left':'right');
-    still.setAttribute('aria-hidden','true');still.inert=true;spread.append(still);
+  if(count===2){
+    const back=nextPages[landingIndex].cloneNode(true);
+    back.classList.add('flip-back');
+    overlay.append(back);
+    still=oldPages[landingIndex];
+    still.classList.add('flip-still',dir>0?'left':'right');
+  }else if(dir<0){
+    still=oldPages[0];
+    still.classList.add('flip-still','single');
+  }
+  if(still){
+    still.setAttribute('aria-hidden','true');
+    still.inert=true;
+    spread.append(still);
   }
   spread.append(overlay);
-  const animation=overlay.animate([
-    {transform:'rotateY(0deg)',filter:'brightness(1)'},
-    {transform:`rotateY(${dir>0?-85:85}deg)`,filter:'brightness(.78)',offset:.48},
-    {transform:`rotateY(${dir>0?-180:180}deg)`,filter:'brightness(1)'}
-  ],{duration:680,easing:'cubic-bezier(.25,.65,.25,1)',fill:'forwards'});
-  const halfway=setTimeout(()=>still?.remove(),330);
+  const direction=dir>0?-1:1;
+  const keyframes=count===2?[
+    {transform:'rotateY(0deg)'},
+    {transform:`rotateY(${direction*24}deg) rotateZ(${direction*1.1}deg)`,offset:.19},
+    {transform:`rotateY(${direction*94}deg) rotateZ(${direction*1.4}deg)`,offset:.53},
+    {transform:`rotateY(${direction*180}deg)`}
+  ]:[
+    {transform:'rotateY(0deg)'},
+    {transform:`rotateY(${direction*27}deg) rotateZ(${direction}deg)`,offset:.28},
+    {transform:`rotateY(${direction*108}deg)`}
+  ];
+  const animation=overlay.animate(keyframes,{
+    duration:count===2?760:560,
+    direction:count===1&&dir<0?'reverse':'normal',
+    easing:'cubic-bezier(.3,.68,.25,1)',
+    fill:'both'
+  });
   try {await animation.finished.catch(()=>{});}
-  finally {clearTimeout(halfway);still?.remove();overlay.remove();}
+  finally {still?.remove();overlay.remove();}
 }
-

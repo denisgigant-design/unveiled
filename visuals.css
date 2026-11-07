@@ -39,32 +39,53 @@
 .quiet-path>.icon{width:16px;color:var(--blue);transition:transform .2s}
 .quiet-path:hover>.icon{transform:translateX(4px)}
 
-/* A code-built leather cover: original emblem, foil, stitching and page edges. */
-.leather-volume{--cover-width:240px;position:relative;display:block;flex-shrink:0;width:var(--cover-width);height:calc(var(--cover-width) * 1.43);transform:rotateY(-17deg) rotateZ(-6deg);transform-style:preserve-3d;transition:transform .45s;isolation:isolate}
-.leather-front{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;text-align:center;padding:38px 25px 24px;border:1px solid #aa8956;border-left:8px solid #0a1830;border-radius:5px 11px 11px 5px;transform-origin:left center;backface-visibility:hidden;background:radial-gradient(ellipse at 25% 12%,#28547855,transparent 60%),repeating-radial-gradient(ellipse at 50% 50%,#ffffff07 0 1px,#00000008 1px 3px),linear-gradient(125deg,#10243d,#07182e 65%,#102842);color:#dac18e;box-shadow:inset 2px 0 3px #0009,inset -2px 0 2px #d4bd7d33,4px 15px 25px #0005}
-.cover-tooling{position:absolute;inset:14px 12px 13px 10px;border:1px solid #bc9c626b;border-radius:3px 6px 6px 3px;box-shadow:inset 0 0 0 4px #152b416b;pointer-events:none}
-.cover-edition{font:6px/1.5 var(--sans);letter-spacing:2.1px;color:#a99064}
-.leather-front>.brand-seal{width:78px;height:63px;margin:22px 0 15px;filter:drop-shadow(0 1px 1px #e6c87833)}
-.leather-title{font:29px/1.12 Georgia,serif;letter-spacing:2px;color:#e4cf9f;text-shadow:0 1px #0008}
-.leather-rule{width:26px;height:1px;background:#b79a62;margin:20px 0 18px}
-.leather-imprint{font:7px/1.3 var(--sans);letter-spacing:3.5px;color:#d6b578}
-.leather-verse{font:5px/1.5 var(--sans);letter-spacing:1.1px;margin-top:auto;padding-top:14px;color:#a38a5b}
-.leather-leaves{position:absolute;inset:7px -11px 4px 11px;border:1px solid #af955c;border-radius:2px 8px 8px 2px;z-index:1;background:repeating-linear-gradient(to bottom,#c0a46a 0,#f0e0b8 1px,#bca36e 2px,#e9d7ac 3px);box-shadow:4px 6px 0 #0c233d,8px 14px 22px #0003}
-.leather-spine{position:absolute;top:2px;bottom:2px;left:-9px;width:17px;border-radius:5px 0 0 5px;background:linear-gradient(90deg,#041024,#153651 60%,#071a2e);box-shadow:inset 2px 0 2px #4d688344;z-index:2}
-.leather-ribbon{position:absolute;right:20%;top:95%;height:43px;width:10px;background:linear-gradient(90deg,#1b7163,#54b293);clip-path:polygon(0 0,100% 0,100% 100%,50% 84%,0 100%);z-index:0}
-.cover-corner{position:absolute;width:21px;height:21px;border-color:#c2a56c;border-style:solid;opacity:.75}
-.corner-tl{left:19px;top:23px;border-width:1px 0 0 1px}.corner-tr{right:21px;top:23px;border-width:1px 1px 0 0}.corner-bl{left:19px;bottom:24px;border-width:0 0 1px 1px}.corner-br{right:21px;bottom:24px;border-width:0 1px 1px 0}
+/* The supplied cover is one face of a hinged volume. */
+.leather-volume{
+  --cover-width:278px;
+  position:relative;display:block;flex-shrink:0;width:var(--cover-width);aspect-ratio:672/810;
+  transform:rotateY(-13deg) rotateZ(-5deg);transform-style:preserve-3d;transition:transform .45s
+}
+.leather-front{position:absolute;inset:0;z-index:3;transform-origin:left center;transform-style:preserve-3d}
+.leather-face,.leather-inside{
+  position:absolute;inset:0;border-radius:5px 8px 8px 5px;backface-visibility:hidden
+}
+.leather-face{
+  background:#06112b url("assets/bible-cover-original.jpg") no-repeat 7.75% 42.52% / 228.57% 126.42%;
+  box-shadow:0 0 0 1px #8aabd36b,0 0 21px #4e92f262,0 0 68px #4c87e347,10px 16px 30px #010710b3;
+  transform:translateZ(1px)
+}
+.leather-inside{
+  display:grid;place-items:center;transform:rotateY(180deg);
+  background:radial-gradient(ellipse at 50% 45%,#163d68,#091833 72%);
+  box-shadow:inset 0 0 0 1px #8aabd362,inset 0 0 0 9px #0c1d3a,inset 0 0 0 10px #8cabc536;
+  color:#afc9e6
+}
+.leather-inside>.brand-seal{width:32%;height:auto;filter:drop-shadow(0 0 12px #64aef48a)}
+.cover-imprint{
+  position:absolute;left:16%;right:13%;top:57%;display:grid;justify-items:center;gap:6px;
+  color:#dce6f1;text-shadow:0 1px 2px #000,0 0 16px #599eee
+}
+.cover-imprint>.brand-seal{width:30%;height:auto;filter:drop-shadow(0 0 5px #599eee)}
+.cover-imprint>span{font:600 clamp(7px,1.2vw,13px)/1.2 Georgia,serif;letter-spacing:.13em}
+.leather-leaves,.leather-endpaper{position:absolute;border-radius:3px 6px 6px 3px}
+.leather-leaves{
+  inset:7px -8px 1px 7px;background:repeating-linear-gradient(#344a62 0 1px,#889caf 1px 2px,#263d58 2px 3px);
+  box-shadow:3px 5px 0 #102b4d,5px 11px 19px #0009
+}
+.leather-endpaper{
+  inset:5px 1px 6px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  color:#d7e7fc;border:1px solid #516c89;background:radial-gradient(ellipse at 60% 44%,#2c4f75,#13283f 62%,#071626);
+  font:600 12px/1.4 Georgia,serif;letter-spacing:2px;box-shadow:inset 7px 0 11px #031329a8
+}
+.leather-endpaper>.brand-seal{width:32%;height:auto}
+.leather-ribbon{
+  position:absolute;right:20%;top:96%;height:34px;width:9px;background:linear-gradient(90deg,#356bb8,#79a5e1);
+  clip-path:polygon(0 0,100% 0,100% 100%,50% 84%,0 100%)
+}
 .mini-volume{--cover-width:125px}
-.mini-volume .leather-front{padding:23px 13px 13px;border-left-width:5px;border-radius:4px 7px 7px 4px}
-.mini-volume .cover-tooling{inset:9px 8px 8px 7px}
-.mini-volume .cover-edition{font-size:3px;letter-spacing:1.3px}
-.mini-volume .brand-seal{width:43px;height:35px;margin:12px 0 9px}
-.mini-volume .leather-title{font-size:16px;letter-spacing:1px}
-.mini-volume .leather-rule{width:17px;margin:11px 0 10px}
-.mini-volume .leather-imprint{font-size:4px;letter-spacing:2px}
-.mini-volume .leather-verse{font-size:2.7px;letter-spacing:.5px;padding-top:7px}
-.mini-volume .cover-corner{display:none}
-.mini-volume .leather-ribbon{height:27px;width:7px}
+.mini-volume .cover-imprint{gap:4px}
+.mini-volume .cover-imprint>span{font-size:6px}
+.mini-volume .leather-ribbon{height:19px;width:6px}
 
 .home-music-feature{position:relative;display:grid;grid-template-columns:1.05fr .75fr 175px;align-items:center;gap:10px;min-height:330px;margin-top:31px;padding:32px 29px 30px 34px;border:1px solid #41567a;border-radius:17px;background:radial-gradient(ellipse at 65% 50%,#4d324d66,transparent 60%),linear-gradient(110deg,#0a1d37,#07162b 70%);color:#e4edf8;overflow:hidden;isolation:isolate}
 .room-feature-copy{position:relative;z-index:2}
@@ -140,7 +161,7 @@
 .outreach-photo-pair .brand-photo{border-radius:7px}
 .mission-grid{scroll-margin-top:25px}
 
-/* A room for the music, with the gold knight as its character. */
+/* Unveiled Music’s own emblem and room lighting. */
 .music-room-stage{position:relative;isolation:isolate;display:grid;grid-template-columns:1.23fr .77fr;align-items:center;gap:16px;min-height:475px;border:1px solid #46506b;border-radius:18px;padding:31px 39px 25px;background:radial-gradient(ellipse at 90% 30%,#7d593d33,transparent 60%),linear-gradient(125deg,#0a1a32,#071329 65%,#151c2c);overflow:hidden;color:#edf4fc}
 .music-room-copy{position:relative;z-index:2;min-width:0;padding:12px 0}
 .room-door-sign{display:flex;align-items:center;gap:11px;font-size:7px;letter-spacing:2.4px;color:#c5b181;margin-bottom:27px}
@@ -154,7 +175,7 @@
 .room-ambience>.room-wave{gap:3px;height:35px}
 .room-character{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1;min-width:0}
 .room-character-halo{position:absolute;inset:4% -20% 12%;z-index:-1;background:radial-gradient(ellipse,#bc824c22,transparent 68%);filter:blur(15px);animation:room-light-breathe 9s ease-in-out infinite alternate}
-.room-character .gold-knight-portrait{box-shadow:0 18px 40px #0003;border:1px solid #68543a55}
+
 .room-character-caption{font-size:6px;letter-spacing:2px;line-height:1.8;color:#ad9671;margin-top:14px}
 .room-light{position:absolute;width:360px;height:160%;top:-40%;z-index:-1;pointer-events:none;filter:blur(38px);opacity:.3;transform:rotate(20deg);animation:room-light-sway 13s ease-in-out infinite alternate}
 .room-light-one{left:5%;background:linear-gradient(90deg,transparent,#315e8b3b,transparent)}
@@ -201,12 +222,12 @@
 .cover-introduction>.button{font-size:11px;gap:18px}
 .cover-edition-note{font-size:9px;line-height:1.8;letter-spacing:.3px;color:var(--visual-muted);margin-top:18px}
 .closed-book-stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;perspective:1400px;min-height:450px;isolation:isolate}
-.open-cover-button{position:relative;z-index:2;display:grid;place-items:center;background:none;padding:22px 20px 28px;border-radius:14px}
+.open-cover-button{transform-style:preserve-3d;position:relative;z-index:2;display:grid;place-items:center;background:none;padding:22px 20px 28px;border-radius:14px}
 .open-cover-button:hover .leather-volume{transform:rotateY(-10deg) rotateZ(-3deg) translateY(-5px)}
 .book-pool-light{position:absolute;left:10%;right:0;bottom:14%;height:27%;border-radius:50%;background:radial-gradient(ellipse,#6a8eae30,transparent 70%);filter:blur(20px);z-index:-1}
 .cover-touch-note{position:relative;z-index:3;font-size:6px;letter-spacing:2px;line-height:1.8;text-align:center;color:var(--visual-muted);margin-top:8px}
 .cover-afterword{display:grid;grid-template-columns:.65fr 1.35fr;align-items:center;gap:35px;max-width:760px;margin:20px auto 5px;padding:25px;border:1px solid var(--visual-line);border-radius:13px;background:var(--visual-surface)}
-.cover-knights-picture{max-width:230px;border-radius:6px}
+.cover-art-picture{max-width:330px;border-radius:6px}
 .cover-afterword>div{padding:7px}
 .cover-afterword .brand-seal{color:var(--blue);width:44px;height:36px;margin-bottom:14px}
 .cover-afterword .eyebrow{font-size:7px}
@@ -242,11 +263,11 @@ body[data-motion="off"] .opening-veil{display:none}
 :root[data-appearance="dark"] .word-feature .plain-link{color:#a3ceed}
 :root[data-appearance="dark"] .listening-shelf .add-media-empty{background:var(--visual-soft);color:var(--visual-text)}
 
-@media(max-width:1100px){.home-pathways{gap:20px;grid-template-columns:1fr 1fr}.word-feature{padding:25px 21px;gap:9px}.word-feature h3{font-size:29px}.mini-book-scene{flex-basis:111px}.mini-volume{--cover-width:105px}.mini-volume .leather-front{padding-top:18px}.mini-volume .brand-seal{width:34px;height:28px;margin:10px 0 8px}.mini-volume .leather-title{font-size:14px}.mini-volume .leather-rule{margin:9px 0}.mini-volume .leather-verse{padding-top:5px}.mini-volume .leather-imprint{font-size:3px}.quiet-path{column-gap:12px;grid-template-columns:35px minmax(0,1fr) 13px}.path-symbol{width:34px;height:40px}.quiet-path h3{font-size:21px}.quiet-path p{font-size:9px}.home-music-feature{grid-template-columns:1.1fr .9fr;padding:28px}.home-gold-knight{display:none}.home-music-feature h2{font-size:34px}.home-reflection{gap:29px}.reflection-copy h2{font-size:34px}.members-spread{grid-template-columns:.75fr 1.25fr;gap:22px}.members-intro h2{font-size:31px}.members-subtitle{font-size:19px}.members-pictures{gap:13px}.music-room-stage{padding:25px 29px}.music-room-stage .music-room-copy h2{font-size:39px}.room-character .gold-knight-portrait{width:190px;height:355px}.room-door-sign{font-size:6px;letter-spacing:1.8px}.outreach-story{padding:26px;gap:25px}.outreach-story h2{font-size:33px}.bible-cover-entry{padding:7px 10px;gap:20px}.cover-introduction h1{font-size:49px}.closed-book-stage .leather-volume{--cover-width:215px}.closed-book-stage .leather-front{padding-top:31px}.closed-book-stage .leather-front>.brand-seal{margin:18px 0 12px;width:68px;height:55px}.closed-book-stage .leather-title{font-size:25px}.closed-book-stage .leather-rule{margin:17px 0 15px}}
-@media(max-width:850px){.home-pathways{grid-template-columns:1fr}.word-feature{min-height:255px;padding:29px;gap:20px}.word-feature h3{font-size:34px}.mini-book-scene{flex-basis:155px}.mini-volume{--cover-width:125px}.mini-volume .leather-front{padding-top:23px}.mini-volume .brand-seal{width:43px;height:35px;margin:12px 0 9px}.mini-volume .leather-title{font-size:16px}.mini-volume .leather-rule{margin:11px 0 10px}.mini-volume .leather-imprint{font-size:4px}.home-quiet-paths{grid-template-columns:1fr 1fr;gap:18px;border:0}.quiet-path{border-top:1px solid var(--visual-line);grid-template-columns:32px minmax(0,1fr);padding:30px 0 22px;column-gap:12px}.quiet-path>.icon{display:none}.quiet-path h3{font-size:20px}.quiet-path .small-label{font-size:6px}.quiet-path p{font-size:9px}.home-reflection{grid-template-columns:.9fr 1.1fr;gap:23px}.reflection-copy h2{font-size:30px}.reflection-copy>p:not(.eyebrow){font-size:11px}.home-outreach-feature{padding:24px;gap:22px}.home-outreach-feature h2{font-size:33px}.home-outreach-feature p:not(.eyebrow){font-size:11px}.identity-spread{gap:23px}.identity-copy h2{font-size:29px}.members-spread{grid-template-columns:1fr;gap:22px}.members-intro{padding-top:0}.members-intro h2{font-size:36px}.members-intro .members-line{margin:17px 0}.members-shared-caption{grid-column:1}.members-pictures{grid-template-columns:1fr .82fr;gap:20px}.members-pictures .member-photo:nth-child(2){margin-top:40px}.outreach-story{grid-template-columns:1fr;gap:28px;padding:27px}.outreach-story-copy{max-width:480px}.outreach-story h2{font-size:37px}.outreach-lead-photo{max-width:360px}.outreach-photo-pair{gap:17px}.music-room-stage{grid-template-columns:1.15fr .85fr;gap:9px;padding:24px 23px;min-height:410px}.music-room-stage .music-room-copy h2{font-size:32px;letter-spacing:-.9px}.music-room-copy>p{font-size:11px;margin:19px 0 23px}.music-room-copy>.button{font-size:9px;padding:11px}.room-character .gold-knight-portrait{width:160px;height:300px}.room-ambience{gap:12px}.room-wave{gap:3px}.room-ambience>.room-wave{gap:2px}.room-ambience>span:last-child{font-size:5px;letter-spacing:1px}.room-door-sign{letter-spacing:1.1px;gap:8px}.room-door-sign .brand-seal{width:34px;height:28px}.room-visual-stories .gallery-grid{gap:17px}.room-visual-stories .gallery-card h3{font-size:21px}.bible-cover-entry{gap:10px;padding:5px 0;min-height:470px}.cover-introduction h1{font-size:44px}.cover-introduction>p:not(.eyebrow):not(.cover-edition-note){font-size:12px}.closed-book-stage .leather-volume{--cover-width:190px}.closed-book-stage .leather-front{padding:28px 18px 18px}.closed-book-stage .cover-edition{font-size:5px;letter-spacing:1.5px}.closed-book-stage .leather-front>.brand-seal{width:59px;height:48px;margin:15px 0 10px}.closed-book-stage .leather-title{font-size:22px}.closed-book-stage .leather-rule{margin:14px 0 12px}.closed-book-stage .leather-imprint{font-size:6px;letter-spacing:3px}.closed-book-stage .leather-verse{font-size:4px}.cover-afterword{gap:20px;padding:20px}.cover-afterword h2{font-size:28px}.cover-touch-note{font-size:5px;letter-spacing:1.4px}}
-@media(max-width:700px){.home-music-feature{margin-top:27px}.home-reflection{margin:34px 0}.home-reflection .reflection-picture{max-width:260px}.members-spread{margin-top:37px;padding-top:29px}.music-room-stage{grid-template-columns:1.2fr .8fr}.room-character .gold-knight-portrait{width:175px;height:326px}.bible-cover-entry{min-height:450px;padding:9px 8px}.cover-introduction h1{font-size:45px}.closed-book-stage .leather-volume{--cover-width:210px}.closed-book-stage .leather-front>.brand-seal{width:64px;height:51px;margin:18px 0 12px}.closed-book-stage .leather-title{font-size:24px}.closed-book-stage .leather-rule{margin:17px 0 14px}.cover-afterword{max-width:600px}.room-visual-stories .gallery-grid{grid-template-columns:1fr}.room-visual-stories .gallery-card,.room-visual-stories .gallery-card:nth-child(n){display:grid;grid-template-columns:110px minmax(0,1fr);column-gap:18px;margin:0;padding:0 0 20px;border-bottom:1px solid var(--visual-line)}.room-visual-stories .gallery-image{grid-column:1;grid-row:1/4;aspect-ratio:3/4}.room-visual-stories .gallery-card>.small-label{grid-column:2;margin-top:8px;font-size:7px}.room-visual-stories .gallery-card h3{grid-column:2;font-size:25px;margin:8px 0 14px}.room-visual-stories .gallery-card>.plain-link{grid-column:2;font-size:10px;align-self:start}.room-visual-stories .gallery-open{right:9px;bottom:9px;width:25px;height:25px}.room-visual-stories .gallery-open>.icon{width:13px}}
-@media(max-width:480px){.home-welcome .today{margin-left:auto}.replay-opening{flex-basis:100%;justify-content:flex-end;font-size:7px;margin-top:-3px}.word-feature{padding:26px 20px;gap:9px;min-height:240px}.word-feature h3{font-size:29px;letter-spacing:-.7px}.word-feature-copy .eyebrow{font-size:6px;letter-spacing:1px;margin-bottom:14px}.word-feature p{font-size:10px;margin:15px 0 20px}.word-feature .plain-link{font-size:9px;gap:10px}.mini-book-scene{flex-basis:113px;min-height:190px}.mini-volume{--cover-width:103px}.mini-volume .leather-front{padding:18px 9px 11px}.mini-volume .brand-seal{width:34px;height:28px;margin:9px 0 7px}.mini-volume .cover-edition{font-size:2.7px;letter-spacing:1px}.mini-volume .leather-title{font-size:13px;letter-spacing:.7px}.mini-volume .leather-rule{margin:8px 0}.mini-volume .leather-imprint{font-size:3px;letter-spacing:1.4px}.mini-volume .leather-verse{font-size:2.3px;padding-top:6px}.home-quiet-paths{grid-template-columns:1fr;gap:0}.quiet-path{grid-template-columns:40px minmax(0,1fr) 16px;gap:14px;min-height:136px;padding:29px 0 21px}.quiet-path:nth-child(2){border-top:0}.path-symbol{width:38px;height:44px}.quiet-path>.icon{display:block}.quiet-path h3{font-size:24px}.quiet-path p{font-size:10px}.quiet-path .small-label{font-size:7px}.home-music-feature{display:block;min-height:0;padding:28px;text-align:left}.home-music-feature h2{font-size:34px}.home-room-instrument{position:absolute;right:-54px;bottom:-39px;opacity:.3;z-index:-1;transform:scale(.8)}.home-music-feature .room-feature-copy{max-width:240px}.home-music-feature p{font-size:11px;max-width:190px}.home-reflection{grid-template-columns:1fr;gap:24px;margin:34px 0}.home-reflection .reflection-picture{max-width:100%}.reflection-picture .brand-photo{max-width:290px;margin:auto}.reflection-copy{padding:0 8px 6px;max-width:none}.reflection-copy h2{font-size:34px}.reflection-copy>p:not(.eyebrow){font-size:12px}.reflection-brand{margin-top:23px;padding-top:20px}.home-outreach-feature{grid-template-columns:1fr;padding:24px;gap:23px}.home-outreach-feature>div{padding:0}.home-outreach-feature h2{font-size:34px}.home-outreach-feature p:not(.eyebrow){font-size:12px}.home-outreach-photo{max-width:100%;border-radius:5px}.identity-spread{grid-template-columns:1fr;gap:25px;padding:28px 0}.identity-copy h2{font-size:32px}.identity-copy>p:not(.eyebrow){font-size:12px}.identity-mark{float:right;margin:3px 6px 10px 15px}.identity-pictures{clear:both}.members-intro h2{font-size:34px}.members-subtitle{font-size:21px;margin:10px 0 18px}.members-intro>p:last-child{font-size:11px}.members-pictures{gap:12px}.members-pictures .member-photo:nth-child(2){margin-top:31px}.members-shared-caption{font-size:5.5px;letter-spacing:1px;line-height:1.8}.members-shared-caption>span{padding:0 5px}.outreach-story{padding:24px;gap:26px}.outreach-story-copy>.brand-seal{width:57px;height:46px;margin-bottom:18px}.outreach-story h2{font-size:33px}.outreach-story-copy>p:not(.eyebrow){font-size:12px;line-height:1.9;margin:18px 0 23px}.outreach-photo-pair{gap:12px;margin-bottom:26px}.music-room-stage{grid-template-columns:1fr;gap:25px;padding:26px 23px 23px;min-height:0;text-align:center}.music-room-copy{padding:0}.room-door-sign{justify-content:center;font-size:6px;letter-spacing:1.8px;margin-bottom:22px}.music-room-stage .music-room-copy h2{font-size:36px;letter-spacing:-1px}.music-room-copy>p{font-size:11px;margin:18px auto 21px;max-width:260px}.music-room-copy>.button{font-size:10px;padding:12px 14px}.room-ambience{justify-content:center;margin-top:19px;gap:16px}.room-ambience>span:last-child{font-size:5.5px;letter-spacing:1px;text-align:left}.room-character .gold-knight-portrait{width:150px;height:281px;border-radius:85px 85px 5px 5px}.room-character-caption{font-size:5px;letter-spacing:1.5px;margin-top:10px}.room-stage-rule{bottom:10px;left:20px;right:20px}.room-visual-stories .gallery-card,.room-visual-stories .gallery-card:nth-child(n){grid-template-columns:95px minmax(0,1fr);gap:0 15px;padding-bottom:18px}.room-visual-stories .gallery-card h3{font-size:23px}.room-visual-stories .gallery-card>.small-label{font-size:6px;letter-spacing:.8px}.room-visual-stories .gallery-card>.plain-link{font-size:9px}.listening-shelf .add-media-empty{padding:29px 19px}.listening-shelf .add-media-empty>strong{font-size:23px}.listening-shelf .add-media-empty>span{font-size:10px}.player-room-trim{min-height:20px;margin-bottom:6px}.player-room-console{min-height:45px;gap:15px;margin-top:8px;padding:7px 5px}.console-dial{width:20px;height:20px}.console-wave{gap:2px}.console-veil .brand-seal{width:29px;height:24px}.trim-label{font-size:5px;letter-spacing:1.8px}.bible-cover-entry{display:flex;flex-direction:column-reverse;gap:10px;padding:0 5px 9px;min-height:0}.closed-book-stage{min-height:330px;align-self:stretch}.closed-book-stage .leather-volume{--cover-width:182px}.closed-book-stage .leather-front{padding:26px 18px 18px}.closed-book-stage .cover-edition{font-size:4.5px;letter-spacing:1.5px}.closed-book-stage .leather-front>.brand-seal{width:54px;height:44px;margin:15px 0 10px}.closed-book-stage .leather-title{font-size:21px}.closed-book-stage .leather-rule{margin:14px 0 12px}.closed-book-stage .leather-imprint{font-size:5.5px;letter-spacing:2.5px}.closed-book-stage .leather-verse{font-size:3.5px;letter-spacing:.7px}.closed-book-stage .cover-tooling{inset:12px 10px 12px 8px}.closed-book-stage .cover-corner{width:16px;height:16px}.closed-book-stage .corner-tl{left:16px;top:20px}.closed-book-stage .corner-tr{right:17px;top:20px}.closed-book-stage .corner-bl{left:16px;bottom:20px}.closed-book-stage .corner-br{right:17px;bottom:20px}.open-cover-button{padding:14px 20px 27px}.cover-touch-note{margin-top:0;font-size:5px;letter-spacing:1.4px}.cover-introduction{padding:12px 8px 10px;width:100%;text-align:center}.cover-introduction .eyebrow{font-size:7px;margin-bottom:12px}.cover-introduction h1{font-size:42px;line-height:1.06}.cover-introduction>p:not(.eyebrow):not(.cover-edition-note){font-size:12px;margin:17px 0 19px}.cover-reading-note{max-width:260px;margin:0 auto 21px;justify-content:center;text-align:left;padding-top:15px}.cover-introduction>.button{font-size:11px;padding:12px 16px}.cover-edition-note{font-size:8px;margin-top:17px}.cover-afterword{grid-template-columns:.8fr 1.2fr;gap:17px;padding:17px;margin-top:22px}.cover-afterword>div{padding:0}.cover-afterword .brand-seal{width:32px;height:26px;margin-bottom:10px}.cover-afterword .eyebrow{font-size:5px;letter-spacing:1px}.cover-afterword h2{font-size:24px}.cover-afterword p:not(.eyebrow){font-size:9px;line-height:1.8;margin:12px 0 15px}.cover-afterword .plain-link{font-size:9px}.reader-size-bar{flex-wrap:wrap;gap:10px}.reader-size-bar>span{width:100%;max-width:none}.reader-size-controls{width:100%;gap:8px;justify-content:flex-start}.reader-size-controls .return-to-cover{margin-left:auto}.reader-size-controls .plain-link{font-size:9px}.opening-identity>.brand-wordmark{font-size:32px}.opening-identity>.brand-seal{width:77px;height:62px}.opening-identity>span:last-child{font-size:5px;letter-spacing:2px}.skip-opening{right:16px;top:16px;font-size:9px;padding:9px 11px}}
-@media(max-width:350px){.word-feature h3{font-size:26px}.word-feature{padding:23px 17px;gap:5px}.mini-book-scene{flex-basis:95px}.mini-volume{--cover-width:88px}.mini-volume .leather-front{padding-top:16px}.mini-volume .brand-seal{width:30px;height:24px;margin:8px 0 5px}.mini-volume .leather-title{font-size:11px}.mini-volume .leather-rule{margin:7px 0}.mini-volume .leather-verse{font-size:1.8px;letter-spacing:.3px}.mini-volume .leather-imprint{font-size:2.5px}.word-feature-copy .eyebrow{font-size:5px}.word-feature p{font-size:9px}.word-feature .plain-link{font-size:8px}.home-music-feature{padding:26px 22px}.home-music-feature h2{font-size:31px}.reflection-copy h2{font-size:31px}.outreach-story{padding:20px}.outreach-story h2{font-size:30px}.music-room-stage .music-room-copy h2{font-size:32px}.members-intro h2{font-size:31px}.cover-afterword{grid-template-columns:1fr;padding:20px}.cover-knights-picture{max-width:180px;margin:auto}.cover-afterword h2{font-size:29px}.cover-afterword p:not(.eyebrow){font-size:11px}.cover-afterword>div{text-align:center}.cover-afterword p:not(.eyebrow){margin-left:auto;margin-right:auto}.reader-size-controls .plain-link{font-size:8px}.reader-size-controls{gap:7px}}
+@media(max-width:1100px){.home-pathways{gap:20px;grid-template-columns:1fr 1fr}.word-feature{padding:25px 21px;gap:9px}.word-feature h3{font-size:29px}.mini-book-scene{flex-basis:111px}.mini-volume{--cover-width:105px}.quiet-path{column-gap:12px;grid-template-columns:35px minmax(0,1fr) 13px}.path-symbol{width:34px;height:40px}.quiet-path h3{font-size:21px}.quiet-path p{font-size:9px}.home-music-feature{grid-template-columns:1.1fr .9fr;padding:28px}.home-gold-knight{display:none}.home-music-feature h2{font-size:34px}.home-reflection{gap:29px}.reflection-copy h2{font-size:34px}.members-spread{grid-template-columns:.75fr 1.25fr;gap:22px}.members-intro h2{font-size:31px}.members-subtitle{font-size:19px}.members-pictures{gap:13px}.music-room-stage{padding:25px 29px}.music-room-stage .music-room-copy h2{font-size:39px}.room-door-sign{font-size:6px;letter-spacing:1.8px}.outreach-story{padding:26px;gap:25px}.outreach-story h2{font-size:33px}.bible-cover-entry{padding:7px 10px;gap:20px}.cover-introduction h1{font-size:49px}.closed-book-stage .leather-volume{--cover-width:215px}}
+@media(max-width:850px){.home-pathways{grid-template-columns:1fr}.word-feature{min-height:255px;padding:29px;gap:20px}.word-feature h3{font-size:34px}.mini-book-scene{flex-basis:155px}.mini-volume{--cover-width:125px}.home-quiet-paths{grid-template-columns:1fr 1fr;gap:18px;border:0}.quiet-path{border-top:1px solid var(--visual-line);grid-template-columns:32px minmax(0,1fr);padding:30px 0 22px;column-gap:12px}.quiet-path>.icon{display:none}.quiet-path h3{font-size:20px}.quiet-path .small-label{font-size:6px}.quiet-path p{font-size:9px}.home-reflection{grid-template-columns:.9fr 1.1fr;gap:23px}.reflection-copy h2{font-size:30px}.reflection-copy>p:not(.eyebrow){font-size:11px}.home-outreach-feature{padding:24px;gap:22px}.home-outreach-feature h2{font-size:33px}.home-outreach-feature p:not(.eyebrow){font-size:11px}.identity-spread{gap:23px}.identity-copy h2{font-size:29px}.members-spread{grid-template-columns:1fr;gap:22px}.members-intro{padding-top:0}.members-intro h2{font-size:36px}.members-intro .members-line{margin:17px 0}.members-shared-caption{grid-column:1}.members-pictures{grid-template-columns:1fr .82fr;gap:20px}.members-pictures .member-photo:nth-child(2){margin-top:40px}.outreach-story{grid-template-columns:1fr;gap:28px;padding:27px}.outreach-story-copy{max-width:480px}.outreach-story h2{font-size:37px}.outreach-lead-photo{max-width:360px}.outreach-photo-pair{gap:17px}.music-room-stage{grid-template-columns:1.15fr .85fr;gap:9px;padding:24px 23px;min-height:410px}.music-room-stage .music-room-copy h2{font-size:32px;letter-spacing:-.9px}.music-room-copy>p{font-size:11px;margin:19px 0 23px}.music-room-copy>.button{font-size:9px;padding:11px}.room-ambience{gap:12px}.room-wave{gap:3px}.room-ambience>.room-wave{gap:2px}.room-ambience>span:last-child{font-size:5px;letter-spacing:1px}.room-door-sign{letter-spacing:1.1px;gap:8px}.room-door-sign .brand-seal{width:34px;height:28px}.room-visual-stories .gallery-grid{gap:17px}.room-visual-stories .gallery-card h3{font-size:21px}.bible-cover-entry{gap:10px;padding:5px 0;min-height:470px}.cover-introduction h1{font-size:44px}.cover-introduction>p:not(.eyebrow):not(.cover-edition-note){font-size:12px}.closed-book-stage .leather-volume{--cover-width:190px}.cover-afterword{gap:20px;padding:20px}.cover-afterword h2{font-size:28px}.cover-touch-note{font-size:5px;letter-spacing:1.4px}}
+@media(max-width:700px){.home-music-feature{margin-top:27px}.home-reflection{margin:34px 0}.home-reflection .reflection-picture{max-width:260px}.members-spread{margin-top:37px;padding-top:29px}.music-room-stage{grid-template-columns:1.2fr .8fr}.bible-cover-entry{min-height:450px;padding:9px 8px}.cover-introduction h1{font-size:45px}.closed-book-stage .leather-volume{--cover-width:210px}.cover-afterword{max-width:600px}.room-visual-stories .gallery-grid{grid-template-columns:1fr}.room-visual-stories .gallery-card,.room-visual-stories .gallery-card:nth-child(n){display:grid;grid-template-columns:110px minmax(0,1fr);column-gap:18px;margin:0;padding:0 0 20px;border-bottom:1px solid var(--visual-line)}.room-visual-stories .gallery-image{grid-column:1;grid-row:1/4;aspect-ratio:3/4}.room-visual-stories .gallery-card>.small-label{grid-column:2;margin-top:8px;font-size:7px}.room-visual-stories .gallery-card h3{grid-column:2;font-size:25px;margin:8px 0 14px}.room-visual-stories .gallery-card>.plain-link{grid-column:2;font-size:10px;align-self:start}.room-visual-stories .gallery-open{right:9px;bottom:9px;width:25px;height:25px}.room-visual-stories .gallery-open>.icon{width:13px}}
+@media(max-width:480px){.home-welcome .today{margin-left:auto}.replay-opening{flex-basis:100%;justify-content:flex-end;font-size:7px;margin-top:-3px}.word-feature{padding:26px 20px;gap:9px;min-height:240px}.word-feature h3{font-size:29px;letter-spacing:-.7px}.word-feature-copy .eyebrow{font-size:6px;letter-spacing:1px;margin-bottom:14px}.word-feature p{font-size:10px;margin:15px 0 20px}.word-feature .plain-link{font-size:9px;gap:10px}.mini-book-scene{flex-basis:113px;min-height:190px}.mini-volume{--cover-width:103px}.home-quiet-paths{grid-template-columns:1fr;gap:0}.quiet-path{grid-template-columns:40px minmax(0,1fr) 16px;gap:14px;min-height:136px;padding:29px 0 21px}.quiet-path:nth-child(2){border-top:0}.path-symbol{width:38px;height:44px}.quiet-path>.icon{display:block}.quiet-path h3{font-size:24px}.quiet-path p{font-size:10px}.quiet-path .small-label{font-size:7px}.home-music-feature{display:block;min-height:0;padding:28px;text-align:left}.home-music-feature h2{font-size:34px}.home-room-instrument{position:absolute;right:-54px;bottom:-39px;opacity:.3;z-index:-1;transform:scale(.8)}.home-music-feature .room-feature-copy{max-width:240px}.home-music-feature p{font-size:11px;max-width:190px}.home-reflection{grid-template-columns:1fr;gap:24px;margin:34px 0}.home-reflection .reflection-picture{max-width:100%}.reflection-picture .brand-photo{max-width:290px;margin:auto}.reflection-copy{padding:0 8px 6px;max-width:none}.reflection-copy h2{font-size:34px}.reflection-copy>p:not(.eyebrow){font-size:12px}.reflection-brand{margin-top:23px;padding-top:20px}.home-outreach-feature{grid-template-columns:1fr;padding:24px;gap:23px}.home-outreach-feature>div{padding:0}.home-outreach-feature h2{font-size:34px}.home-outreach-feature p:not(.eyebrow){font-size:12px}.home-outreach-photo{max-width:100%;border-radius:5px}.identity-spread{grid-template-columns:1fr;gap:25px;padding:28px 0}.identity-copy h2{font-size:32px}.identity-copy>p:not(.eyebrow){font-size:12px}.identity-mark{float:right;margin:3px 6px 10px 15px}.identity-pictures{clear:both}.members-intro h2{font-size:34px}.members-subtitle{font-size:21px;margin:10px 0 18px}.members-intro>p:last-child{font-size:11px}.members-pictures{gap:12px}.members-pictures .member-photo:nth-child(2){margin-top:31px}.members-shared-caption{font-size:5.5px;letter-spacing:1px;line-height:1.8}.members-shared-caption>span{padding:0 5px}.outreach-story{padding:24px;gap:26px}.outreach-story-copy>.brand-seal{width:57px;height:46px;margin-bottom:18px}.outreach-story h2{font-size:33px}.outreach-story-copy>p:not(.eyebrow){font-size:12px;line-height:1.9;margin:18px 0 23px}.outreach-photo-pair{gap:12px;margin-bottom:26px}.music-room-stage{grid-template-columns:1fr;gap:25px;padding:26px 23px 23px;min-height:0;text-align:center}.music-room-copy{padding:0}.room-door-sign{justify-content:center;font-size:6px;letter-spacing:1.8px;margin-bottom:22px}.music-room-stage .music-room-copy h2{font-size:36px;letter-spacing:-1px}.music-room-copy>p{font-size:11px;margin:18px auto 21px;max-width:260px}.music-room-copy>.button{font-size:10px;padding:12px 14px}.room-ambience{justify-content:center;margin-top:19px;gap:16px}.room-ambience>span:last-child{font-size:5.5px;letter-spacing:1px;text-align:left}.room-character-caption{font-size:5px;letter-spacing:1.5px;margin-top:10px}.room-stage-rule{bottom:10px;left:20px;right:20px}.room-visual-stories .gallery-card,.room-visual-stories .gallery-card:nth-child(n){grid-template-columns:95px minmax(0,1fr);gap:0 15px;padding-bottom:18px}.room-visual-stories .gallery-card h3{font-size:23px}.room-visual-stories .gallery-card>.small-label{font-size:6px;letter-spacing:.8px}.room-visual-stories .gallery-card>.plain-link{font-size:9px}.listening-shelf .add-media-empty{padding:29px 19px}.listening-shelf .add-media-empty>strong{font-size:23px}.listening-shelf .add-media-empty>span{font-size:10px}.player-room-trim{min-height:20px;margin-bottom:6px}.player-room-console{min-height:45px;gap:15px;margin-top:8px;padding:7px 5px}.console-dial{width:20px;height:20px}.console-wave{gap:2px}.console-veil .brand-seal{width:29px;height:24px}.trim-label{font-size:5px;letter-spacing:1.8px}.bible-cover-entry{display:flex;flex-direction:column-reverse;gap:10px;padding:0 5px 9px;min-height:0}.closed-book-stage{min-height:330px;align-self:stretch}.closed-book-stage .leather-volume{--cover-width:182px}.open-cover-button{padding:14px 20px 27px}.cover-touch-note{margin-top:0;font-size:5px;letter-spacing:1.4px}.cover-introduction{padding:12px 8px 10px;width:100%;text-align:center}.cover-introduction .eyebrow{font-size:7px;margin-bottom:12px}.cover-introduction h1{font-size:42px;line-height:1.06}.cover-introduction>p:not(.eyebrow):not(.cover-edition-note){font-size:12px;margin:17px 0 19px}.cover-reading-note{max-width:260px;margin:0 auto 21px;justify-content:center;text-align:left;padding-top:15px}.cover-introduction>.button{font-size:11px;padding:12px 16px}.cover-edition-note{font-size:8px;margin-top:17px}.cover-afterword{grid-template-columns:.8fr 1.2fr;gap:17px;padding:17px;margin-top:22px}.cover-afterword>div{padding:0}.cover-afterword .brand-seal{width:32px;height:26px;margin-bottom:10px}.cover-afterword .eyebrow{font-size:5px;letter-spacing:1px}.cover-afterword h2{font-size:24px}.cover-afterword p:not(.eyebrow){font-size:9px;line-height:1.8;margin:12px 0 15px}.cover-afterword .plain-link{font-size:9px}.reader-size-bar{flex-wrap:wrap;gap:10px}.reader-size-bar>span{width:100%;max-width:none}.reader-size-controls{width:100%;gap:8px;justify-content:flex-start}.reader-size-controls .return-to-cover{margin-left:auto}.reader-size-controls .plain-link{font-size:9px}.opening-identity>.brand-wordmark{font-size:32px}.opening-identity>.brand-seal{width:77px;height:62px}.opening-identity>span:last-child{font-size:5px;letter-spacing:2px}.skip-opening{right:16px;top:16px;font-size:9px;padding:9px 11px}}
+@media(max-width:350px){.word-feature h3{font-size:26px}.word-feature{padding:23px 17px;gap:5px}.mini-book-scene{flex-basis:95px}.mini-volume{--cover-width:88px}.word-feature-copy .eyebrow{font-size:5px}.word-feature p{font-size:9px}.word-feature .plain-link{font-size:8px}.home-music-feature{padding:26px 22px}.home-music-feature h2{font-size:31px}.reflection-copy h2{font-size:31px}.outreach-story{padding:20px}.outreach-story h2{font-size:30px}.music-room-stage .music-room-copy h2{font-size:32px}.members-intro h2{font-size:31px}.cover-afterword{grid-template-columns:1fr;padding:20px}.cover-art-picture{max-width:180px;margin:auto}.cover-afterword h2{font-size:29px}.cover-afterword p:not(.eyebrow){font-size:11px}.cover-afterword>div{text-align:center}.cover-afterword p:not(.eyebrow){margin-left:auto;margin-right:auto}.reader-size-controls .plain-link{font-size:8px}.reader-size-controls{gap:7px}}
 @media(prefers-reduced-motion:reduce){.opening-veil{display:none}}
 @media(max-width:480px){.brand-hero .brand-home-title{font-size:clamp(31px,10.7vw,43px)}}
 
@@ -265,3 +286,92 @@ body[data-motion="off"] .opening-veil{display:none}
 .media-link-card.selected-media{border-color:var(--blue);box-shadow:inset 0 3px var(--blue)}
 body[data-page="team"] .members-spread{margin-top:15px;border-top:0;padding-top:14px}
 @media(max-width:600px){.room-listening-deck .music-room-player{padding:0 13px 16px}.room-listening-deck>.section-heading{align-items:flex-start}.room-listening-deck>.section-heading>.muted{display:none}.room-player-empty{gap:8px;padding:18px;min-height:245px}.room-player-empty>.brand-seal{width:46px;height:37px}.room-player-empty h3{font-size:26px}.room-player-empty p{font-size:10px}.room-player-empty .button{font-size:10px;margin-top:3px}.room-listening-deck .player-screen:has(.room-player-empty){aspect-ratio:auto;min-height:245px}.room-selection{font-size:10px}}
+
+/* Cover light follows the hinge and remains visible with motion paused. */
+.book-pool-light{
+  inset:10% -10% 4%;height:auto;
+  background:radial-gradient(ellipse,#347ac858,transparent 65%);filter:blur(23px);
+  animation:book-light-breathe 5s ease-in-out infinite alternate
+}
+.book-opening .book-pool-light{animation:book-light-open .84s ease-out both}
+.book-opening .leather-endpaper{animation:book-endpaper-light .84s ease-out both}
+@keyframes book-light-breathe{to{opacity:.58;transform:scale(.92)}}
+@keyframes book-light-open{0%{opacity:.8}68%{opacity:1;transform:scale(1.26)}100%{opacity:.76;transform:scale(1.07)}}
+@keyframes book-endpaper-light{0%,18%{filter:brightness(.7)}74%{filter:brightness(1.35)}100%{filter:brightness(1)}}
+
+/* Members’ supplied character artwork. */
+.members-knights{margin:20px 0 35px}
+.members-knights>.section-heading>.muted{font-size:9px;letter-spacing:.14em}
+.knights-gallery{display:grid;grid-template-columns:1.12fr .88fr;align-items:center;gap:clamp(14px,3vw,34px)}
+.knights-gallery figure{margin:0;min-width:0}
+.knights-gallery .brand-photo{width:100%;border:1px solid #405577;border-radius:12px;background:#07111f}
+.knights-gallery .brand-photo img{width:100%;height:auto}
+.knights-gallery figcaption{display:flex;justify-content:space-between;gap:14px;padding:12px 2px;color:var(--visual-text)}
+.knights-gallery figcaption strong{display:block;font:24px/1.2 Georgia,serif}
+.knights-gallery figcaption small{display:block;margin-top:5px;font-size:10px;color:var(--visual-muted)}
+.knights-pair figcaption span:last-child{text-align:right}
+.knight-detail figcaption{flex-direction:column;gap:0}
+
+/* A thin blue frame meets the gauntlets of the transparent guards. */
+.music-room-emblem{
+  width:min(100%,330px);aspect-ratio:1;border:1px solid #98794e;border-radius:50%;overflow:hidden;
+  box-shadow:0 0 40px #c4905740,0 15px 45px #010511ad
+}
+.music-room-emblem img{width:100%;height:100%;object-fit:cover}
+.music-room-emblem .photo-enlarge{bottom:12%;right:12%}
+.player-stage{
+  --guard-width:clamp(40px,14%,144px);
+  --guard-rail:calc(var(--guard-width) - 2px);
+  position:relative;isolation:isolate
+}
+.music-room-player .player-surround{
+  margin-inline:var(--guard-rail);padding:2px;border:1px solid #71bbf2;border-radius:5px;
+  background:#264c72;box-shadow:0 0 18px #48aaff48,0 9px 25px #020710a1
+}
+.music-room-player .player-screen{border:0;border-radius:2px}
+.player-knight{
+  position:absolute;top:50%;width:var(--guard-width);height:auto;transform:translateY(-50%);
+  overflow:hidden;z-index:2;pointer-events:none;filter:drop-shadow(0 5px 6px #010814c7)
+}
+.player-knight-left{left:calc(var(--guard-rail) - var(--guard-width) + 3px)}
+.player-knight-right{right:calc(var(--guard-rail) - var(--guard-width) + 3px)}
+.music-tree-feature{
+  display:grid;grid-template-columns:.88fr 1.12fr;gap:clamp(16px,4vw,46px);align-items:center;
+  margin:36px 0 0;padding:clamp(18px,4vw,36px);border:1px solid #3a5773;border-radius:15px;
+  background:radial-gradient(ellipse at 70% 40%,#162b4a,#0b172a 77%)
+}
+.music-tree-feature h2{font-size:clamp(28px,4vw,48px);margin:10px 0}
+.music-tree-feature p:not(.eyebrow){color:#a9c4da;line-height:1.8}
+.music-tree-feature .brand-photo{max-width:320px;justify-self:center;border-radius:10px;border:1px solid #466788}
+
+.shop-apparel{margin:30px 0 36px}
+.apparel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,2vw,23px)}
+.apparel-item{overflow:hidden;border:1px solid var(--visual-line);border-radius:13px;background:var(--visual-surface)}
+.apparel-item .brand-photo{width:100%;background:#e3ded8}
+.apparel-item .brand-photo img{width:100%;aspect-ratio:4/5;object-fit:cover}
+.apparel-copy{display:grid;gap:7px;padding:clamp(10px,2.1vw,20px)}
+.apparel-copy h3{font-size:clamp(17px,2.6vw,27px);line-height:1.18}
+.apparel-copy .small-label{font-size:9px;letter-spacing:.12em;color:var(--visual-muted)}
+.apparel-price{font:21px/1.35 Georgia,serif;color:var(--gold)}
+.apparel-note{margin-top:12px;color:var(--visual-muted);font-size:12px}
+
+@media(max-width:700px){
+  .knights-gallery{grid-template-columns:1fr}
+  .knight-detail{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:18px;max-width:520px}
+  .knights-gallery figcaption strong{font-size:21px}
+}
+@media(max-width:600px){
+  .music-room-player .player-screen{aspect-ratio:auto;height:max(200px,38vw)}
+}
+@media(max-width:480px){
+  .player-stage{--guard-width:clamp(36px,12vw,55px);--guard-rail:max(25px,calc(var(--guard-width) - 12px))}
+  .music-room-player .player-screen:has(.room-player-empty){height:auto}
+  .music-tree-feature{grid-template-columns:1fr}
+  .music-tree-feature .brand-photo{max-width:240px}
+  .members-knights>.section-heading>.muted{display:none}
+  .room-character .music-room-emblem{width:min(100%,215px)}
+}
+@media(max-width:350px){
+  .room-listening-deck .music-room-player{padding-inline:7px}
+  .player-stage{--guard-rail:20px}
+}

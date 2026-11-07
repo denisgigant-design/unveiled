@@ -200,3 +200,16 @@ body[data-page="bible"] .topbar{height:66px}
 .team-values .team-value>.tile-icon{position:static;inset:auto;flex-shrink:0;margin:0 0 18px}
 .team-values .team-value>h3{margin:0 0 10px;max-width:100%;overflow-wrap:anywhere}
 .team-values .team-value>p{margin:0 0 24px}
+
+/* Keep brightness outside the perspective scene so both sides of a leaf can turn. */
+.book-luminosity{filter:brightness(var(--page-brightness,1))}
+#reader-workspace .book-spread>.flip-still.single{width:100%;left:0}
+#reader-workspace .book-flip>.paper-page{border-radius:2px 5px 5px 2px}
+#reader-workspace .book-flip>.paper-page::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,#0209169e,transparent 28%,#a0c8ff18 76%,#02091673);
+  animation:paper-fold-shadow .76s ease-in-out both
+}
+#reader-workspace .book-flip.single>.paper-page::after{animation-duration:.56s}
+#reader-workspace .book-flip.single.backward>.paper-page::after{animation-direction:reverse}
+@keyframes paper-fold-shadow{0%,100%{opacity:0}47%{opacity:1}}

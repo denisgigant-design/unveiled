@@ -68,17 +68,6 @@
 .fellowship-feature>span>span:last-child{font-size:12px;line-height:1.5}
 .fellowship-feature>.icon{width:19px;height:19px}
 
-.opening-veil[data-veil-theme="fellowship"] .opening-panel{
-  background:repeating-linear-gradient(93deg,#34142c 0,#863c62 5%,#4b203e 10%,#b75680 14%,#541c42 20%)
-}
-.opening-veil[data-veil-theme="fellowship"] .opening-left{animation-name:fellowship-veil-left}
-.opening-veil[data-veil-theme="fellowship"] .opening-right{animation-name:fellowship-veil-right}
-.opening-veil[data-veil-theme="fellowship"] .opening-light{background:#ffafd588}
-.opening-veil[data-veil-theme="fellowship"] .opening-identity img{border-radius:50%;box-shadow:0 0 32px #ffb3da6b}
-.opening-veil[data-veil-theme="fellowship"] .opening-identity>span:last-child{font-size:10px;color:#ffe0ec}
-.opening-veil[data-veil-theme="fellowship"] .skip-opening{background:#2c1329dd;color:#ffe3ee;border-color:#dd8eb5}
-@keyframes fellowship-veil-left{0%,15%{transform:translateX(0) rotateY(0)}80%,100%{transform:translateX(-105%) rotateY(32deg)}}
-@keyframes fellowship-veil-right{0%,15%{transform:translateX(0) rotateY(0)}80%,100%{transform:translateX(105%) rotateY(-32deg)}}
 @media(max-width:480px){
   .fellowship-sanctuary{padding-bottom:18px}
   .fellowship-garden{grid-template-columns:minmax(0,1fr) minmax(0,3fr) minmax(0,1fr)}

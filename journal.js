@@ -1,4 +1,4 @@
-import {outreachVisual} from './visuals.js?v=unveiled7';
+import {outreachVisual} from './visuals.js?v=unveiled8';
 import {esc,uid} from './core.mjs';
 import {MISSIONS} from './data.mjs';
 const dateLabel=value=>{const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleDateString('en-IE',{day:'numeric',month:'short',year:'numeric'}):'Saved entry';};

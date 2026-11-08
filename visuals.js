@@ -1,5 +1,7 @@
 import {esc,EN_BOOKS,PL_BOOKS,VERSIONS} from './core.mjs';
 import {palm,wordmark,veilMark} from './brand-assets.mjs?v=unveiled6';
+import {bookColourChoices,syncBookColour} from './book-reader.mjs?v=unveiled8';
+import {veilSource,veilPanels} from './veil-art.mjs?v=unveiled8';
 
 const pictures={
  night:{file:'knights-night.png',title:'The Unveiled world',alt:'Two silver knights and the gold Unveiled Music knight against a black background'},
@@ -16,8 +18,13 @@ const pictures={
  denis:{file:'denis-knight-closeup.jpg',title:'Denis · The square helmet',alt:'Close-up of Denis’s engraved square helmet with gold cross and blue cloak'},
  musicLogo:{file:'unveiled-music-logo.jpg',title:'Unveiled Music',alt:'Unveiled Music emblem with gold lettering, a green palm, draped curtains and a knight with a lyre'},
  musicTree:{file:'tree-of-life-blue.jpg',title:'The Tree of Life · Unveiled Music',alt:'Three Unveiled knights gathered around the silver Tree of Life lit by blue flames'},
- shirtBlack:{file:'burning-bush-black.jpg',title:'The Burning Bush T-shirt · Black',alt:'Black T-shirt printed with Moses at the burning bush'},
- shirtWhite:{file:'burning-bush-white.png',title:'The Burning Bush T-shirt · White',alt:'White T-shirt mockup printed with Moses at the burning bush'},
+ alex:{file:'alex-knight-closeup.jpg',title:'Alex · The crescent helmet',alt:'Alex in a silver crescent-crested helmet, beside Psalm 27:1'},
+ worship:{file:'teaching-worship.jpg',title:'Worship in action',alt:'Two knights contrast religious practice with serving a neighbour, with Mark 7:7 and Colossians 3:23'},
+ preach:{file:'teaching-preach.jpg',title:'Preach the Word',alt:'One knight speaks about himself while the other opens the Bible and preaches the Word'},
+ revelation:{file:'teaching-revelation.jpg',title:'Spiritual revelation',alt:'Two knights compare receiving the Word by the Spirit with approaching it through the carnal mind'},
+ musicStudio:{file:'music-studio-knight.jpg',title:'Inside the Unveiled Music studio',alt:'The gold chrome knight at a mixing desk with a vocalist in the recording booth'},
+ fellowshipStudio:{file:'fellowship-studio.jpg',title:'Inside the Women’s Fellowship studio',alt:'A woman reads Scripture in the Unveiled Women’s Fellowship recording studio'},
+ membersOutreach:{file:'members-outreach.jpg',title:'Unveiled in the community',alt:'Members at an outdoor gathering beneath the Unveiled flag'},
  together:{file:'outreach-together.png',title:'Faith, together',alt:'Unveiled outreach image with people carrying signs about Jesus'}
 };
 export const imageButton=(key,className='',caption='')=>{const p=pictures[key];return `<button class="brand-photo ${className}" data-brand-image="${key}" aria-label="View ${esc(p.title)}"><img src="assets/${p.file}" alt="${esc(p.alt)}" loading="lazy"><span class="photo-enlarge" aria-hidden="true">↗</span>${caption?`<span class="photo-caption">${caption}</span>`:''}</button>`;};
@@ -64,10 +71,16 @@ export function membersSection(){
      <span><strong>Denis</strong><small>Square helmet · Right</small></span>
     </figcaption>
    </figure>
-   <figure class="knight-detail">
-    ${imageButton('denis')}
-    <figcaption><strong>Denis</strong><small>The square helmet, up close</small></figcaption>
-   </figure>
+   <div class="knights-solos">
+    <figure class="knight-detail">
+     ${imageButton('denis')}
+     <figcaption><strong>Denis</strong><small>Square helmet</small></figcaption>
+    </figure>
+    <figure class="knight-detail">
+     ${imageButton('alex')}
+     <figcaption><strong>Alex</strong><small>Crescent helmet</small></figcaption>
+    </figure>
+   </div>
   </div>
  </section>
  <section class="members-spread" aria-labelledby="members-heading">
@@ -80,12 +93,48 @@ export function membersSection(){
   </div>
   <div class="members-pictures">${imageButton('teaching1','member-photo')}${imageButton('teaching2','member-photo')}</div>
   <p class="members-shared-caption">DENIS &amp; ALEX <span>·</span> DISCIPLED IN THE WORD</p>
+ </section>
+ <p class="members-teaching-link"><button class="button outline" data-route="teaching">Explore Teaching Moments</button></p>
+ <section class="members-community">
+  ${imageButton('membersOutreach')}
+  <div><p class="eyebrow">UNVEILED IN THE COMMUNITY</p><h2>Faith out in the open.</h2><p>Members and families gathered under the Unveiled flag.</p></div>
+ </section>`;
+}
+
+export function teachingSection(){
+ return `<section class="teaching-moments" aria-labelledby="teaching-heading">
+  <header class="section-heading"><div><p class="eyebrow">SCRIPTURE IN EVERYDAY LIFE</p><h2 id="teaching-heading">Teaching Moments.</h2></div></header>
+  <div class="teaching-grid">
+   ${[['worship','Worship in action','Mark 7:7 · Colossians 3:23'],['preach','Preach the Word','A message worth sharing'],['revelation','Spiritual revelation','1 Corinthians 2:14 · Ephesians 1:17']].map(([art,title,subtitle])=>`
+    <article class="teaching-card">${imageButton(art)}<h3>${title}</h3><p>${subtitle}</p></article>`).join('')}
+  </div>
  </section>`;
 }
 
 export function outreachVisual(ctx){return `<section class="outreach-story"><div class="outreach-story-copy">${veilMark()}<p class="eyebrow">UNVEILED / OUT IN THE OPEN</p><h2>Christ is King.<br><em>Let love be seen.</em></h2><p>The message belongs in everyday life — in the streets, in our conversations and in the way we serve.</p><button class="button" data-scroll-missions>Find a way to serve ${ctx.icon('arrow')}</button></div>${imageButton('king','outreach-lead-photo')}</section><section class="outreach-photo-pair" aria-label="Unveiled outreach pictures">${imageButton('march')}${imageButton('together')}</section>`;}
 
-export function musicRoomIntro(ctx){return `<section class="music-room-stage"><div class="room-light room-light-one" aria-hidden="true"></div><div class="room-light room-light-two" aria-hidden="true"></div><div class="music-room-copy"><span class="room-door-sign">${veilMark()} UNVEILED MUSIC</span><h2>Let the message<br><em>find its sound.</em></h2><p>Your space to listen, discover and keep the music close.</p><button class="button" data-add-media>${ctx.icon('plus')} Bring a video into the room</button><div class="room-ambience">${bars()}<span>BEYOND THE VEIL.<br>INTO THE LIGHT.</span></div></div><div class="room-character"><div class="room-character-halo" aria-hidden="true"></div>${imageButton('musicLogo','music-room-emblem')}<span class="room-character-caption">THE SOUND OF UNVEILED</span></div><span class="room-stage-rule" aria-hidden="true"></span></section>`;}
+export function musicRoomIntro(ctx){
+ return `<section class="music-room-stage">
+  <div class="room-light room-light-one" aria-hidden="true"></div>
+  <div class="room-light room-light-two" aria-hidden="true"></div>
+  <div class="music-room-copy">
+   <span class="room-door-sign">${veilMark()} UNVEILED MUSIC</span>
+   <h2>Let the message<br><em>find its sound.</em></h2>
+   <p>Listen to the featured video or add a song to your shelf.</p>
+   <button class="button" data-show-player>${ctx.icon('play')} Go to the player</button>
+   <div class="room-ambience">${bars()}<span>BEYOND THE VEIL.<br>INTO THE LIGHT.</span></div>
+  </div>
+  <div class="room-character">
+   <div class="room-character-halo" aria-hidden="true"></div>
+   <div class="music-room-art">
+    ${imageButton('musicLogo','music-room-emblem')}
+    ${imageButton('musicStudio','music-room-portrait')}
+   </div>
+   <button class="plain-link room-character-caption" data-replay-veil>${ctx.icon('veil')} Replay opening</button>
+  </div>
+  <span class="room-stage-rule" aria-hidden="true"></span>
+ </section>`;
+}
 
 function playerKnight(side,viewBox){
  return `<svg class="player-knight player-knight-${side}" viewBox="${viewBox}" aria-hidden="true" focusable="false">
@@ -93,21 +142,27 @@ function playerKnight(side,viewBox){
  </svg>`;
 }
 
-export function playerMarkup(ctx,link=null,id=null){
- const screen=id?`<iframe class="video-frame" title="${esc(link.title)}" src="https://www.youtube-nocookie.com/embed/${id}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`:`<div class="room-player-empty">${veilMark()}<span class="small-label">THE MUSIC ROOM</span><h3>A little room for sound.</h3><p>Bring a song or a message into the room.</p><button class="button" data-add-media>${ctx.icon('plus')} Add a YouTube link</button></div>`;
- return `<section class="unveiled-player music-room-player" aria-label="Unveiled Music Room player"><div class="player-brandbar"><img src="assets/unveiled-music-logo.jpg" width="52" height="52" alt="Unveiled Music emblem"><div>${wordmark()}<span class="player-category">THE MUSIC ROOM</span></div><span class="player-palm" aria-hidden="true">${palm()}</span></div><div class="player-room-trim" aria-hidden="true"><span class="trim-light"></span><span class="trim-label">UNVEILED MUSIC</span><span class="trim-dot"></span></div><div class="player-stage">
-  ${playerKnight('left','0 0 652 1024')}
-  <div class="player-surround"><div class="player-screen">${screen}</div></div>
-  ${playerKnight('right','884 0 652 1024')}
- </div><div class="player-room-console" aria-hidden="true"><span class="console-dial"></span>${bars('console-wave')}<span class="console-veil">${veilMark()}</span><span class="console-dial dial-two"></span></div><div class="player-footer"><span>BEYOND THE VEIL. INTO THE LIGHT.</span>${id?`<a class="plain-link" href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">Open on YouTube ${ctx.icon('external')}</a>`:'<span>MAKE YOURSELF AT HOME.</span>'}</div></section>`;
+export function playerMarkup(ctx,link,id){
+ return `<section class="unveiled-player music-room-player" aria-label="Unveiled Music Room player">
+  <div class="player-brandbar"><img src="assets/unveiled-music-logo.jpg" width="52" height="52" alt="Unveiled Music emblem"><div>${wordmark()}<span class="player-category">THE MUSIC ROOM</span></div><span class="player-palm" aria-hidden="true">${palm()}</span></div>
+  <div class="player-stage">
+   ${playerKnight('left','0 0 652 1024')}
+   <div class="player-screen">
+    <iframe class="video-frame" loading="lazy" title="${esc(link.title)}" src="https://www.youtube-nocookie.com/embed/${id}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+   </div>
+   ${playerKnight('right','884 0 652 1024')}
+  </div>
+  <div class="player-footer"><span>BEYOND THE VEIL. INTO THE LIGHT.</span><a class="plain-link" href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">Open on YouTube ${ctx.icon('external')}</a></div>
+ </section>`;
 }
 
-export function showBibleCover(ctx,root,openReader){
+export function showBibleCover(ctx,root,openReader,prepareReader){
  const reading=ctx.read('reading',null),names=reading?.version==='bg'?PL_BOOKS:EN_BOOKS;
- root.innerHTML=`<section class="bible-cover-entry"><div class="cover-introduction"><p class="eyebrow">THE WORD, HELD CLOSE</p><h1>A book to<br>live by.</h1><p>Open the cover.<br>Make a little room for the Word.</p><div class="cover-reading-note">${ctx.icon('bookmark')}<span>${reading?'Your place is waiting.':'Begin wherever you are.'}<strong>${reading?esc((names[reading.book]||'John')+' '+(reading.chapter||1)):'66 books · English & Polish'}</strong></span></div><button class="button" data-open-book>Open your Bible ${ctx.icon('arrow')}</button><p class="cover-edition-note">KJV · ASV 1901 · Biblia Gdańska 1881</p></div><div class="closed-book-stage"><span class="book-pool-light" aria-hidden="true"></span><button class="open-cover-button" data-open-book aria-label="Open the Unveiled Bible cover">${leatherCover()}</button><span class="cover-touch-note">OPEN THE WORD. LET THE LIGHT IN.</span></div></section><section class="cover-afterword">${imageButton('bookCover','cover-art-picture')}<div>${veilMark()}<p class="eyebrow">BEYOND THE VEIL</p><h2>The invitation<br>is to come closer.</h2><p>Read at your own pace. Change the type size, save a verse, and return to the place you left.</p><button class="plain-link" data-open-book>Begin reading ${ctx.icon('arrow')}</button></div></section>`;
+ root.innerHTML=`<section class="bible-cover-entry"><div class="cover-introduction"><p class="eyebrow">THE WORD, HELD CLOSE</p><h1>A book to<br>live by.</h1><p>Open the cover.<br>Make a little room for the Word.</p><div class="cover-reading-note">${ctx.icon('bookmark')}<span>${reading?'Your place is waiting.':'Begin wherever you are.'}<strong>${reading?esc((names[reading.book]||'John')+' '+(reading.chapter||1)):'66 books · English & Polish'}</strong></span></div><button class="button" data-open-book>Open your Bible ${ctx.icon('arrow')}</button><p class="cover-edition-note">KJV · ASV 1901 · Biblia Gdańska 1881</p>${bookColourChoices(ctx)}</div><div class="closed-book-stage"><span class="book-pool-light" aria-hidden="true"></span><button class="open-cover-button" data-open-book aria-label="Open the Unveiled Bible cover">${leatherCover()}</button><span class="cover-touch-note">OPEN THE WORD. LET THE LIGHT IN.</span></div></section><section class="cover-afterword">${imageButton('bookCover','cover-art-picture')}<div>${veilMark()}<p class="eyebrow">BEYOND THE VEIL</p><h2>The invitation<br>is to come closer.</h2><p>Read at your own pace. Change the type size, save a verse, and return to the place you left.</p><button class="plain-link" data-open-book>Begin reading ${ctx.icon('arrow')}</button></div></section>`;
  let opening=false;
  root.querySelectorAll('[data-open-book]').forEach(button=>button.onclick=async()=>{
   if(opening)return;opening=true;
+  prepareReader();
   root.querySelectorAll('[data-open-book]').forEach(b=>b.disabled=true);
   const stage=root.querySelector('.closed-book-stage');
   const front=stage.querySelector('.leather-front'),volume=stage.querySelector('.leather-volume');
@@ -134,35 +189,74 @@ export function showBibleCover(ctx,root,openReader){
 }
 
 export function initVisuals(ctx){
- let activeOpening=null,openingTimer,lastRoute;
+ let activeOpening=null,openingTimer,lastRoute,openingVersion=0;
  const reduce=matchMedia('(prefers-reduced-motion:reduce)');
- function syncReplay(){const button=document.querySelector('[data-replay-veil]');if(button){button.disabled=document.body.dataset.motion==='off'||reduce.matches;button.title=button.disabled?'Enable motion to replay the opening':'Replay the opening veil';}}
- function clearOpening(){clearTimeout(openingTimer);activeOpening?.remove();activeOpening=null;}
- function opening(replay=false,theme='home'){
-  clearOpening();if(document.body.dataset.motion==='off'||reduce.matches)return;
-  if(theme==='home'&&!replay){try{if(sessionStorage.getItem('unveiled.veil-intro.v1'))return;sessionStorage.setItem('unveiled.veil-intro.v1','seen');}catch{if(ctx.veilSeen)return;}ctx.veilSeen=true;}
-  const el=document.createElement('div');el.className='opening-veil';el.dataset.veilTheme=theme;
-  el.innerHTML=`<div class="opening-panel opening-left" aria-hidden="true"></div><div class="opening-panel opening-right" aria-hidden="true"></div><div class="opening-light" aria-hidden="true"></div><div class="opening-identity" aria-hidden="true">${theme==='fellowship'
-   ?'<img src="assets/womens-fellowship-logo.jpg" width="104" height="104" alt=""><span>WOMEN’S FELLOWSHIP</span>'
-   :`${veilMark()}${wordmark()}<span>BEYOND THE VEIL. INTO THE LIGHT.</span>`}</div><button class="skip-opening" aria-label="Skip opening animation">Skip animation ${ctx.icon('arrow')}</button>`;
-  document.body.append(el);activeOpening=el;el.querySelector('button').onclick=clearOpening;
-  openingTimer=setTimeout(clearOpening,1750);
+ const canAnimate=()=>document.body.dataset.motion!=='off'&&!reduce.matches;
+ function syncReplay(){
+  document.querySelectorAll('[data-replay-veil]').forEach(button=>{
+   button.disabled=!canAnimate();
+   button.title=button.disabled?'Enable motion to replay the opening':'Replay the opening veil';
+  });
+ }
+ function clearOpening(){
+  openingVersion++;
+  clearTimeout(openingTimer);
+  activeOpening?.remove();
+  activeOpening=null;
+ }
+ async function opening(theme,replay=false){
+  clearOpening();
+  if(!canAnimate())return;
+  const introKey='unveiled.veil-intro.v2';
+  if(theme==='home'&&!replay){
+   try{if(sessionStorage.getItem(introKey))return;}
+   catch{if(ctx.veilSeen)return;}
+  }
+  const version=openingVersion,art=new Image();
+  art.src=veilSource(theme);
+  try{await art.decode();}catch{return;}
+  if(version!==openingVersion||!canAnimate())return;
+  if(theme==='home'){
+   ctx.veilSeen=true;
+   try{sessionStorage.setItem(introKey,'seen');}catch{}
+  }
+  const identity=theme==='fellowship'
+   ?'<img src="assets/womens-fellowship-logo.jpg" width="96" height="96" alt=""><span>WOMEN’S FELLOWSHIP</span>'
+   :theme==='media'
+    ?'<img src="assets/unveiled-music-logo.jpg" width="96" height="96" alt=""><span>UNVEILED MUSIC</span>'
+    :`${veilMark()}${wordmark()}<span>BEYOND THE VEIL. INTO THE LIGHT.</span>`;
+  const el=document.createElement('div');
+  el.className='opening-veil';
+  el.dataset.veilTheme=theme;
+  el.innerHTML=`<div class="opening-art" aria-hidden="true">${veilPanels(theme,'opening')}</div>
+   <div class="opening-identity" aria-hidden="true">${identity}</div>
+   <button class="skip-opening" aria-label="Skip opening animation">Skip animation ${ctx.icon('arrow')}</button>`;
+  document.body.append(el);
+  activeOpening=el;
+  el.querySelector('button').onclick=clearOpening;
+  openingTimer=setTimeout(clearOpening,2200);
  }
  document.addEventListener('click',event=>{
   const picture=event.target.closest('[data-brand-image]');
-  if(picture){const p=pictures[picture.dataset.brandImage];if(!p)return;ctx.modal(p.title,`<figure class="art-lightbox supplied-picture"><img src="assets/${p.file}" alt="${esc(p.alt)}"><figcaption>${esc(p.title)}</figcaption></figure><a class="button outline full" href="assets/${p.file}" download>${ctx.icon('download')} Save image</a>`);}
-  if(event.target.closest('[data-replay-veil]'))opening(true);
+  if(picture){
+   const p=pictures[picture.dataset.brandImage];
+   if(!p)return;
+   ctx.modal(p.title,`<figure class="art-lightbox supplied-picture"><img src="assets/${p.file}" alt="${esc(p.alt)}"><figcaption>${esc(p.title)}</figcaption></figure><a class="button outline full" href="assets/${p.file}" download>${ctx.icon('download')} Save image</a>`);
+  }
+  if(event.target.closest('[data-replay-veil]'))opening(ctx.route,true);
   if(event.target.closest('[data-reader-cover]')){ctx.bibleOpened=false;ctx.refresh();}
-  if(event.target.closest('[data-scroll-missions]'))document.querySelector('.mission-grid')?.scrollIntoView({behavior:document.body.dataset.motion==='off'?'instant':'smooth',block:'start'});
-  if(event.target.closest('button[data-motion]')){syncReplay();if(document.body.dataset.motion==='off')clearOpening();}
+  const colour=event.target.closest('button[data-book-colour]');
+  if(colour){ctx.save('book-colour',colour.dataset.bookColour);syncBookColour(ctx);}
+  if(event.target.closest('[data-scroll-missions]'))document.querySelector('.mission-grid')?.scrollIntoView({behavior:canAnimate()?'smooth':'instant',block:'start'});
+  if(event.target.closest('button[data-motion]')){syncReplay();if(!canAnimate())clearOpening();}
  });
  reduce.addEventListener('change',()=>{syncReplay();if(reduce.matches)clearOpening();});
  return {enter(){
   syncReplay();
+  syncBookColour(ctx);
   if(ctx.route===lastRoute)return;
   lastRoute=ctx.route;
-  if(ctx.route==='home')opening();
-  else if(ctx.route==='fellowship')opening(false,'fellowship');
+  if(['home','fellowship','media'].includes(ctx.route))opening(ctx.route);
   else clearOpening();
  }};
 }

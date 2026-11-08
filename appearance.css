@@ -73,7 +73,6 @@
 :root[data-appearance="dark"] .map-caption{background:#10222e;color:#a2b9c8}
 :root[data-appearance="dark"] .map-caption a{color:#b4d4bd}
 :root[data-appearance="dark"] .bible-map>rect{fill:#112c40}
-:root[data-appearance="dark"] .bible-map g[clip-path]>path{fill:#274238;stroke:#426451}
 :root[data-appearance="dark"] .sea-label{fill:#93bbc9}
 :root[data-appearance="dark"] .bible-map #map-grid path{stroke:#53768b}
 :root[data-appearance="dark"] :is(.game-feature-art,.memory-preview){background:radial-gradient(ellipse at center,#203f3d,#112534)}

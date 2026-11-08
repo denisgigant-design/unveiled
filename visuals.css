@@ -4,7 +4,6 @@
 .brand-seal{display:inline-block;width:60px;height:48px;flex-shrink:0;vertical-align:middle}
 .icon-accent{stroke:var(--gold)}
 .sidebar .icon-accent{stroke:#b9a16e}
-.avatar-button .brand-seal{display:block;width:23px;height:22px;margin:auto}
 .site-frame{overflow-x:clip}
 .home-welcome{flex-wrap:wrap;gap:12px}
 .home-welcome .today{margin-left:auto}
@@ -192,24 +191,6 @@
 .room-visual-stories .gallery-card:nth-child(3){margin-top:70px}
 .room-visual-stories .gallery-card h3{font-size:24px}
 
-/* Ambient detail stays outside the embedded video and its controls. */
-.player-room-trim{position:relative;display:flex;align-items:center;justify-content:space-between;gap:15px;min-height:24px;margin:0 2px 8px;color:#9ab4c8;overflow:hidden}
-.trim-label{font-size:6px;letter-spacing:2.4px;padding:0 0 0 12px;border-left:1px solid #b89a5b66}
-.trim-dot{display:block;width:4px;height:4px;border-radius:50%;background:#71b8a0;box-shadow:0 0 10px #71b8a055;animation:trim-pulse 4s ease-in-out infinite}
-.trim-light{position:absolute;left:-22%;bottom:0;width:22%;height:1px;background:linear-gradient(90deg,transparent,#c9ad75,transparent);animation:trim-travel 7s ease-in-out infinite}
-.player-room-console{position:relative;display:flex;align-items:center;justify-content:center;gap:21px;min-height:53px;margin:11px 2px 0;padding:8px 11px;border-bottom:1px solid #a68a4e33}
-.console-dial{display:block;width:22px;height:22px;border:1px solid #a9926466;border-radius:50%;background:radial-gradient(circle,#4b6072 0 15%,#172e46 20% 60%,#07162c 62%);box-shadow:inset 0 0 0 4px #102a41;position:relative}
-.console-dial:after{content:"";position:absolute;left:50%;top:3px;height:5px;width:1px;background:#d5bd84;transform-origin:50% 8px;animation:dial-sway 9s ease-in-out infinite alternate}
-.dial-two:after{animation-delay:-5s}
-.console-wave{height:27px;gap:3px}
-.console-wave i{max-height:23px}
-.console-veil{margin-left:2px;color:#9aaec1}
-.console-veil .brand-seal{width:32px;height:26px}
-.music-room-player .player-footer{padding-top:13px}
-@keyframes trim-travel{to{left:105%}}
-@keyframes trim-pulse{50%{opacity:.3;box-shadow:0 0 16px #71b8a077}}
-@keyframes dial-sway{to{transform:rotate(55deg)}}
-
 /* The reader opens from a leather cover and retains the existing reading state. */
 .bible-cover-entry{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:28px;min-height:520px;padding:12px 25px 19px}
 .cover-introduction{padding:15px 0}
@@ -238,25 +219,6 @@
 .reader-size-controls .return-to-cover{display:inline-flex;align-items:center;gap:5px}
 .return-to-cover>.icon{width:13px;height:13px}
 
-/* A short, skippable opening; no additional step is needed to use the site. */
-.opening-veil{position:fixed;inset:0;z-index:80;pointer-events:none;perspective:1500px;overflow:hidden;isolation:isolate}
-.opening-panel{position:absolute;top:0;bottom:0;width:50.5%;z-index:2;background:repeating-linear-gradient(92deg,#160c2c 0,#42163f 5%,#201631 10%,#5e254c 14%,#1b1030 20%);box-shadow:inset -8px 0 30px #0007;will-change:transform}
-.opening-panel:after{content:"";position:absolute;top:0;bottom:0;right:5px;width:3px;background:linear-gradient(#99763a,#e0c585,#776039);box-shadow:-7px 0 0 #bb9a5c33}
-.opening-left{left:0;transform-origin:left center;animation:opening-left 1.65s cubic-bezier(.65,0,.3,1) both}
-.opening-right{right:0;transform-origin:right center;animation:opening-right 1.65s cubic-bezier(.65,0,.3,1) both}
-.opening-right:after{left:5px;right:auto;box-shadow:7px 0 0 #bb9a5c33}
-.opening-light{position:absolute;inset:-15% 47%;z-index:1;background:#6ec7e77a;filter:blur(45px);animation:opening-light 1.65s ease-out both}
-.opening-identity{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;color:#eee0be;animation:opening-identity 1.65s ease-out both}
-.opening-identity>.brand-seal{width:91px;height:73px;stroke-width:1}
-.opening-identity>.brand-wordmark{font-size:36px;color:#f1ece1}
-.opening-identity>span:last-child{font-size:6px;letter-spacing:3px;color:#baa77c}
-.skip-opening{position:absolute;top:22px;right:22px;z-index:5;display:flex;align-items:center;gap:10px;padding:10px 13px;border:1px solid #bba47266;border-radius:6px;background:#07152fbb;color:#e0d2b0;font-size:10px;pointer-events:auto}
-.skip-opening .icon{width:13px;height:13px}
-@keyframes opening-left{0%,14%{transform:translateX(0) rotateY(0)}80%,100%{transform:translateX(-105%) rotateY(9deg)}}
-@keyframes opening-right{0%,14%{transform:translateX(0) rotateY(0)}80%,100%{transform:translateX(105%) rotateY(-9deg)}}
-@keyframes opening-identity{0%,18%{opacity:1;transform:scale(1)}48%,100%{opacity:0;transform:scale(.94)}}
-@keyframes opening-light{0%{opacity:0;transform:scaleX(.1)}30%{opacity:1}85%,100%{opacity:0;transform:scaleX(7)}}
-body[data-motion="off"] .opening-veil{display:none}
 :root[data-appearance="dark"] .word-feature{background:linear-gradient(130deg,#182f46,#10283a);border-color:#345469}
 :root[data-appearance="dark"] .word-feature h3{color:#dceaf4}
 :root[data-appearance="dark"] .word-feature p{color:#a9bed0}
@@ -274,18 +236,18 @@ body[data-motion="off"] .opening-veil{display:none}
 /* The room player is ready before a visitor adds their first link. */
 .room-listening-deck{margin-top:38px;scroll-margin-top:24px}
 .room-listening-deck>.section-heading>.muted{font-size:8px;letter-spacing:1.2px}
-.room-listening-deck .music-room-player{padding:0 24px 21px;border:1px solid #657594;border-radius:17px;background:radial-gradient(ellipse at 50% 0,#153450,#08152c 65%);color:#e8f1fa;box-shadow:0 13px 35px #07152f16}
-.room-player-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;height:100%;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 60%,#16374d,#071426 70%)}
-.room-player-empty>.brand-seal{width:67px;height:54px;color:#cfb780}
-.room-player-empty .small-label{font-size:7px;letter-spacing:2.5px;color:#a8c2d6}
-.room-player-empty h3{font-size:34px;line-height:1.15;color:#edf4fb}
-.room-player-empty p{font-size:11px;line-height:1.7;color:#a6bcd0}
-.room-player-empty .button{font-size:11px;padding:11px 15px;margin-top:5px}
+
+
+
+
+
+
+
 .room-selection{font-size:11px;line-height:1.8;color:var(--visual-muted);margin:15px 2px 0;overflow-wrap:anywhere}
 .room-selection strong{font-weight:500;color:var(--visual-text)}
 .media-link-card.selected-media{border-color:var(--blue);box-shadow:inset 0 3px var(--blue)}
 body[data-page="team"] .members-spread{margin-top:15px;border-top:0;padding-top:14px}
-@media(max-width:600px){.room-listening-deck .music-room-player{padding:0 13px 16px}.room-listening-deck>.section-heading{align-items:flex-start}.room-listening-deck>.section-heading>.muted{display:none}.room-player-empty{gap:8px;padding:18px;min-height:245px}.room-player-empty>.brand-seal{width:46px;height:37px}.room-player-empty h3{font-size:26px}.room-player-empty p{font-size:10px}.room-player-empty .button{font-size:10px;margin-top:3px}.room-listening-deck .player-screen:has(.room-player-empty){aspect-ratio:auto;min-height:245px}.room-selection{font-size:10px}}
+@media(max-width:600px){.room-listening-deck>.section-heading{align-items:flex-start}.room-listening-deck>.section-heading>.muted{display:none}.room-listening-deck .player-screen:has(.room-selection{font-size:10px}}
 
 /* Cover light follows the hinge and remains visible with motion paused. */
 .book-pool-light{
@@ -312,29 +274,6 @@ body[data-page="team"] .members-spread{margin-top:15px;border-top:0;padding-top:
 .knights-pair figcaption span:last-child{text-align:right}
 .knight-detail figcaption{flex-direction:column;gap:0}
 
-/* A thin blue frame meets the gauntlets of the transparent guards. */
-.music-room-emblem{
-  width:min(100%,330px);aspect-ratio:1;border:1px solid #98794e;border-radius:50%;overflow:hidden;
-  box-shadow:0 0 40px #c4905740,0 15px 45px #010511ad
-}
-.music-room-emblem img{width:100%;height:100%;object-fit:cover}
-.music-room-emblem .photo-enlarge{bottom:12%;right:12%}
-.player-stage{
-  --guard-width:clamp(40px,14%,144px);
-  --guard-rail:calc(var(--guard-width) - 2px);
-  position:relative;isolation:isolate
-}
-.music-room-player .player-surround{
-  margin-inline:var(--guard-rail);padding:2px;border:1px solid #71bbf2;border-radius:5px;
-  background:#264c72;box-shadow:0 0 18px #48aaff48,0 9px 25px #020710a1
-}
-.music-room-player .player-screen{border:0;border-radius:2px}
-.player-knight{
-  position:absolute;top:50%;width:var(--guard-width);height:auto;transform:translateY(-50%);
-  overflow:hidden;z-index:2;pointer-events:none;filter:drop-shadow(0 5px 6px #010814c7)
-}
-.player-knight-left{left:calc(var(--guard-rail) - var(--guard-width) + 3px)}
-.player-knight-right{right:calc(var(--guard-rail) - var(--guard-width) + 3px)}
 .music-tree-feature{
   display:grid;grid-template-columns:.88fr 1.12fr;gap:clamp(16px,4vw,46px);align-items:center;
   margin:36px 0 0;padding:clamp(18px,4vw,36px);border:1px solid #3a5773;border-radius:15px;
@@ -343,17 +282,6 @@ body[data-page="team"] .members-spread{margin-top:15px;border-top:0;padding-top:
 .music-tree-feature h2{font-size:clamp(28px,4vw,48px);margin:10px 0}
 .music-tree-feature p:not(.eyebrow){color:#a9c4da;line-height:1.8}
 .music-tree-feature .brand-photo{max-width:320px;justify-self:center;border-radius:10px;border:1px solid #466788}
-
-.shop-apparel{margin:30px 0 36px}
-.apparel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,2vw,23px)}
-.apparel-item{overflow:hidden;border:1px solid var(--visual-line);border-radius:13px;background:var(--visual-surface)}
-.apparel-item .brand-photo{width:100%;background:#e3ded8}
-.apparel-item .brand-photo img{width:100%;aspect-ratio:4/5;object-fit:cover}
-.apparel-copy{display:grid;gap:7px;padding:clamp(10px,2.1vw,20px)}
-.apparel-copy h3{font-size:clamp(17px,2.6vw,27px);line-height:1.18}
-.apparel-copy .small-label{font-size:9px;letter-spacing:.12em;color:var(--visual-muted)}
-.apparel-price{font:21px/1.35 Georgia,serif;color:var(--gold)}
-.apparel-note{margin-top:12px;color:var(--visual-muted);font-size:12px}
 
 @media(max-width:700px){
   .knights-gallery{grid-template-columns:1fr}
@@ -364,14 +292,10 @@ body[data-page="team"] .members-spread{margin-top:15px;border-top:0;padding-top:
   .music-room-player .player-screen{aspect-ratio:auto;height:max(200px,38vw)}
 }
 @media(max-width:480px){
-  .player-stage{--guard-width:clamp(36px,12vw,55px);--guard-rail:max(25px,calc(var(--guard-width) - 12px))}
-  .music-room-player .player-screen:has(.room-player-empty){height:auto}
+  
+  .music-room-player .player-screen:has(
   .music-tree-feature{grid-template-columns:1fr}
   .music-tree-feature .brand-photo{max-width:240px}
   .members-knights>.section-heading>.muted{display:none}
   .room-character .music-room-emblem{width:min(100%,215px)}
-}
-@media(max-width:350px){
-  .room-listening-deck .music-room-player{padding-inline:7px}
-  .player-stage{--guard-rail:20px}
 }

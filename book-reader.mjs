@@ -23,54 +23,129 @@ export function measureBook(verses, actual, options, chapter) {
   } finally {wrapper.remove();}
 }
 
-export async function animateBookTurn(spread,oldPages,count,dir) {
-  if(matchMedia('(prefers-reduced-motion:reduce)').matches||document.body.dataset.motion==='off')return;
-  const overlay=document.createElement('div');
-  overlay.className=`book-flip ${dir>0?'forward':'backward'} ${count===1?'single':''}`;
-  overlay.setAttribute('aria-hidden','true');overlay.inert=true;
-  const nextPages=spread.querySelectorAll(':scope > .paper-page');
-  const turningIndex=dir>0?count-1:0;
-  const landingIndex=dir>0?0:count-1;
-  const front=count===1&&dir<0?nextPages[0].cloneNode(true):oldPages[turningIndex];
-  front.classList.add('flip-front');
-  overlay.append(front);
+function bookColour(ctx){
+ return ctx.read('book-colour','navy')==='pink'?'pink':'navy';
+}
 
-  // On a spread the underside becomes the page on the opposite side of the spine.
-  // On one-page layouts the leaf lifts away and reveals the page underneath it.
-  let still;
-  if(count===2){
-    const back=nextPages[landingIndex].cloneNode(true);
-    back.classList.add('flip-back');
-    overlay.append(back);
-    still=oldPages[landingIndex];
-    still.classList.add('flip-still',dir>0?'left':'right');
-  }else if(dir<0){
-    still=oldPages[0];
-    still.classList.add('flip-still','single');
+export function bookColourChoices(ctx){
+ const selected=bookColour(ctx);
+ return `<div class="book-colour-choices" role="group" aria-label="Bible cover colour">
+  <span>Bible colour</span>
+  ${[['navy','Navy'],['pink','Pink']].map(([value,label])=>`<button type="button" data-book-colour="${value}" aria-pressed="${selected===value}"><i aria-hidden="true"></i>${label}</button>`).join('')}
+ </div>`;
+}
+
+export function syncBookColour(ctx){
+ const colour=bookColour(ctx);
+ document.body.dataset.bookColour=colour;
+ document.querySelectorAll('button[data-book-colour]').forEach(button=>{
+  button.setAttribute('aria-pressed',String(button.dataset.bookColour===colour));
+ });
+}
+
+function pageMotion(){
+ return document.body.dataset.motion!=='off'&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
+}
+
+function leafPose(angle,dir){
+ const tilt=Math.sin(angle*Math.PI/180)*1.7;
+ return `rotateY(${-dir*angle}deg) rotateZ(${-dir*tilt}deg)`;
+}
+
+export function bindBookSwipe(spread,canTurn,turn){
+ let gesture,ignoreClick=false;
+ spread.addEventListener('pointerdown',event=>{
+  if(!event.isPrimary||event.button!==0||gesture)return;
+  ignoreClick=false;
+  gesture={id:event.pointerId,x:event.clientX,y:event.clientY,time:performance.now()};
+ });
+ spread.addEventListener('pointermove',event=>{
+  if(gesture?.id!==event.pointerId)return;
+  const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
+  if(!gesture.leaf){
+   if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)){gesture=null;return;}
+   if(Math.abs(dx)<12||Math.abs(dx)<Math.abs(dy)*1.15)return;
+   const dir=dx<0?1:-1;
+   if(!canTurn(dir)){gesture=null;return;}
+   const leaves=spread.querySelectorAll(':scope > .paper-page');
+   gesture.leaf=dir>0?leaves[leaves.length-1]:leaves[0];
+   gesture.dir=dir;
+   ignoreClick=true;
+   spread.setPointerCapture(event.pointerId);
   }
-  if(still){
-    still.setAttribute('aria-hidden','true');
-    still.inert=true;
-    spread.append(still);
+  event.preventDefault();
+  const {leaf,dir}=gesture;
+  const distance=Math.max(0,-dir*dx);
+  gesture.distance=distance;
+  gesture.angle=Math.min(76,distance/leaf.offsetWidth*145);
+  if(pageMotion()){
+   leaf.classList.add('swipe-leaf',dir<0?'swipe-backward':'swipe-forward');
+   leaf.style.transform=leafPose(gesture.angle,dir);
+   leaf.style.setProperty('--swipe-shade',Math.min(.68,gesture.angle/115));
   }
-  spread.append(overlay);
-  const direction=dir>0?-1:1;
-  const keyframes=count===2?[
-    {transform:'rotateY(0deg)'},
-    {transform:`rotateY(${direction*24}deg) rotateZ(${direction*1.1}deg)`,offset:.19},
-    {transform:`rotateY(${direction*94}deg) rotateZ(${direction*1.4}deg)`,offset:.53},
-    {transform:`rotateY(${direction*180}deg)`}
-  ]:[
-    {transform:'rotateY(0deg)'},
-    {transform:`rotateY(${direction*27}deg) rotateZ(${direction}deg)`,offset:.28},
-    {transform:`rotateY(${direction*108}deg)`}
-  ];
-  const animation=overlay.animate(keyframes,{
-    duration:count===2?760:560,
-    direction:count===1&&dir<0?'reverse':'normal',
-    easing:'cubic-bezier(.3,.68,.25,1)',
-    fill:'both'
-  });
-  try {await animation.finished.catch(()=>{});}
-  finally {still?.remove();overlay.remove();}
+ });
+ function end(event,commit){
+  if(gesture?.id!==event.pointerId)return;
+  const {leaf,dir,distance=0,angle=0,time}=gesture;
+  gesture=null;
+  if(!leaf)return;
+  const farEnough=distance>=Math.min(78,leaf.offsetWidth*.23);
+  const flick=distance>=34&&performance.now()-time<230;
+  const pose=leaf.style.transform;
+  leaf.classList.remove('swipe-leaf','swipe-backward','swipe-forward');
+  leaf.style.removeProperty('transform');
+  leaf.style.removeProperty('--swipe-shade');
+  if(commit&&(farEnough||flick)&&canTurn(dir)){turn(dir,angle);return;}
+  if(pose&&pageMotion()){
+   leaf.style.transformOrigin=dir>0?'left center':'right center';
+   const restore=leaf.animate([{transform:pose},{transform:'rotateY(0)'}],{
+    duration:260,easing:'cubic-bezier(.22,.8,.32,1)'
+   });
+   restore.finished.catch(()=>{}).finally(()=>leaf.style.removeProperty('transform-origin'));
+  }
+ }
+ spread.addEventListener('pointerup',event=>end(event,true));
+ spread.addEventListener('pointercancel',event=>end(event,false));
+ spread.addEventListener('lostpointercapture',event=>end(event,false));
+ spread.addEventListener('pointerleave',event=>{if(gesture?.id===event.pointerId&&!gesture.leaf)gesture=null;});
+ spread.addEventListener('click',event=>{
+  if(ignoreClick&&event.detail){event.preventDefault();event.stopPropagation();ignoreClick=false;}
+ },true);
+}
+
+export async function animateBookTurn(spread,oldPages,count,dir,angle=0){
+ if(!pageMotion())return;
+ const overlay=document.createElement('div');
+ overlay.className=`book-flip ${dir>0?'forward':'backward'} ${count===1?'single':''}`;
+ overlay.setAttribute('aria-hidden','true');
+ overlay.inert=true;
+ const nextPages=spread.querySelectorAll(':scope > .paper-page');
+ const turningIndex=dir>0?count-1:0,landingIndex=dir>0?0:count-1;
+ const front=oldPages[turningIndex];
+ front.classList.add('flip-front');
+ overlay.append(front);
+
+ // The underside lands on the opposite side of a two-page spread.
+ let still;
+ if(count===2){
+  const back=nextPages[landingIndex].cloneNode(true);
+  back.classList.add('flip-back');
+  overlay.append(back);
+  still=oldPages[landingIndex];
+  still.classList.add('flip-still',dir>0?'left':'right');
+  still.setAttribute('aria-hidden','true');
+  still.inert=true;
+  spread.append(still);
+ }
+ spread.append(overlay);
+ const finish=count===2?180:108;
+ const duration=(count===2?775:570)-Math.round(angle*2.7);
+ overlay.style.setProperty('--leaf-duration',duration+'ms');
+ const animation=overlay.animate([
+  {transform:leafPose(angle,dir)},
+  {transform:leafPose(angle+(finish-angle)*.57,dir),offset:.54},
+  {transform:leafPose(finish,dir)}
+ ],{duration,easing:'cubic-bezier(.24,.58,.25,1)',fill:'both'});
+ try{await animation.finished.catch(()=>{});}
+ finally{still?.remove();overlay.remove();}
 }

@@ -54,7 +54,7 @@ export function enhanceHome(ctx,root){
  const grid=root.querySelector('.rhythm-grid');
  if(grid)grid.outerHTML=`<div class="home-pathways"><button class="word-feature" data-route="bible"><span class="word-feature-copy"><span class="eyebrow">01 / READ &amp; REFLECT</span><h3>${reading?'Pick up the Word.':'Open something eternal.'}</h3><p>${esc(location)}</p><span class="plain-link">Open your Bible ${ctx.icon('arrow')}</span></span><span class="mini-book-scene">${leatherCover(true)}</span></button><div class="home-quiet-paths"><button class="quiet-path" data-route="prayer"><span class="path-number">02</span><span class="path-symbol">${ctx.icon('heart')}</span><span><span class="small-label">PRAY &amp; REMEMBER</span><h3>Room for what’s on your heart.</h3><p>Your private prayer and reflection journal.</p></span>${ctx.icon('arrow')}</button><button class="quiet-path" data-route="games"><span class="path-number">03</span><span class="path-symbol">${ctx.icon('games')}</span><span><span class="small-label">PLAY &amp; DISCOVER</span><h3>A little play. A deeper truth.</h3><p>Discover body, soul and spirit.</p></span>${ctx.icon('arrow')}</button></div></div>`;
  const bottom=root.querySelector('.home-bottom-grid');
- if(bottom)bottom.outerHTML=`<section class="home-music-feature"><div class="room-feature-copy"><p class="eyebrow">UNVEILED MUSIC</p><h2>Step into<br>the Music Room.</h2><p>A space for the message to be heard.</p><button class="button" data-route="media">Enter the Music Room ${ctx.icon('arrow')}</button></div><div class="home-room-instrument" aria-hidden="true"><span class="room-orbit orbit-a"></span><span class="room-orbit orbit-b"></span><span class="vinyl-record"><span>${veilMark()}</span></span>${bars()}</div><div class="gold-knight-portrait home-gold-knight" aria-hidden="true"><img src="assets/knights-night.png" alt=""></div></section><section class="home-reflection"><div class="reflection-picture">${imageButton('city')}</div><div class="reflection-copy"><p class="eyebrow">A MOMENT TO BE STILL</p><h2>Slow down.<br>Let the Word settle.</h2><p>Make a little space to read, pray and remember who God is.</p><button class="plain-link" data-passage="18,46,10,kjv">Read Psalm 46:10 ${ctx.icon('arrow')}</button><div class="reflection-brand">${veilMark()}<span>THE VEIL IS OPEN.<br>THE INVITATION IS YOURS.</span></div></div></section><section class="home-outreach-feature"><div><p class="eyebrow">BEYOND THESE PAGES</p><h2>Faith steps<br>into the world.</h2><p>Share the message. Serve the people.<br>Start with the person near you.</p><button class="button outline" data-route="outreach">Explore outreach ${ctx.icon('arrow')}</button></div>${imageButton('together','home-outreach-photo')}</section><section class="identity-spread"><div class="identity-copy"><button class="identity-mark" data-brand-image="mark" aria-label="View the Unveiled mark">${veilMark()}</button><p class="eyebrow">THE WORLD OF UNVEILED</p><h2>One message.<br>Many expressions.</h2><p>Scripture. Music. Prayer.<br>A faith that finds expression in life.</p></div><div class="identity-pictures">${imageButton('day','identity-day')}${imageButton('night','identity-night')}</div></section>`;
+ if(bottom)bottom.outerHTML=`<section class="home-music-feature"><div class="room-feature-copy"><p class="eyebrow">UNVEILED MUSIC</p><h2>Step into<br>the Music &amp; Media Room.</h2><p>A space for the message to be heard.</p><button class="button" data-route="media">Enter the Music &amp; Media Room ${ctx.icon('arrow')}</button></div><div class="home-room-instrument" aria-hidden="true"><span class="room-orbit orbit-a"></span><span class="room-orbit orbit-b"></span><span class="vinyl-record"><span>${veilMark()}</span></span>${bars()}</div><div class="gold-knight-portrait home-gold-knight" aria-hidden="true"><img src="assets/knights-night.png" alt=""></div></section><section class="home-reflection"><div class="reflection-picture">${imageButton('city')}</div><div class="reflection-copy"><p class="eyebrow">A MOMENT TO BE STILL</p><h2>Slow down.<br>Let the Word settle.</h2><p>Make a little space to read, pray and remember who God is.</p><button class="plain-link" data-passage="18,46,10,kjv">Read Psalm 46:10 ${ctx.icon('arrow')}</button><div class="reflection-brand">${veilMark()}<span>THE VEIL IS OPEN.<br>THE INVITATION IS YOURS.</span></div></div></section><section class="home-outreach-feature"><div><p class="eyebrow">BEYOND THESE PAGES</p><h2>Faith steps<br>into the world.</h2><p>Share the message. Serve the people.<br>Start with the person near you.</p><button class="button outline" data-route="outreach">Explore outreach ${ctx.icon('arrow')}</button></div>${imageButton('together','home-outreach-photo')}</section><section class="identity-spread"><div class="identity-copy"><button class="identity-mark" data-brand-image="mark" aria-label="View the Unveiled mark">${veilMark()}</button><p class="eyebrow">THE WORLD OF UNVEILED</p><h2>One message.<br>Many expressions.</h2><p>Scripture. Music. Prayer.<br>A faith that finds expression in life.</p></div><div class="identity-pictures">${imageButton('day','identity-day')}${imageButton('night','identity-night')}</div></section>`;
 }
 
 export function membersSection(){
@@ -120,8 +120,8 @@ export function musicRoomIntro(ctx){
   <div class="music-room-copy">
    <span class="room-door-sign">${veilMark()} UNVEILED MUSIC</span>
    <h2>Let the message<br><em>find its sound.</em></h2>
-   <p>Listen to the featured video or add a song to your shelf.</p>
-   <button class="button" data-show-player>${ctx.icon('play')} Go to the player</button>
+   <p>Inside the Unveiled Music studio.</p>
+   <button class="button outline" data-watch-jump="music">${ctx.icon('play')} Back to Music</button>
    <div class="room-ambience">${bars()}<span>BEYOND THE VEIL.<br>INTO THE LIGHT.</span></div>
   </div>
   <div class="room-character">
@@ -130,29 +130,9 @@ export function musicRoomIntro(ctx){
     ${imageButton('musicLogo','music-room-emblem')}
     ${imageButton('musicStudio','music-room-portrait')}
    </div>
-   <button class="plain-link room-character-caption" data-replay-veil>${ctx.icon('veil')} Replay opening</button>
+
   </div>
   <span class="room-stage-rule" aria-hidden="true"></span>
- </section>`;
-}
-
-function playerKnight(side,viewBox){
- return `<svg class="player-knight player-knight-${side}" viewBox="${viewBox}" aria-hidden="true" focusable="false">
-  <image href="assets/player-knights.png" width="1536" height="1024"/>
- </svg>`;
-}
-
-export function playerMarkup(ctx,link,id){
- return `<section class="unveiled-player music-room-player" aria-label="Unveiled Music Room player">
-  <div class="player-brandbar"><img src="assets/unveiled-music-logo.jpg" width="52" height="52" alt="Unveiled Music emblem"><div>${wordmark()}<span class="player-category">THE MUSIC ROOM</span></div><span class="player-palm" aria-hidden="true">${palm()}</span></div>
-  <div class="player-stage">
-   ${playerKnight('left','0 0 652 1024')}
-   <div class="player-screen">
-    <iframe class="video-frame" loading="lazy" title="${esc(link.title)}" src="https://www.youtube-nocookie.com/embed/${id}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-   </div>
-   ${playerKnight('right','884 0 652 1024')}
-  </div>
-  <div class="player-footer"><span>BEYOND THE VEIL. INTO THE LIGHT.</span><a class="plain-link" href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">Open on YouTube ${ctx.icon('external')}</a></div>
  </section>`;
 }
 
@@ -223,7 +203,7 @@ export function initVisuals(ctx){
   const identity=theme==='fellowship'
    ?'<img src="assets/womens-fellowship-logo.jpg" width="96" height="96" alt=""><span>WOMEN’S FELLOWSHIP</span>'
    :theme==='media'
-    ?'<img src="assets/unveiled-music-logo.jpg" width="96" height="96" alt=""><span>UNVEILED MUSIC</span>'
+    ?'<img src="assets/unveiled-music-logo.jpg" width="96" height="96" alt=""><span>MUSIC &amp; MEDIA ROOM</span>'
     :`${veilMark()}${wordmark()}<span>BEYOND THE VEIL. INTO THE LIGHT.</span>`;
   const el=document.createElement('div');
   el.className='opening-veil';

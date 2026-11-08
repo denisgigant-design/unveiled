@@ -1,4 +1,4 @@
-import {imageButton} from './visuals.js?v=unveiled8';
+import {imageButton} from './visuals.js?v=unveiled9';
 import {veilPanels} from './veil-art.mjs?v=unveiled8';
 
 function gardenArt(kind,viewBox,label=''){

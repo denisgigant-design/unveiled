@@ -83,27 +83,6 @@ body[data-motion="off"] .opening-veil{display:none}
 .music-room-emblem .photo-enlarge{bottom:12%;right:12%}
 .music-room-portrait{width:100%;border-radius:14px 14px 6px 6px;border:1px solid #98794e80}
 .music-room-portrait img{width:100%;height:auto;aspect-ratio:3/4;object-fit:cover}
-.music-room-player{
-  container-type:inline-size;
-  --guard-width:clamp(57px,13vw,176px);
-  --guard-width:clamp(57px,17cqi,176px);
-  --guard-rail:min(calc(var(--guard-width) - 4px),16%);
-  --guard-headroom:calc(var(--guard-width) * .46);
-}
-.player-stage{position:relative;isolation:isolate;padding-top:var(--guard-headroom)}
-.music-room-player .player-screen{
-  margin-inline:var(--guard-rail);aspect-ratio:16/9;border:0;border-radius:0;
-  background:#000;box-shadow:0 12px 40px #03060d8c
-}
-.player-knight{
-  position:absolute;top:var(--guard-headroom);width:var(--guard-width);height:auto;
-  transform:translateY(-29%);overflow:hidden;z-index:2;pointer-events:none;
-  filter:drop-shadow(0 8px 9px #010814ca)
-}
-.player-knight-left{left:calc(var(--guard-rail) - var(--guard-width) + 7px)}
-.player-knight-right{right:calc(var(--guard-rail) - var(--guard-width) + 7px)}
-.music-room-player .player-footer{margin-inline:var(--guard-rail);padding-top:13px}
-
 .book-colour-choices{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:13px 0;color:#b3c7d9;font-size:12px}
 .book-colour-choices>span{margin-right:4px}
 .book-colour-choices>button{
@@ -180,8 +159,6 @@ body[data-book-colour="pink"] .book-pool-light{background:radial-gradient(ellips
   .knights-solos{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:600px){
-  .music-room-player{--guard-width:clamp(46px,15vw,80px);--guard-rail:clamp(26px,8vw,39px)}
-  .music-room-player .player-screen{aspect-ratio:auto;height:max(200px,38vw)}
   .teaching-grid{grid-template-columns:1fr}
   .teaching-card .brand-photo img{max-height:640px;object-fit:contain}
   .map-title{gap:6px;flex-wrap:wrap}
@@ -193,7 +170,6 @@ body[data-book-colour="pink"] .book-pool-light{background:radial-gradient(ellips
   .music-room-art{width:min(100%,295px);margin-inline:auto}
   .fellowship-studio,.members-community{grid-template-columns:1fr}
   .members-community .brand-photo{order:2}
-  .music-room-player .player-footer{margin-inline:0}
   .garden-drapes{opacity:.49}
 }
 

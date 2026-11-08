@@ -11,17 +11,22 @@ const roomOf=video=>video.room==='music'?'music':'media';
 const videoKey=video=>youtubeID(video.url)||video.url;
 const words=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ł/gi,'l').toLowerCase().trim();
 
-/* Eight slices leave a real opening for the player and keep it usable on phones. */
+/* Wide screens use the artwork’s opening. Narrow screens use unscaled drapery and handrails. */
 function frameMarkup(kind){
  const {file,cut:[left,top,right,bottom]}=rooms[kind];
  const xs=[0,left,right,1536],ys=[0,top,bottom,864];
  const wide=span=>+(span/1536*100).toFixed(5);
  const style=`--art-left:${wide(left)}%;--art-right:${wide(1536-right)}%;--art-top:${wide(top)};--art-window:${wide(bottom-top)};--art-bottom:${wide(864-bottom)}`;
+ const art=(className,x,y,width,height)=>`<svg class="${className}" viewBox="${x} ${y} ${width} ${height}" aria-hidden="true" focusable="false"><image href="assets/${file}" width="1536" height="864"/></svg>`;
  const slices=ys.slice(0,-1).flatMap((y,row)=>xs.slice(0,-1).map((x,col)=>{
   if(row===1&&col===1)return `<div class="watch-slot" data-player-slot="${kind}"></div>`;
-  return `<svg class="watch-art-slice" viewBox="${x} ${y} ${xs[col+1]-x} ${ys[row+1]-y}" preserveAspectRatio="none" aria-hidden="true" focusable="false"><image href="assets/${file}" width="1536" height="864"/></svg>`;
+  return art('watch-art-slice',x,y,xs[col+1]-x,ys[row+1]-y);
  })).join('');
- return `<div class="watch-frame" style="${style}"><div class="watch-grid">${slices}</div></div>`;
+ return `<div class="watch-frame" style="${style}"><div class="watch-grid">
+  ${art('watch-mobile-art watch-mobile-crown',0,0,1536,top)}
+  ${slices}
+  ${art('watch-mobile-art watch-mobile-rail',0,bottom,1536,864-bottom)}
+ </div></div>`;
 }
 
 function watchSection(ctx,kind){
@@ -123,8 +128,8 @@ export function media(ctx,root){
    const video=ctx.playback.forRoom(kind),isActive=roomOf(active)===kind;
    slot.dataset.active=String(isActive);
    slot.innerHTML=isActive?'':video
-    ?`<button class="button" data-play-room="${kind}">${ctx.icon('play')} Play ${esc(video.title)}</button>`
-    :`<button class="button outline" data-search-section="${kind}">${ctx.icon('search')} Find a music video</button>`;
+    ?`<button class="watch-cue" data-play-room="${kind}"><span>${ctx.icon('play')}</span>Play ${esc(video.title)}</button>`
+    :`<button class="watch-cue" data-search-section="${kind}"><span>${ctx.icon('search')}</span>Find a music video</button>`;
    const actions=room.querySelector(`[data-watch-actions="${kind}"]`);
    actions.innerHTML=video?`<div class="watch-video-title"><span class="small-label">${video.id===featuredVideo.id?'FEATURED VIDEO':'SELECTED VIDEO'}</span><strong>${esc(video.title)}</strong></div>
     <button class="button outline" data-save-video="${kind}" ${saved(video,kind)?'disabled':''}>${ctx.icon(saved(video,kind)?'check':'bookmark')} ${saved(video,kind)?'Saved to playlist':'Save to '+rooms[kind].playlist+' playlist'}</button>

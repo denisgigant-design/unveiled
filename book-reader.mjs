@@ -44,18 +44,19 @@ export function syncBookColour(ctx){
 }
 
 function pageMotion(){
- return document.body.dataset.motion!=='off'&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
+ return !matchMedia('(prefers-reduced-motion:reduce)').matches;
 }
 
 function leafPose(angle,dir){
- const tilt=Math.sin(angle*Math.PI/180)*1.7;
- return `rotateY(${-dir*angle}deg) rotateZ(${-dir*tilt}deg)`;
+ const lift=Math.sin(angle*Math.PI/180);
+ return `translateZ(${lift*12}px) rotateY(${-dir*angle}deg) rotateZ(${-dir*lift*1.15}deg)`;
 }
 
 export function bindBookSwipe(spread,canTurn,turn){
- let gesture,ignoreClick=false;
+ let gesture,restoring,ignoreClick=false;
  spread.addEventListener('pointerdown',event=>{
   if(!event.isPrimary||event.button!==0||gesture)return;
+  restoring?.cancel();
   ignoreClick=false;
   gesture={id:event.pointerId,x:event.clientX,y:event.clientY,time:performance.now()};
  });
@@ -63,34 +64,35 @@ export function bindBookSwipe(spread,canTurn,turn){
   if(gesture?.id!==event.pointerId)return;
   const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
   if(!gesture.leaf){
-   if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)){gesture=null;return;}
-   if(Math.abs(dx)<12||Math.abs(dx)<Math.abs(dy)*1.15)return;
+   if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){gesture=null;return;}
+   if(Math.abs(dx)<9||Math.abs(dx)<Math.abs(dy)*1.2)return;
    const dir=dx<0?1:-1;
    if(!canTurn(dir)){gesture=null;return;}
    const leaves=spread.querySelectorAll(':scope > .paper-page');
    gesture.leaf=dir>0?leaves[leaves.length-1]:leaves[0];
    gesture.dir=dir;
+   gesture.width=gesture.leaf.offsetWidth;
    ignoreClick=true;
    spread.setPointerCapture(event.pointerId);
   }
-  event.preventDefault();
+  if(event.cancelable)event.preventDefault();
   const {leaf,dir}=gesture;
   const distance=Math.max(0,-dir*dx);
-  gesture.distance=distance;
-  gesture.angle=Math.min(76,distance/leaf.offsetWidth*145);
+  gesture.angle=Math.min(76,distance/gesture.width*170);
   if(pageMotion()){
    leaf.classList.add('swipe-leaf',dir<0?'swipe-backward':'swipe-forward');
    leaf.style.transform=leafPose(gesture.angle,dir);
-   leaf.style.setProperty('--swipe-shade',Math.min(.68,gesture.angle/115));
+   leaf.style.setProperty('--swipe-shade',Math.min(.8,gesture.angle/92));
   }
  });
  function end(event,commit){
   if(gesture?.id!==event.pointerId)return;
-  const {leaf,dir,distance=0,angle=0,time}=gesture;
+  const {leaf,dir,x,width,angle=0,time}=gesture;
   gesture=null;
   if(!leaf)return;
-  const farEnough=distance>=Math.min(78,leaf.offsetWidth*.23);
-  const flick=distance>=34&&performance.now()-time<230;
+  const distance=Math.max(0,-dir*(event.clientX-x));
+  const farEnough=distance>=Math.min(60,width*.18);
+  const flick=distance>=25&&performance.now()-time<260;
   const pose=leaf.style.transform;
   leaf.classList.remove('swipe-leaf','swipe-backward','swipe-forward');
   leaf.style.removeProperty('transform');
@@ -98,10 +100,14 @@ export function bindBookSwipe(spread,canTurn,turn){
   if(commit&&(farEnough||flick)&&canTurn(dir)){turn(dir,angle);return;}
   if(pose&&pageMotion()){
    leaf.style.transformOrigin=dir>0?'left center':'right center';
-   const restore=leaf.animate([{transform:pose},{transform:'rotateY(0)'}],{
-    duration:260,easing:'cubic-bezier(.22,.8,.32,1)'
+   const animation=leaf.animate([{transform:pose},{transform:leafPose(0,dir)}],{
+    duration:200,easing:'cubic-bezier(.22,.8,.32,1)'
    });
-   restore.finished.catch(()=>{}).finally(()=>leaf.style.removeProperty('transform-origin'));
+   restoring=animation;
+   animation.finished.catch(()=>{}).finally(()=>{
+    if(restoring===animation)restoring=null;
+    leaf.style.removeProperty('transform-origin');
+   });
   }
  }
  spread.addEventListener('pointerup',event=>end(event,true));
@@ -138,14 +144,14 @@ export async function animateBookTurn(spread,oldPages,count,dir,angle=0){
   spread.append(still);
  }
  spread.append(overlay);
- const finish=count===2?180:108;
- const duration=(count===2?775:570)-Math.round(angle*2.7);
+ const finish=count===2?180:99;
+ const duration=(count===2?610:430)-Math.round(angle*1.8);
  overlay.style.setProperty('--leaf-duration',duration+'ms');
  const animation=overlay.animate([
   {transform:leafPose(angle,dir)},
-  {transform:leafPose(angle+(finish-angle)*.57,dir),offset:.54},
+  {transform:leafPose(angle+(finish-angle)*.63,dir),offset:.55},
   {transform:leafPose(finish,dir)}
- ],{duration,easing:'cubic-bezier(.24,.58,.25,1)',fill:'both'});
+ ],{duration,easing:'cubic-bezier(.23,.62,.25,1)',fill:'both'});
  try{await animation.finished.catch(()=>{});}
  finally{still?.remove();overlay.remove();}
 }

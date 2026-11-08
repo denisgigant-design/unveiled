@@ -114,16 +114,27 @@ body[data-book-colour="pink"] .book-pool-light{background:radial-gradient(ellips
 :root[data-appearance="dark"] body[data-book-colour="pink"] #reader-workspace .book-spread[data-theme="paper"]>.paper-page:nth-child(2){
   background:linear-gradient(90deg,#291d33,#35283d 9%)
 }
-#reader-workspace .book-spread{touch-action:pan-y pinch-zoom}
-#reader-workspace .swipe-leaf{z-index:6;backface-visibility:hidden;will-change:transform;user-select:none}
+/* A swipe turns the leaf, while an up/down drag scrolls the document. */
+#reader-workspace :is(.book-spread,.paper-page,.verse-text,.verse-line){touch-action:pan-y pinch-zoom}
+#reader-workspace :is(.paper-page,.verse-text){overflow:clip}
+#reader-workspace .book-spread{perspective:clamp(720px,155vw,2000px);overflow-anchor:none}
+#reader-workspace .book-spread:has(>.swipe-leaf){background:linear-gradient(90deg,#0c182b,#1c3147 17%,#15283e 85%,#0e1c30)}
+#reader-workspace .swipe-leaf{
+  z-index:6;backface-visibility:hidden;will-change:transform;user-select:none;
+  box-shadow:0 6px 20px #0106138c,0 0 0 1px #b8cfe443;
+}
 #reader-workspace .swipe-forward{transform-origin:left center}
 #reader-workspace .swipe-backward{transform-origin:right center}
 #reader-workspace .swipe-leaf::after{
   content:"";position:absolute;inset:0;pointer-events:none;opacity:var(--swipe-shade,0);
-  background:linear-gradient(90deg,#010819a1,transparent 30%,#d0e5ff3d 72%,#02091891)
+  background:linear-gradient(90deg,#020815a8,transparent 21%,transparent 56%,#dbecff55 92%,#f2f5ff9a)
 }
+#reader-workspace .swipe-backward::after{transform:scaleX(-1)}
+#reader-workspace .book-flip>.paper-page{box-shadow:0 6px 20px #02061198,0 0 0 1px #afc5e34d}
 #reader-workspace .book-flip>.paper-page::after,
 #reader-workspace .book-flip.single>.paper-page::after{animation-duration:var(--leaf-duration,.57s);animation-direction:normal}
+#reader-workspace .page-controls{margin:13px auto 2px}
+#reader-workspace .page-controls .round-button{width:44px;height:44px}
 
 .map-zoom{display:flex;align-items:center;gap:5px;font-size:11px;letter-spacing:0}
 .map-zoom button{

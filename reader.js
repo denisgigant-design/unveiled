@@ -1,6 +1,6 @@
 import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference} from './core.mjs';
 import {pageForAnchor} from './book-layout.mjs';
-import {measureBook,animateBookTurn,bindBookSwipe,bookColourChoices} from './book-reader.mjs?v=unveiled8';
+import {measureBook,animateBookTurn,bindBookSwipe,bookColourChoices} from './book-reader.mjs?v=unveiled10';
 const cache=new Map();
 const textSize = {min: 10, max: 32, step: 2, initial: 18};
 const clampSize = value => Math.max(textSize.min, Math.min(textSize.max, Number(value) || textSize.initial));
@@ -15,21 +15,63 @@ export function createReader(ctx){
  let pendingAnchor=null,pendingEnd=false;
  function currentAnchor(){const first=pages[s.page]?.[0];return first?{verse:first.v,offset:first.start||0}:s.anchor||{verse:1,offset:0};}
  function paginateCurrent(verse){pendingAnchor=verse?{verse,offset:0}:s.anchor||currentAnchor();}
- function draw(){
+ const selectionTip='<p class="reader-tip">Swipe sideways or use the arrows to turn a page. Tap a verse to highlight or save it.</p>';
+ function pageStatus(){
+  const label=step()===2&&s.page+1<pages.length?`Pages ${s.page+1}–${s.page+2}`:`Page ${s.page+1}`;
+  return label+` of ${pages.length}`;
+ }
+ function pageAvailable(dir){
+  const inChapter=dir<0?s.page>0:s.page+step()<pages.length;
+  return inChapter||Boolean(adjacentChapter(bible,s.book,s.chapter,dir));
+ }
+ function paperMarkup(){
+  const highlights=ctx.read('highlights',{}),saved=ctx.read('bookmarks',[]);
+  return Array.from({length:step()},(_,side)=>{
+   const index=s.page+side,page=pages[index];
+   if(!page)return '<article class="paper-page quiet-page"><span class="small-label">TAKE A MOMENT</span><p>Read. Reflect.<br>Let the Word take root.</p><span>✧</span></article>';
+   const verses=page.map(verse=>{
+    const bookmarked=saved.some(mark=>mark.version===s.version&&mark.book===s.book&&mark.chapter===s.chapter&&mark.verse===verse.v);
+    const colour=highlights[key(verse.v)];
+    return `<button class="verse-line ${selected===verse.v?'verse-selected':''} ${bookmarked?'is-bookmarked':''}"
+     data-verse="${verse.v}" data-offset="${verse.start||0}" aria-label="Verse ${verse.v}${verse.start?' continued':''}: ${esc(verse.text)}">
+     <sup>${verse.v}</sup><span class="${colour?'highlight highlight-'+esc(colour):''}">${esc(verse.text)}</span></button>`;
+   }).join('');
+   return `<article class="paper-page">
+    <div class="paper-running"><span>${names()[s.book]}</span><span>${VERSIONS[s.version].short}</span></div>
+    ${index===0?`<div class="chapter-heading"><span>CHAPTER</span><h2>${s.chapter}</h2><span class="chapter-line"></span></div>`:''}
+    <div class="verse-text">${verses}</div><div class="page-number">${index+1}</div>
+   </article>`;
+  }).join('');
+ }
+ function draw({pagesOnly=false}={}){
   if(ctx.route!=='bible'||!bible||!ctx.bibleOpened)return;
   const place=pendingAnchor||s.anchor||currentAnchor(),ending=pendingEnd;
-  paint();
-  const measured=measureBook(bible[s.book].chapters[s.chapter-1],root.querySelector('.paper-page'),settings(),s.chapter);
-  if(measured){pages=measured;s.page=pendingEnd?Math.floor((pages.length-1)/step())*step():pageForAnchor(pages,place,step());}
-  pendingAnchor=null;pendingEnd=false;paint();
+  if(pagesOnly){
+   root.querySelector('.book-spread').innerHTML=paperMarkup();
+   root.querySelector('#page-status').textContent=pageStatus();
+   root.querySelector('#selected-tools').innerHTML=selectionTip;
+   root.querySelectorAll('[data-turn]').forEach(button=>{button.disabled=!pageAvailable(+button.dataset.turn);});
+  }else{
+   let paper=root.querySelector('.book-spread > .paper-page');
+   if(!paper){paint();paper=root.querySelector('.book-spread > .paper-page');}
+   const measured=measureBook(bible[s.book].chapters[s.chapter-1],paper,settings(),s.chapter);
+   if(measured){
+    pages=measured;
+    s.page=ending?Math.floor((pages.length-1)/step())*step():pageForAnchor(pages,place,step());
+   }
+   paint();
+  }
+  pendingAnchor=null;pendingEnd=false;
   s.anchor=ending?currentAnchor():place;ctx.save('reading',s);
-  const shell=root.querySelector('.book-shell');shell.style.setProperty('--left-leaves',Math.min(11,2+s.page*.4)+'px');shell.style.setProperty('--right-leaves',Math.min(11,2+Math.max(0,pages.length-s.page-step())*.4)+'px');
+  const shell=root.querySelector('.book-shell');
+  shell.style.setProperty('--left-leaves',Math.min(11,2+s.page*.4)+'px');
+  shell.style.setProperty('--right-leaves',Math.min(11,2+Math.max(0,pages.length-s.page-step())*.4)+'px');
  }
  function changeSize(value){const o={...settings(),size:clampSize(value)};pendingAnchor=s.anchor||currentAnchor();ctx.save('reader-settings',o);draw();}
- function paint(){if(ctx.route!=='bible'||!bible||!ctx.bibleOpened)return;const opts=settings(),highlights=ctx.read('highlights',{}),saved=ctx.read('bookmarks',[]);root.innerHTML=`<div class="page-heading reader-heading"><div><p class="eyebrow">THE WORD, ONE PAGE AT A TIME</p><h1>Open the book.</h1><p>A little space. A deeper understanding.</p></div><span class="pill">66 books · English & Polish</span></div><section id="reader-workspace"><div class="reader-toolbar"><div class="passage-select"><label>Book<select id="reader-book" aria-label="Bible book">${names().map((n,i)=>`<option value="${i}" ${i===s.book?'selected':''}>${n}</option>`).join('')}</select></label><label>Chapter<select id="reader-chapter" aria-label="Chapter">${Array.from({length:bible[s.book].chapters.length},(_,i)=>`<option ${i+1===s.chapter?'selected':''}>${i+1}</option>`).join('')}</select></label></div><div class="reader-actions"><label class="sr-only" for="reader-version">Translation</label><select id="reader-version">${Object.entries(VERSIONS).map(([id,v])=>`<option value="${id}" ${id===s.version?'selected':''}>${v.short} · ${v.lang==='pl'?'Polski':v.name}</option>`).join('')}</select><button class="icon-button" data-search aria-label="Search the Bible">${ctx.icon('search')}</button><button class="icon-button" data-saved aria-label="Saved verses">${ctx.icon('bookmark')}</button><button class="icon-button" data-settings aria-label="Reading settings">${ctx.icon('settings')}</button></div></div><div class="reader-size-bar"><span>Make yourself comfortable</span><div class="reader-size-controls"><button class="type-step" data-font-step="-1" ${opts.size<=textSize.min?'disabled':''} aria-label="Decrease Bible text size">A−</button><output id="reader-size-value">${opts.size}px</output><button class="type-step" data-font-step="1" ${opts.size>=textSize.max?'disabled':''} aria-label="Increase Bible text size">A+</button><button class="plain-link" data-settings>Font &amp; page</button><button class="plain-link return-to-cover" data-reader-cover aria-label="Close the Bible to its cover">${ctx.icon('book')} Cover</button></div></div>${bookColourChoices(ctx)}<div class="book-heading"><span id="reader-location" class="small-label">${names()[s.book]} ${s.chapter}</span><span class="small-label">THE HOLY BIBLE</span></div><div class="book-luminosity" style="--page-brightness:${opts.brightness/100}"><div class="book-shell"><span class="book-ribbon" aria-hidden="true"></span><div class="book-spread" data-theme="${opts.theme}" style="--reader-size:${opts.size}px;--reader-font:${{georgia:'Georgia,serif',palatino:'Palatino,serif',sans:'system-ui,sans-serif'}[opts.font]}">${Array.from({length:step()},(_,side)=>{const page=pages[s.page+side];return page?`<article class="paper-page"><div class="paper-running"><span>${names()[s.book]}</span><span>${VERSIONS[s.version].short}</span></div>${s.page+side===0?`<div class="chapter-heading"><span>CHAPTER</span><h2>${s.chapter}</h2><span class="chapter-line"></span></div>`:''}<div class="verse-text">${page.map(v=>`<button class="verse-line ${selected===v.v?'verse-selected':''} ${saved.some(b=>b.version===s.version&&b.book===s.book&&b.chapter===s.chapter&&b.verse===v.v)?'is-bookmarked':''}" data-verse="${v.v}" data-offset="${v.start||0}" aria-label="Verse ${v.v}${v.start?' continued':''}: ${esc(v.text)}"><sup>${v.v}</sup><span class="${highlights[key(v.v)]?'highlight highlight-'+esc(highlights[key(v.v)]):''}">${esc(v.text)}</span></button>`).join('')}</div><div class="page-number">${s.page+side+1}</div></article>`:`<article class="paper-page quiet-page"><span class="small-label">TAKE A MOMENT</span><p>Read. Reflect.<br>Let the Word take root.</p><span>✧</span></article>`;}).join('')}</div></div></div><div id="selected-tools">${selected?`<div class="verse-selection"><span>${names()[s.book]} ${s.chapter}:${selected}</span><div class="highlight-colours">${['gold','green','blue','pink'].map(c=>`<button class="colour-dot ${c}" data-highlight="${c}" aria-label="Highlight ${c}"></button>`).join('')}<button class="colour-dot clear" data-highlight="none" aria-label="Remove highlight">×</button></div><button class="small-button" data-bookmark>${ctx.icon('bookmark')} Save verse</button><button class="icon-button" data-copy aria-label="Copy selected verse">${ctx.icon('copy')}</button><button class="icon-button" data-deselect aria-label="Clear verse selection">×</button></div>`:'<p class="reader-tip">Tap a verse to highlight or save it. Swipe or use the arrows to turn a page.</p>'}</div><div class="page-controls"><button class="round-button" data-turn="-1" aria-label="Previous page" ${!s.page&&!adjacentChapter(bible,s.book,s.chapter,-1)?'disabled':''}>${ctx.icon('chevron','flipped')}</button><span id="page-status">${step()===2&&s.page+1<pages.length?`Pages ${s.page+1}–${Math.min(pages.length,s.page+2)}`:`Page ${s.page+1}`} of ${pages.length}</span><button class="round-button" data-turn="1" aria-label="Next page" ${s.page+step()>=pages.length&&!adjacentChapter(bible,s.book,s.chapter,1)?'disabled':''}>${ctx.icon('chevron')}</button></div><p class="fine-print reader-source">Larger text makes more pages. Your place is remembered.<br>KJV · ASV 1901 · Biblia Gdańska 1881. Verse numbering follows the selected edition. <button class="plain-link" data-about>Text sources</button></p></section>`;const host=root.querySelector('#reader-workspace');host.addEventListener('change',e=>{if(e.target.id==='reader-version'){s.anchor=currentAnchor();s.version=e.target.value;s.page=0;selected=0;ctx.save('reading',s);render(root);}else if(e.target.id==='reader-book'||e.target.id==='reader-chapter'){if(e.target.id==='reader-book'){s.book=+e.target.value;s.chapter=1;}else s.chapter=+e.target.value;s.page=0;selected=0;paginateCurrent(1);draw();}});host.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.turn)turn(+b.dataset.turn);if(b.dataset.fontStep)changeSize(settings().size+textSize.step*(+b.dataset.fontStep));if(b.dataset.verse){selected=+b.dataset.verse;pendingAnchor={verse:selected,offset:+b.dataset.offset||0};draw();}if(b.hasAttribute('data-deselect')){selected=0;draw();}if(b.dataset.highlight){const all=ctx.read('highlights',{});if(b.dataset.highlight==='none')delete all[key(selected)];else all[key(selected)]=b.dataset.highlight;ctx.save('highlights',all);draw();ctx.toast('Highlight saved.');}if(b.hasAttribute('data-bookmark')){const all=ctx.read('bookmarks',[]);if(!all.some(b=>b.version===s.version&&b.book===s.book&&b.chapter===s.chapter&&b.verse===selected)){all.unshift({version:s.version,book:s.book,chapter:s.chapter,verse:selected,text:bible[s.book].chapters[s.chapter-1][selected-1]});ctx.save('bookmarks',all);ctx.toast('Verse saved.');draw();}else ctx.toast('This verse is already saved.');}if(b.hasAttribute('data-copy')){const text=`${bible[s.book].chapters[s.chapter-1][selected-1]} — ${names()[s.book]} ${s.chapter}:${selected} (${VERSIONS[s.version].short})`;try{await navigator.clipboard.writeText(text);ctx.toast('Verse copied.');}catch{ctx.modal('Copy this verse',`<textarea readonly class="copy-verse">${esc(text)}</textarea>`);}}if(b.hasAttribute('data-search'))search();if(b.hasAttribute('data-saved'))bookmarks();if(b.hasAttribute('data-settings'))preferences();});bindBookSwipe(host.querySelector('.book-spread'),canTurn,turn);}
+ function paint(){if(ctx.route!=='bible'||!bible||!ctx.bibleOpened)return;const opts=settings();root.innerHTML=`<div class="page-heading reader-heading"><div><p class="eyebrow">THE WORD, ONE PAGE AT A TIME</p><h1>Open the book.</h1><p>A little space. A deeper understanding.</p></div><span class="pill">66 books · English & Polish</span></div><section id="reader-workspace"><div class="reader-toolbar"><div class="passage-select"><label>Book<select id="reader-book" aria-label="Bible book">${names().map((n,i)=>`<option value="${i}" ${i===s.book?'selected':''}>${n}</option>`).join('')}</select></label><label>Chapter<select id="reader-chapter" aria-label="Chapter">${Array.from({length:bible[s.book].chapters.length},(_,i)=>`<option ${i+1===s.chapter?'selected':''}>${i+1}</option>`).join('')}</select></label></div><div class="reader-actions"><label class="sr-only" for="reader-version">Translation</label><select id="reader-version">${Object.entries(VERSIONS).map(([id,v])=>`<option value="${id}" ${id===s.version?'selected':''}>${v.short} · ${v.lang==='pl'?'Polski':v.name}</option>`).join('')}</select><button class="icon-button" data-search aria-label="Search the Bible">${ctx.icon('search')}</button><button class="icon-button" data-saved aria-label="Saved verses">${ctx.icon('bookmark')}</button><button class="icon-button" data-settings aria-label="Reading settings">${ctx.icon('settings')}</button></div></div><div class="reader-size-bar"><span>Make yourself comfortable</span><div class="reader-size-controls"><button class="type-step" data-font-step="-1" ${opts.size<=textSize.min?'disabled':''} aria-label="Decrease Bible text size">A−</button><output id="reader-size-value">${opts.size}px</output><button class="type-step" data-font-step="1" ${opts.size>=textSize.max?'disabled':''} aria-label="Increase Bible text size">A+</button><button class="plain-link" data-settings>Font &amp; page</button><button class="plain-link return-to-cover" data-reader-cover aria-label="Close the Bible to its cover">${ctx.icon('book')} Cover</button></div></div>${bookColourChoices(ctx)}<div class="book-heading"><span id="reader-location" class="small-label">${names()[s.book]} ${s.chapter}</span><span class="small-label">THE HOLY BIBLE</span></div><div class="book-luminosity" style="--page-brightness:${opts.brightness/100}"><div class="book-shell"><span class="book-ribbon" aria-hidden="true"></span><div class="book-spread" data-theme="${opts.theme}" style="--reader-size:${opts.size}px;--reader-font:${{georgia:'Georgia,serif',palatino:'Palatino,serif',sans:'system-ui,sans-serif'}[opts.font]}">${paperMarkup()}</div></div></div><div class="page-controls"><button class="round-button" data-turn="-1" aria-label="Previous page" ${pageAvailable(-1)?'':'disabled'}>${ctx.icon('chevron','flipped')}</button><span id="page-status" aria-live="polite">${pageStatus()}</span><button class="round-button" data-turn="1" aria-label="Next page" ${pageAvailable(1)?'':'disabled'}>${ctx.icon('chevron')}</button></div><div id="selected-tools">${selected?`<div class="verse-selection"><span>${names()[s.book]} ${s.chapter}:${selected}</span><div class="highlight-colours">${['gold','green','blue','pink'].map(c=>`<button class="colour-dot ${c}" data-highlight="${c}" aria-label="Highlight ${c}"></button>`).join('')}<button class="colour-dot clear" data-highlight="none" aria-label="Remove highlight">×</button></div><button class="small-button" data-bookmark>${ctx.icon('bookmark')} Save verse</button><button class="icon-button" data-copy aria-label="Copy selected verse">${ctx.icon('copy')}</button><button class="icon-button" data-deselect aria-label="Clear verse selection">×</button></div>`:selectionTip}</div><p class="fine-print reader-source">Larger text makes more pages. Your place is remembered.<br>KJV · ASV 1901 · Biblia Gdańska 1881. Verse numbering follows the selected edition. <button class="plain-link" data-about>Text sources</button></p></section>`;const host=root.querySelector('#reader-workspace');host.addEventListener('change',e=>{if(e.target.id==='reader-version'){s.anchor=currentAnchor();s.version=e.target.value;s.page=0;selected=0;ctx.save('reading',s);render(root);}else if(e.target.id==='reader-book'||e.target.id==='reader-chapter'){if(e.target.id==='reader-book'){s.book=+e.target.value;s.chapter=1;}else s.chapter=+e.target.value;s.page=0;selected=0;paginateCurrent(1);draw();}});host.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.turn)turn(+b.dataset.turn);if(b.dataset.fontStep)changeSize(settings().size+textSize.step*(+b.dataset.fontStep));if(b.dataset.verse){selected=+b.dataset.verse;pendingAnchor={verse:selected,offset:+b.dataset.offset||0};draw();}if(b.hasAttribute('data-deselect')){selected=0;draw();}if(b.dataset.highlight){const all=ctx.read('highlights',{});if(b.dataset.highlight==='none')delete all[key(selected)];else all[key(selected)]=b.dataset.highlight;ctx.save('highlights',all);draw();ctx.toast('Highlight saved.');}if(b.hasAttribute('data-bookmark')){const all=ctx.read('bookmarks',[]);if(!all.some(b=>b.version===s.version&&b.book===s.book&&b.chapter===s.chapter&&b.verse===selected)){all.unshift({version:s.version,book:s.book,chapter:s.chapter,verse:selected,text:bible[s.book].chapters[s.chapter-1][selected-1]});ctx.save('bookmarks',all);ctx.toast('Verse saved.');draw();}else ctx.toast('This verse is already saved.');}if(b.hasAttribute('data-copy')){const text=`${bible[s.book].chapters[s.chapter-1][selected-1]} — ${names()[s.book]} ${s.chapter}:${selected} (${VERSIONS[s.version].short})`;try{await navigator.clipboard.writeText(text);ctx.toast('Verse copied.');}catch{ctx.modal('Copy this verse',`<textarea readonly class="copy-verse">${esc(text)}</textarea>`);}}if(b.hasAttribute('data-search'))search();if(b.hasAttribute('data-saved'))bookmarks();if(b.hasAttribute('data-settings'))preferences();});bindBookSwipe(host.querySelector('.book-spread'),canTurn,turn);}
  function canTurn(dir){
   if(busy||ctx.route!=='bible'||!bible||!root?.querySelector('.book-spread'))return false;
-  return (dir<0?s.page>0:s.page+step()<pages.length)||Boolean(adjacentChapter(bible,s.book,s.chapter,dir));
+  return pageAvailable(dir);
  }
  async function turn(dir,angle=0){
   if(!canTurn(dir))return;
@@ -37,9 +79,17 @@ export function createReader(ctx){
   const count=step(),oldPages=[...root.querySelectorAll('.book-spread > .paper-page')].map(p=>p.cloneNode(true));
   try{
    selected=0;
-   if(dir>0&&s.page+count<pages.length){s.page+=count;pendingAnchor=currentAnchor();draw();}
-   else if(dir<0&&s.page>0){s.page=Math.max(0,s.page-count);pendingAnchor=currentAnchor();draw();}
-   else{const next=adjacentChapter(bible,s.book,s.chapter,dir);if(!next)return;s.book=next.book;s.chapter=next.chapter;s.page=0;pendingAnchor={verse:1,offset:0};pendingEnd=dir<0;draw();}
+   if(dir>0&&s.page+count<pages.length){s.page+=count;pendingAnchor=currentAnchor();draw({pagesOnly:true});}
+   else if(dir<0&&s.page>0){s.page=Math.max(0,s.page-count);pendingAnchor=currentAnchor();draw({pagesOnly:true});}
+   else{
+    const next=adjacentChapter(bible,s.book,s.chapter,dir);
+    if(!next)return;
+    const focusDirection=document.activeElement?.dataset.turn;
+    s.book=next.book;s.chapter=next.chapter;s.page=0;
+    pendingAnchor={verse:1,offset:0};pendingEnd=dir<0;
+    draw();
+    if(focusDirection)root.querySelector(`[data-turn="${focusDirection}"]`)?.focus({preventScroll:true});
+   }
    await animateBookTurn(root.querySelector('.book-spread'),oldPages,count,dir,angle);
   }finally{busy=false;}
  }
@@ -48,7 +98,19 @@ export function createReader(ctx){
  function search(){ctx.modal('Find it in the Word',`<form class="search-form"><div class="search-input">${ctx.icon('search')}<label class="sr-only" for="bible-query">Passage or words</label><input id="bible-query" type="search" placeholder="John 3:16, Psalm 23, or a word…" autocomplete="off"><button class="button small">Find</button></div><p class="fine-print">Searching ${VERSIONS[s.version].name}. Use at least 3 letters for a word search.</p></form><div id="search-results" class="search-results"></div>`,body=>{body.querySelector('form').onsubmit=e=>{e.preventDefault();const q=body.querySelector('input').value.trim(),ref=parseReference(q,bible),result=[];if(ref)result.push({...ref,text:bible[ref.book].chapters[ref.chapter-1][ref.verse-1]});else if(q.length>=3){outer:for(let b=0;b<bible.length;b++)for(let c=0;c<bible[b].chapters.length;c++)for(let v=0;v<bible[b].chapters[c].length;v++){const text=bible[b].chapters[c][v];if(text.toLocaleLowerCase().includes(q.toLocaleLowerCase())){result.push({book:b,chapter:c+1,verse:v+1,text});if(result.length===40)break outer;}}}body.querySelector('#search-results').innerHTML=result.length?`${result.length===40?'<p class="fine-print">First 40 matches. Add more words to narrow your search.</p>':''}${result.map(r=>`<button class="search-result" data-passage="${r.book},${r.chapter},${r.verse},${s.version}"><strong>${names()[r.book]} ${r.chapter}:${r.verse}</strong><span>${esc(r.text)}</span>${ctx.icon('arrow')}</button>`).join('')}`:'<div class="empty-state"><h3>No matches yet.</h3><p>Try a book and chapter, or a different word of at least three letters.</p></div>';};body.querySelector('input').focus();});}
  async function render(target){root=target;const generation=++run,pending=ctx.pendingPassage;ctx.pendingPassage=null;if(pending){s={book:pending.book,chapter:pending.chapter,page:0,version:pending.version||'kjv'};selected=pending.verse||0;}if(!VERSIONS[s.version])s.version='kjv';root.innerHTML='<div class="page-heading"><div><p class="eyebrow">OPEN THE WORD</p><h1>A book to live by.</h1></div></div><div class="loading-panel">Opening your Bible…</div>';let loaded;try{loaded=await loadBible(s.version);}catch{if(generation===run&&ctx.route==='bible')root.querySelector('.loading-panel').innerHTML='<p>The Bible text could not be loaded.</p><button class="button" data-route="bible">Try again</button>';return;}if(generation!==run||ctx.route!=='bible'||!ctx.bibleOpened)return;bible=loaded;s.book=Math.min(65,Math.max(0,+s.book||0));s.chapter=Math.min(bible[s.book].chapters.length,Math.max(1,+s.chapter||1));pendingAnchor=pending?{verse:pending.verse||1,offset:0}:s.anchor||{verse:1,offset:0};draw();if(ctx.readerSearchRequested){ctx.readerSearchRequested=false;search();}}
  document.addEventListener('keydown',e=>{if(ctx.route!=='bible'||!ctx.bibleOpened||document.querySelector('#site-dialog').open||['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();turn(e.key==='ArrowRight'?1:-1);}});
- let resizeFrame;window.addEventListener('resize',()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{if(ctx.route==='bible'&&ctx.bibleOpened&&bible){paginateCurrent();draw();}});});return {
+ let resizeFrame,lastWidth=window.innerWidth;
+ window.addEventListener('resize',()=>{
+  // Phone address bars change the height while the reader scrolls.
+  if(lastWidth===window.innerWidth)return;
+  lastWidth=window.innerWidth;
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame=requestAnimationFrame(()=>{
+   if(ctx.route==='bible'&&ctx.bibleOpened&&bible&&root?.querySelector('.book-spread')){
+    paginateCurrent();draw();
+   }
+  });
+ });
+ return {
   render,
   prepare(){return loadBible(VERSIONS[s.version]?s.version:'kjv').catch(()=>{});},
   reset(){

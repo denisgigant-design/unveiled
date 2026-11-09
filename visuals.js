@@ -169,52 +169,51 @@ export function showBibleCover(ctx,root,openReader,prepareReader){
 }
 
 export function initVisuals(ctx){
- let activeOpening=null,openingTimer,lastRoute,openingVersion=0;
+ let activeOpening=null,openingTimer,lastRoute;
+ const entrances={home:'home',team:'home',fellowship:'fellowship',media:'media'};
  const reduce=matchMedia('(prefers-reduced-motion:reduce)');
- const canAnimate=()=>document.body.dataset.motion!=='off'&&!reduce.matches;
  function syncReplay(){
   document.querySelectorAll('[data-replay-veil]').forEach(button=>{
-   button.disabled=!canAnimate();
-   button.title=button.disabled?'Enable motion to replay the opening':'Replay the opening veil';
+   button.disabled=reduce.matches;
+   button.title=button.disabled?'Reduced motion is enabled on this device':'Replay the opening veil';
   });
  }
  function clearOpening(){
-  openingVersion++;
   clearTimeout(openingTimer);
   activeOpening?.remove();
   activeOpening=null;
  }
- async function opening(theme,replay=false){
+ function opening(route){
   clearOpening();
-  if(!canAnimate())return;
-  const introKey='unveiled.veil-intro.v2';
-  if(theme==='home'&&!replay){
-   try{if(sessionStorage.getItem(introKey))return;}
-   catch{if(ctx.veilSeen)return;}
-  }
-  const version=openingVersion,art=new Image();
-  art.src=veilSource(theme);
-  try{await art.decode();}catch{return;}
-  if(version!==openingVersion||!canAnimate())return;
-  if(theme==='home'){
-   ctx.veilSeen=true;
-   try{sessionStorage.setItem(introKey,'seen');}catch{}
-  }
-  const identity=theme==='fellowship'
+  const theme=entrances[route];
+  if(reduce.matches||!theme)return;
+  const identity=route==='fellowship'
    ?'<img src="assets/womens-fellowship-logo.jpg" width="96" height="96" alt=""><span>WOMEN’S FELLOWSHIP</span>'
-   :theme==='media'
+   :route==='media'
     ?'<img src="assets/unveiled-music-logo.jpg" width="96" height="96" alt=""><span>MUSIC &amp; MEDIA ROOM</span>'
-    :`${veilMark()}${wordmark()}<span>BEYOND THE VEIL. INTO THE LIGHT.</span>`;
+    :`${veilMark()}${wordmark()}<span>${route==='team'?'MEMBERS · DISCIPLED IN THE WORD':'BEYOND THE VEIL. INTO THE LIGHT.'}</span>`;
   const el=document.createElement('div');
   el.className='opening-veil';
   el.dataset.veilTheme=theme;
+  el.dataset.veilRoute=route;
+  el.dataset.waiting='';
   el.innerHTML=`<div class="opening-art" aria-hidden="true">${veilPanels(theme,'opening')}</div>
    <div class="opening-identity" aria-hidden="true">${identity}</div>
    <button class="skip-opening" aria-label="Skip opening animation">Skip animation ${ctx.icon('arrow')}</button>`;
   document.body.append(el);
   activeOpening=el;
   el.querySelector('button').onclick=clearOpening;
-  openingTimer=setTimeout(clearOpening,2200);
+  el.querySelector('.opening-identity').onanimationend=()=>{if(activeOpening===el)clearOpening();};
+  function reveal(){
+   if(activeOpening!==el||!el.hasAttribute('data-waiting'))return;
+   clearTimeout(openingTimer);
+   el.removeAttribute('data-waiting');
+   openingTimer=setTimeout(clearOpening,2500);
+  }
+  openingTimer=setTimeout(reveal,480);
+  const art=new Image();
+  art.src=veilSource(theme);
+  art.decode().then(reveal,reveal);
  }
  document.addEventListener('click',event=>{
   const picture=event.target.closest('[data-brand-image]');
@@ -223,12 +222,11 @@ export function initVisuals(ctx){
    if(!p)return;
    ctx.modal(p.title,`<figure class="art-lightbox supplied-picture"><img src="assets/${p.file}" alt="${esc(p.alt)}"><figcaption>${esc(p.title)}</figcaption></figure><a class="button outline full" href="assets/${p.file}" download>${ctx.icon('download')} Save image</a>`);
   }
-  if(event.target.closest('[data-replay-veil]'))opening(ctx.route,true);
+  if(event.target.closest('[data-replay-veil]'))opening(ctx.route);
   if(event.target.closest('[data-reader-cover]')){ctx.bibleOpened=false;ctx.refresh();}
   const colour=event.target.closest('button[data-book-colour]');
   if(colour){ctx.save('book-colour',colour.dataset.bookColour);syncBookColour(ctx);}
-  if(event.target.closest('[data-scroll-missions]'))document.querySelector('.mission-grid')?.scrollIntoView({behavior:canAnimate()?'smooth':'instant',block:'start'});
-  if(event.target.closest('button[data-motion]')){syncReplay();if(!canAnimate())clearOpening();}
+  if(event.target.closest('[data-scroll-missions]'))document.querySelector('.mission-grid')?.scrollIntoView({behavior:reduce.matches?'instant':'smooth',block:'start'});
  });
  reduce.addEventListener('change',()=>{syncReplay();if(reduce.matches)clearOpening();});
  return {enter(){
@@ -236,7 +234,6 @@ export function initVisuals(ctx){
   syncBookColour(ctx);
   if(ctx.route===lastRoute)return;
   lastRoute=ctx.route;
-  if(['home','fellowship','media'].includes(ctx.route))opening(ctx.route);
-  else clearOpening();
+  opening(ctx.route);
  }};
 }

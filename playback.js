@@ -32,17 +32,20 @@ function youtubeAPI(){
 export function createPlayback(ctx){
  const host=document.querySelector('#persistent-player'),screen=host.querySelector('.persistent-screen');
  const title=host.querySelector('[data-dock-title]'),status=host.querySelector('[data-dock-status]');
+ const compactButton=host.querySelector('[data-compact-player]'),restoreButton=host.querySelector('[data-restore-player]');
  let remembered={media:featuredVideo};
  let current=featuredVideo,slots={},roomUpdate,frame,player,ready=false,failed=false,loadedId,engaged=false,playRequested=false,playing=false,dismissed=false,seenInline=false,raf;
- let notice='';
+ let notice='',compact=false;
  const topbar=document.querySelector('#topbar');
  const resize=new ResizeObserver(scheduleLayout);
  resize.observe(document.querySelector('#main'));
 
  function showMode(mode){
   if(host.dataset.mode===mode)return;
+  const focused=host.contains(document.activeElement);
   host.dataset.mode=mode;
-  document.body.classList.toggle('has-floating-player',mode==='dock');
+  document.body.classList.toggle('has-floating-player',['dock','compact','bubble'].includes(mode));
+  if(mode==='bubble'&&focused)restoreButton.focus({preventScroll:true});
  }
  function layout(){
   raf=null;
@@ -50,14 +53,17 @@ export function createPlayback(ctx){
   const headerBottom=topbar.getBoundingClientRect().bottom;
   const visible=box&&box.bottom>headerBottom+Math.min(80,box.height/2)&&box.top<window.innerHeight-Math.min(80,box.height/2);
   if(visible){seenInline=true;dismissed=false;}
-  const keepVisible=!dismissed&&(engaged||playRequested||Boolean(frame&&!ready&&seenInline));
+  const keepVisible=playing||!dismissed&&(engaged||playRequested||Boolean(frame&&!ready&&seenInline));
   if(box&&(visible||!keepVisible)){
    showMode('inline');
    host.style.setProperty('--player-x',box.left+window.scrollX+'px');
    host.style.setProperty('--player-y',box.top+window.scrollY+'px');
    host.style.setProperty('--player-width',box.width+'px');
    host.style.setProperty('--player-height',box.height+'px');
-  }else showMode(keepVisible?'dock':'parked');
+  }else{
+   const floating=compact?(ready&&!playing&&!playRequested?'bubble':'compact'):'dock';
+   showMode(keepVisible?floating:'parked');
+  }
  }
  function scheduleLayout(){if(raf==null)raf=requestAnimationFrame(layout);}
  function sync(){
@@ -71,6 +77,11 @@ export function createPlayback(ctx){
   });
   title.textContent=current.title;
   status.textContent=notice;
+  const sizeAction=compact?'Expand floating player':'Minimize floating player';
+  compactButton.setAttribute('aria-label',sizeAction);
+  compactButton.title=sizeAction;
+  compactButton.setAttribute('aria-pressed',String(compact));
+  restoreButton.setAttribute('aria-label','Restore floating player for '+current.title);
   scheduleLayout();
   roomUpdate?.();
  }
@@ -149,9 +160,8 @@ export function createPlayback(ctx){
  }
  function pause(){
   playRequested=false;
-  playing=false;
   if(ready)player.pauseVideo();
-  else if(frame)frame.src=frameURL(loadedId);
+  else if(frame){playing=false;frame.src=frameURL(loadedId);}
   sync();
  }
  function select(video,play=false){
@@ -177,7 +187,7 @@ export function createPlayback(ctx){
  function reset(){
   remembered={media:featuredVideo};
   current=featuredVideo;
-  engaged=false;dismissed=true;notice='';
+  engaged=false;dismissed=true;notice='';compact=false;
   pause();
   if(frame){frame.title=current.title;setSelectedVideo();}
  }
@@ -191,6 +201,13 @@ export function createPlayback(ctx){
  host.querySelector('[data-close-player]').onclick=()=>{
   dismissed=true;engaged=false;
   pause();
+ };
+ compactButton.onclick=()=>{compact=!compact;sync();};
+ restoreButton.onclick=()=>{
+  compact=false;
+  layout();
+  if(host.dataset.mode==='dock')compactButton.focus({preventScroll:true});
+  sync();
  };
  window.addEventListener('scroll',scheduleLayout,{passive:true});
  window.addEventListener('resize',scheduleLayout);

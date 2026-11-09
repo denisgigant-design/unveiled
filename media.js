@@ -1,7 +1,8 @@
 import {esc,uid,safeLink,youtubeID} from './core.mjs';
 import {RESOURCES} from './data.mjs?v=unveiled9';
-import {imageButton,musicRoomIntro} from './visuals.js?v=unveiled9';
-import {featuredVideo} from './playback.js?v=unveiled9';
+import {imageButton,musicRoomIntro} from './visuals.js?v=unveiled11';
+import {featuredVideo} from './playback.js?v=unveiled11';
+import {findYoutubeVideos,setYoutubeSearchKey,youtubeResultsURL,youtubeSearchKey} from './youtube-search.mjs?v=unveiled11';
 
 const rooms={
  music:{name:'Unveiled Music',playlist:'Music',file:'unveiled-music-frame.jpg',cut:[373,327,1163,737]},
@@ -55,14 +56,17 @@ export function media(ctx,root){
    <button class="plain-link" data-replay-veil>${ctx.icon('veil')} Replay opening</button>
   </div>
   <section class="video-finder" aria-labelledby="video-finder-title">
-   <h2 id="video-finder-title">Search videos</h2>
+   <div class="video-finder-heading"><div><p class="eyebrow">THE LISTENING SHELF</p><h2 id="video-finder-title">Find a video.</h2></div><span class="video-finder-emblem" aria-hidden="true">${ctx.icon('palm')}</span></div>
    <form role="search" class="video-search">
     <label class="sr-only" for="watch-query">Search videos by title or YouTube link</label>
-    <div class="video-search-field">${ctx.icon('search')}<input id="watch-query" type="search" autocomplete="off" maxlength="2000" placeholder="Search by title or paste a YouTube link"></div>
-    <label class="sr-only" for="watch-filter">Video section</label>
-    <select id="watch-filter"><option value="all">Both sections</option><option value="music">Music</option><option value="media">Media</option></select>
+    <div class="video-search-field">${ctx.icon('search')}<input id="watch-query" type="search" autocomplete="off" maxlength="2000" placeholder="Search or paste a YouTube link"><button class="video-search-submit" type="submit">Search ${ctx.icon('arrow')}</button></div>
+    <div class="video-search-options">
+     <label for="watch-filter">Library <select id="watch-filter"><option value="all">Both sections</option><option value="music">Music</option><option value="media">Media</option></select></label>
+     <a class="plain-link" data-youtube-search-link target="_blank" rel="noopener noreferrer">Search on YouTube ${ctx.icon('external')}</a>
+     <button type="button" class="plain-link" data-youtube-connect></button>
+    </div>
    </form>
-   <p class="video-search-hint">Search Unveiled’s featured and saved videos, or paste a YouTube video link.</p>
+   <p class="video-search-hint" data-search-status role="status"></p>
    <div class="video-results" data-video-results aria-live="polite"></div>
   </section>
   ${watchSection(ctx,'music')}
@@ -70,10 +74,18 @@ export function media(ctx,root){
  </div>`;
  const room=root.querySelector('.media-room');
  const input=room.querySelector('#watch-query'),filter=room.querySelector('#watch-filter');
+ const searchButton=room.querySelector('.video-search-submit');
  const results=room.querySelector('[data-video-results]');
+ const searchLink=room.querySelector('[data-youtube-search-link]');
+ const searchStatus=room.querySelector('[data-search-status]');
+ const connect=room.querySelector('[data-youtube-connect]');
  const slots=Object.fromEntries(Object.keys(rooms).map(kind=>[kind,room.querySelector(`[data-player-slot="${kind}"]`)]));
  const scopedLinks=()=>ctx.read('links',[]);
- let matches=[],lastWatchKey='';
+ let matches=[],youtubeMatches=[],request,lastWatchKey='';
+ const linkTitle=id=>'YouTube video · '+id;
+ const youtubeHint=()=>youtubeSearchKey()
+  ?'Search YouTube here, or paste a video link and save it to either playlist.'
+  :'Search your library, open YouTube results, or paste a video link to save it directly.';
 
  function jump(kind){
   const section=room.querySelector(`[data-watch-section="${kind}"]`);
@@ -91,15 +103,21 @@ export function media(ctx,root){
   jump(kind);
  }
  function saved(video,kind){
-  return scopedLinks().some(link=>videoKey(link)===videoKey(video)&&roomOf(link)===kind);
+  const key=videoKey(video);
+  return scopedLinks().some(link=>roomOf(link)===kind&&videoKey(link)===key);
  }
  function drawSearch(){
   const term=input.value.trim(),kind=filter.value;
-  const videos=[featuredVideo,...scopedLinks().filter(link=>youtubeID(link.url))];
+  const links=scopedLinks(),videos=[featuredVideo,...links.filter(link=>youtubeID(link.url))];
+  const savedKeys=new Set(links.map(link=>roomOf(link)+':'+videoKey(link)));
   const exact=youtubeID(safeLink(term)||'');
+  searchLink.href=youtubeResultsURL(term);
+  searchLink.hidden=Boolean(exact);
+  searchButton.setAttribute('aria-label',exact?'Find pasted video':youtubeSearchKey()?'Search YouTube':'Search YouTube in a new tab');
+  connect.textContent=youtubeSearchKey()?'YouTube search settings':'Connect YouTube search';
   if(exact){
    const known=videos.find(video=>youtubeID(video.url)===exact);
-   matches=[{...(known||{title:'YouTube video',url:'https://youtu.be/'+exact,needsTitle:true}),room:kind==='all'?roomOf(known||{}):kind}];
+   matches=[{...(known||{title:linkTitle(exact),url:'https://youtu.be/'+exact,needsTitle:true}),room:kind==='all'?roomOf(known||{}):kind,pasted:true}];
   }else{
    const query=words(term).split(/\s+/).filter(Boolean);
    const seen=new Set();
@@ -111,13 +129,81 @@ export function media(ctx,root){
     seen.add(key);
     return true;
    });
+   const listed=new Set(matches.map(videoKey));
+   matches.push(...youtubeMatches.filter(video=>!listed.has(videoKey(video))).map(video=>({...video,room:kind==='music'?'music':'media'})));
   }
-  results.innerHTML=matches.length?matches.map((video,i)=>`
-   <button class="video-result" data-play-result="${i}">
-    <span class="video-result-icon">${ctx.icon('play')}</span>
-    <span><small>${rooms[roomOf(video)].name}${video===featuredVideo?' · FEATURED':''}</small><strong>${esc(video.title)}</strong></span>
-    ${ctx.icon('arrow')}
-   </button>`).join(''):'<p class="video-search-empty">Try another title or paste a YouTube video link.</p>';
+  results.innerHTML=matches.length?matches.map((video,i)=>{
+   const id=youtubeID(video.url);
+   const label=video.pasted?'YouTube link':video.channel||rooms[roomOf(video)].name+(video===featuredVideo?' · Featured':'');
+   return `<div class="video-result">
+    <button class="video-result-play" data-play-result="${i}" aria-label="Play ${esc(video.title)}">
+     <img class="video-result-thumbnail" src="https://i.ytimg.com/vi/${id}/mqdefault.jpg" alt="" loading="lazy">
+     <span><small>${esc(label)}</small><strong>${esc(video.title)}</strong></span>${ctx.icon('play')}
+    </button>
+    ${video.needsTitle?'<input class="pasted-video-title" maxlength="120" aria-label="Optional title for this video" placeholder="Name it (optional)">':''}
+    <div class="video-result-actions">${Object.keys(rooms).map(destination=>{
+     const inPlaylist=savedKeys.has(destination+':'+videoKey(video));
+     return `<button class="save-result" data-save-result="${i}" data-save-destination="${destination}" ${inPlaylist?'disabled':''}>${ctx.icon(inPlaylist?'check':'plus')} ${inPlaylist?'In':'Save to'} ${rooms[destination].playlist}</button>`;
+    }).join('')}</div>
+   </div>`;
+  }).join(''):'<p class="video-search-empty">Try another title or paste a YouTube video link.</p>';
+ }
+ function clearYoutubeResults(){
+  request?.abort();
+  youtubeMatches=[];
+  results.removeAttribute('aria-busy');
+  searchStatus.textContent=youtubeHint();
+  drawSearch();
+ }
+ async function submitSearch(event){
+  event.preventDefault();
+  clearYoutubeResults();
+  const query=input.value.trim(),key=youtubeSearchKey();
+  if(!query||youtubeID(safeLink(query)||''))return;
+  if(!key){
+   searchLink.click();
+   searchStatus.textContent='Copy a video link from YouTube and paste it here to save it.';
+   return;
+  }
+  const controller=new AbortController();
+  request=controller;
+  searchStatus.textContent='Searching YouTube…';
+  results.setAttribute('aria-busy','true');
+  try{
+   const found=await findYoutubeVideos(query,key,controller.signal);
+   if(controller.signal.aborted||!room.isConnected)return;
+   youtubeMatches=found;
+   searchStatus.textContent=found.length?`YouTube · ${found.length} playable ${found.length===1?'result':'results'}`:'YouTube found no embeddable videos for those words.';
+   drawSearch();
+  }catch(error){
+   if(!controller.signal.aborted&&room.isConnected)searchStatus.textContent=error instanceof TypeError?'YouTube could not be reached. Open YouTube search or paste a link.':error.message;
+  }finally{
+   if(request===controller)results.removeAttribute('aria-busy');
+  }
+ }
+ function searchSettings(){
+  ctx.modal('YouTube search',`<form class="entry-form">
+   <p class="muted">Use a YouTube Data API v3 key restricted to this website. The key is kept in this tab and sent to Google when you search.</p>
+   <label>Website-restricted API key<input name="key" type="password" required maxlength="180" autocomplete="off" spellcheck="false"></label>
+   <div class="form-footer"><a class="plain-link" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Google Cloud credentials ${ctx.icon('external')}</a><button class="button">Connect search</button></div>
+   ${youtubeSearchKey()?'<button type="button" class="plain-link" data-disconnect-search>Disconnect this tab</button>':''}
+  </form>`,body=>{
+   const form=body.querySelector('form');
+   const finish=key=>{setYoutubeSearchKey(key);ctx.closeModal();clearYoutubeResults();};
+   form.onsubmit=event=>{
+    event.preventDefault();
+    const key=form.elements.key.value.trim();
+    if(!/^[\w-]{15,180}$/.test(key)){ctx.toast('Enter a Google API key.');return;}
+    finish(key);
+   };
+   body.querySelector('[data-disconnect-search]')?.addEventListener('click',()=>finish(''));
+  });
+ }
+ function resultFor(button,index){
+  const video=matches[index];
+  if(!video)return null;
+  const title=button.closest('.video-result').querySelector('.pasted-video-title')?.value.trim();
+  return title?{...video,title}:video;
  }
  function drawWatch(force=false){
   const active=ctx.playback.current();
@@ -150,9 +236,9 @@ export function media(ctx,root){
   }
  }
  function refreshLibrary(){drawPlaylists();drawSearch();drawWatch(true);}
- function saveVideo(video,kind,title=video.title){
+ function saveVideo(video,kind){
   if(saved(video,kind)){ctx.toast('Already in your playlist.');return;}
-  const link={id:uid(),title,url:video.url,room:kind};
+  const link={id:uid(),title:video.title,url:video.url,room:kind};
   const persisted=ctx.save('links',[link,...scopedLinks()]);
   if(!room.isConnected)return;
   refreshLibrary();
@@ -160,23 +246,11 @@ export function media(ctx,root){
  }
  function saveSelection(kind){
   const video=ctx.playback.forRoom(kind);
-  if(!video)return;
-  if(!video.needsTitle){saveVideo(video,kind);return;}
-  ctx.modal('Name your saved video',`<form class="entry-form">
-   <label>Video title<input name="title" required maxlength="120" placeholder="Enter a title you’ll recognise"></label>
-   <button class="button">Save to ${rooms[kind].playlist} playlist</button></form>`,body=>{
-   body.querySelector('form').onsubmit=event=>{
-    event.preventDefault();
-    const title=new FormData(event.target).get('title').trim();
-    if(!title)return;
-    ctx.closeModal();
-    saveVideo(video,kind,title);
-   };
-  });
+  if(video)saveVideo(video,kind);
  }
  function add(kind){
   ctx.modal('Add a video or link',`<form class="entry-form">
-   <label>Title<input name="title" required maxlength="120" placeholder="A song, a teaching, a channel…"></label>
+   <label>Title <small>Optional for a YouTube video</small><input name="title" maxlength="120" placeholder="A song, a teaching, a channel…"></label>
    <label>YouTube or other link<input name="url" type="url" required maxlength="2000" placeholder="https://…"></label>
    <label>Playlist<select name="room"><option value="music" ${kind==='music'?'selected':''}>Music</option><option value="media" ${kind==='media'?'selected':''}>Media</option></select></label>
    <p class="fine-print">YouTube videos play here. Other links open on their own website.</p>
@@ -184,23 +258,29 @@ export function media(ctx,root){
   </form>`,body=>{
    body.querySelector('form').onsubmit=event=>{
     event.preventDefault();
-    const values=new FormData(event.target),url=safeLink(values.get('url')),title=values.get('title').trim();
-    if(!url||!title){ctx.toast('Enter a title and an https link.');return;}
+    const values=new FormData(event.target),url=safeLink(values.get('url')),id=youtubeID(url);
+    const title=values.get('title').trim()||(id&&(id===youtubeID(featuredVideo.url)?featuredVideo.title:linkTitle(id)));
+    if(!url||!title){ctx.toast('Paste a YouTube video link, or give the other HTTPS link a title.');return;}
     ctx.closeModal();
     saveVideo({title,url},values.get('room'));
    };
   });
  }
- room.querySelector('.video-search').onsubmit=event=>{event.preventDefault();drawSearch();};
- input.oninput=drawSearch;
+ room.querySelector('.video-search').onsubmit=submitSearch;
+ input.oninput=clearYoutubeResults;
  filter.onchange=drawSearch;
+ connect.onclick=searchSettings;
  room.addEventListener('click',event=>{
   const b=event.target.closest('button');
   if(!b)return;
   if(b.dataset.watchJump)jump(b.dataset.watchJump);
   if(b.dataset.searchSection)searchIn(b.dataset.searchSection);
   if(b.dataset.addVideo)add(b.dataset.addVideo);
-  if(b.dataset.playResult!=null&&matches[b.dataset.playResult])play(matches[b.dataset.playResult]);
+  if(b.dataset.playResult!=null){const video=resultFor(b,b.dataset.playResult);if(video)play(video);}
+  if(b.dataset.saveResult!=null){
+   const video=resultFor(b,b.dataset.saveResult),destination=b.dataset.saveDestination;
+   if(video&&Object.hasOwn(rooms,destination))saveVideo(video,destination);
+  }
   if(b.dataset.playRoom){
    const video=ctx.playback.forRoom(b.dataset.playRoom);
    if(video)play(video);
@@ -222,6 +302,7 @@ export function media(ctx,root){
    });
   }
  });
+ searchStatus.textContent=youtubeHint();
  refreshLibrary();
  ctx.playback.attach(slots,drawWatch);
 }

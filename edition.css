@@ -7,6 +7,7 @@
 }
 .opening-veil[data-veil-theme="fellowship"]{--veil-dark:#220f29;--veil-light:#9f3a77}
 .opening-veil[data-veil-theme="media"]{--veil-dark:#041b16;--veil-light:#327e59}
+.opening-veil[data-veil-route="team"]{--veil-dark:#0a1731;--veil-light:#836a42}
 .opening-veil::before{
   content:"";position:absolute;inset:0;
   background:radial-gradient(ellipse at 50% 53%,var(--veil-light),var(--veil-dark) 70%);
@@ -49,7 +50,8 @@
 }
 @keyframes veil-background{0%,25%{opacity:1}87%,100%{opacity:0}}
 @keyframes veil-identity{0%,19%{opacity:1}57%,100%{opacity:0;transform:translateY(-9px) scale(.95)}}
-body[data-motion="off"] .opening-veil{display:none}
+.opening-veil[data-waiting]::before,
+.opening-veil[data-waiting] :is(.veil-panel,.opening-identity){animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){.opening-veil{display:none}}
 .garden-drapes{overflow:hidden;opacity:.64}
 .fellowship-header{text-shadow:0 2px 12px #200d22}

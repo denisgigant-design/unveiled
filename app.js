@@ -1,11 +1,11 @@
 import {esc,uid,EN_BOOKS,PL_BOOKS,VERSIONS,validateBackup} from './core.mjs';
 import {icon,NAV} from './data.mjs?v=unveiled9';
 import {createReader} from './reader.js?v=unveiled10';
-import {renderFeature} from './features.js?v=unveiled10';
+import {renderFeature} from './features.js?v=unveiled11';
 import {wordmark,palm,veilMark} from './brand-assets.mjs?v=unveiled6';
-import {initMotion} from './motion.js?v=unveiled6';
-import {enhanceHome,showBibleCover,initVisuals} from './visuals.js?v=unveiled9';
-import {createPlayback} from './playback.js?v=unveiled9';
+import {initMotion} from './motion.js?v=unveiled11';
+import {enhanceHome,showBibleCover,initVisuals} from './visuals.js?v=unveiled11';
+import {createPlayback} from './playback.js?v=unveiled11';
 import {createDeviceAccounts,showDeviceAccount} from './device-accounts.mjs?v=unveiled8';
 const main=document.querySelector('#main'),dialog=document.querySelector('#site-dialog'),memory=new Map();let toastTimer,warned=false;
 const accounts=createDeviceAccounts({onSaveError:()=>ctx.toast('Your browser could not save the account. Export a backup from Your personal space.')});

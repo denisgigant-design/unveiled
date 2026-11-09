@@ -1,5 +1,4 @@
-// Set to the deployed server’s /search URL when the site’s YouTube key is configured.
-export const youtubeSearchEndpoint='';
+export const youtubeSearchEndpoint='https://unveiled-youtube-search.arisenmyna.chatgpt.site/search';
 
 export function youtubeResultsURL(query){
  const url=new URL('https://www.youtube.com/results');

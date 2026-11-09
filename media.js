@@ -2,7 +2,7 @@ import {esc,uid,safeLink,youtubeID} from './core.mjs';
 import {RESOURCES} from './data.mjs?v=unveiled9';
 import {musicRoomIntro} from './visuals.js?v=unveiled11';
 import {featuredVideo} from './playback.js?v=unveiled12';
-import {findYoutubeVideos,youtubeResultsURL,youtubeSearchEndpoint} from './youtube-search.mjs?v=unveiled12';
+import {findYoutubeVideos,youtubeResultsURL,youtubeSearchEndpoint} from './youtube-search.mjs?v=unveiled13';
 
 const rooms={
  music:{name:'Unveiled Music',playlist:'Music',file:'unveiled-music-frame.jpg',cut:[373,327,1163,737]},

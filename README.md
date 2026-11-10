@@ -42,3 +42,11 @@ Live social feeds and paid checkout are not connected. The resource shop current
 The site uses plain HTML, CSS and JavaScript modules. Serve this folder over HTTP to preview it. Run `node checks.mjs` and `node book-checks.mjs` to validate Bible pagination, passage references, backup validation, game data, maps and resources. No dependencies are required.
 
 Bible text and map sources are linked in the site's About dialog and `data/sources.json`. Scripture is presented separately from teaching commentary. Map locations are approximate; lines show the sequence of places rather than exact travel paths.
+
+### Bible word study
+
+Open the reader and choose **Word study**, or select a verse and choose **Study words**. The study panel gives an English gloss in context, transliteration, and a short lexicon entry when available. It uses Hebrew and Aramaic for the Old Testament and Greek Textus Receptus readings for the New Testament. The original text is shown by passage, with reference adjustments for known differences across the reader editions. The Hebrew spelling lookup checks vowel-pointed and unpointed forms recorded in the Hebrew corpus, and suggests forms one edit away.
+
+Word data comes from TAHOT, TAGNT, TBESH, and TBESG at [STEPBible.org and Tyndale House Cambridge](https://STEPBible.github.io/STEPBible-Data/), licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The generated files use [source revision `5de0a47`](https://github.com/STEPBible/STEPBible-Data/tree/5de0a47f35f0fc13dfe1430d104e5db8a4285f9c). The converter selects the primary Hebrew readings and TR Greek readings, regularizes Unicode and punctuation, removes Hebrew cantillation, extracts brief glosses, and indexes original spellings and references. The reader loads compressed data on demand.
+
+Run `python3 build-word-study.py /path/to/STEPBible-Data` from this checkout to regenerate the study data. Run `node word-study-checks.mjs` to verify coverage and spelling behavior.

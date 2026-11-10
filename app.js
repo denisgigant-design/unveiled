@@ -1,6 +1,6 @@
 import {esc,uid,EN_BOOKS,PL_BOOKS,VERSIONS,validateBackup} from './core.mjs';
 import {icon,NAV} from './data.mjs?v=unveiled9';
-import {createReader} from './reader.js?v=unveiled10';
+import {createReader} from './reader.js?v=unveiled18';
 import {renderFeature} from './features.js?v=unveiled15';
 import {wordmark,palm,veilMark} from './brand-assets.mjs?v=unveiled6';
 import {initMotion} from './motion.js?v=unveiled17';

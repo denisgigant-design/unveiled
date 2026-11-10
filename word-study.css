@@ -1,0 +1,125 @@
+.word-study {
+  --study-accent: #224e74;
+  --study-card: #eef4f9;
+  --study-border: #bfd0df;
+  --study-muted: #4c6379;
+}
+:root[data-appearance="dark"] .word-study {
+  --study-accent: #a8d2f6;
+  --study-card: #14263b;
+  --study-border: #3d5874;
+  --study-muted: #adbed2;
+}
+#site-dialog[data-variant="word-study"] { max-width: 760px; }
+.word-study [hidden] { display: none; }
+.reader-word-study { white-space: nowrap; }
+.reader-word-study svg { width: 16px; height: 16px; }
+.study-tabs { display: flex; gap: 8px; margin: 4px 0 16px; }
+.study-tabs button,
+.study-secondary,
+.study-word-list button,
+.study-verse-select,
+.study-spelling-form input {
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--study-border);
+  border-radius: 8px;
+  background: var(--study-card);
+  color: inherit;
+}
+.study-tabs button,
+.study-secondary { font-size: .87rem; font-weight: 650; }
+.study-tabs [aria-pressed="true"],
+.study-word-list [aria-pressed="true"] {
+  border-color: var(--study-accent);
+  box-shadow: inset 0 0 0 1px var(--study-accent);
+  color: var(--study-accent);
+}
+.study-passage-bar,
+.study-word-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 14px;
+}
+.study-passage-bar h3,
+.word-study section h3 { margin: 0; font-size: 1.2rem; }
+.study-passage-bar label { color: var(--study-muted); font-size: .85rem; }
+.study-verse-select { margin-left: 4px; }
+.study-verse-text {
+  margin: 9px 0 16px;
+  padding: 0 0 0 12px;
+  border-left: 2px solid var(--study-border);
+  font: 1rem/1.45 Georgia, serif;
+}
+.study-word-caption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 9px; }
+.study-word-caption span,
+.study-source,
+.study-hint { color: var(--study-muted); font-size: .82rem; line-height: 1.42; }
+.study-hint { margin: 5px 0 9px; }
+.study-word-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 3px;
+  max-height: 12.5rem;
+  overflow: auto;
+}
+.study-word-list button,
+.study-word,
+.study-lemma,
+.study-matches bdi,
+.study-spelling-form input {
+  font-family: 'Times New Roman', 'Arial Hebrew', serif;
+  font-size: 1.38rem;
+  line-height: 1.32;
+}
+.study-word-list button { min-width: 42px; padding: 3px 9px; }
+.study-word-detail {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--study-border);
+  border-radius: 10px;
+  background: var(--study-card);
+}
+.study-word { font-size: 1.9rem; }
+.study-roman, .study-language, .study-example-ref { color: var(--study-muted); font-size: .85rem; }
+.study-roman { margin-inline-start: 5px; overflow-wrap: anywhere; }
+.study-meaning { margin: 7px 0 12px; line-height: 1.4; }
+.study-label {
+  display: block;
+  margin: 0 0 4px;
+  color: var(--study-accent);
+  font-size: .73rem;
+  font-weight: 700;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+.study-lexicon, .study-matches { list-style: none; margin: 0; padding: 0; }
+.study-lexicon li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  padding: 4px 0;
+  line-height: 1.4;
+}
+.study-lexicon li + li, .study-matches li + li { border-top: 1px solid var(--study-border); }
+.study-lexicon small { color: var(--study-muted); }
+.study-word-detail .study-secondary { margin-top: 8px; }
+.study-spelling-form { display: flex; gap: 8px; margin: 12px 0; }
+.study-spelling-form input { flex: 1; min-width: 0; font-size: 1.5rem; }
+.study-result-message { margin: 12px 0 8px; line-height: 1.4; }
+.study-matches li { padding: 7px 0; line-height: 1.35; }
+.study-matches .plain-link, .study-source a { color: var(--study-accent); }
+.study-source { margin: 14px 0 0; }
+.study-source a { text-decoration: underline; }
+
+@media (max-width: 550px) {
+  #site-dialog[data-variant="word-study"] { width: calc(100% - 20px); padding: 0 13px 16px; }
+  #site-dialog[data-variant="word-study"] .dialog-bar { padding: 12px 0; }
+  #site-dialog[data-variant="word-study"] .dialog-bar h2 { font-size: 1.17rem; }
+  .study-word-list { max-height: 9.4rem; }
+  .study-word-detail { padding: 9px 11px; }
+}

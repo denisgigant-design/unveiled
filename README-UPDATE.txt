@@ -1,38 +1,23 @@
-UNVEILED BIBLE — TWO-PAGE MOBILE + LIVE FINGER PREVIEW (Version 4)
-=================================================================
+UNVEILED BIBLE — PAGE TURN FIX V6 (10 November 2026)
 
-Files to replace in the ROOT of your existing GitHub repository:
-  index.html
-  reader.js
-  book-reader.mjs
+Replace the following files in the ROOT of the GitHub repository:
+  1. book-reader.mjs
+  2. reader.js
+  3. index.html
 
-1. Download and unzip this package on your phone or computer.
-2. Open https://github.com/denisgigant-design/unveiled
-3. Switch to the main branch if necessary.
-4. Upload the THREE files listed above to the repository ROOT, replacing the
-   existing files. Commit the changes. Do not upload a ZIP as the website itself.
-5. Open https://denisgigant-design.github.io/unveiled/
-   An Incognito tab avoids old cached files while GitHub Pages redeploys.
+Repository: https://github.com/denisgigant-design/unveiled
+Live site: https://denisgigant-design.github.io/unveiled/
 
-WHAT CHANGED
-- True two-page spread now opens by default on mobile (including after reopening).
-- A compact Pages control switches between Two pages and One page on mobile.
-- Changing modes remeasures the passage so the right page contains real text.
-- During a finger drag, the sheet's BACK AND UNDERLYING PAGES show the actual
-  upcoming Scripture immediately, including when crossing chapters.
-- The paper's original irregular shape, colours, palm trees, and veil artwork
-  remain intact; the curl follows the established page contour.
-- Arrow buttons, backward turns, and vertical scrolling remain supported.
-- The index page refreshes the JavaScript import URLs to avoid old browser cache.
+Changes:
+- Scripture text size minimum is now 1px, maximum remains 32px, and A−/A+ steps are 1px. The Font & page slider also allows 1px.
+- Removed the artificial black spine-shadow gradient, the dark leaf overlay and the shadow on the moving page edge.
+- The revealed portion of a page is now computed from the position of the curling paper strips, not a percentage of the rotation angle.
+- The static old-page covering layer no longer renders a second copy of the old Scripture text. Old text stays on the turning leaf; the new page text appears underneath as it becomes exposed.
+- index.html includes an import map so the unchanged app.js's older reader.js import is redirected to this updated reader.js. Cache identifiers are advanced to unveiled23.
 
-CHECKS PERFORMED
-- JavaScript syntax checks for both updated modules.
-- Chromium simulated phone and desktop: two/single mode, finger drag,
-  visible upcoming page text during drag, completion, and cleanup.
-- Chromium simulated chapter boundary: destination Scripture present before
-  finger release and correct chapter shown after release.
+Keep the names exactly as shown, without v6 in their filenames. Upload into the repository root (not inside a folder).
+Commit the changes to main. GitHub Pages will republish automatically. In Chrome, test in a NEW incognito tab to avoid stale caches.
 
-NOTE
-- The update has not been pushed to your GitHub repository from this chat.
-- The two-page phone layout uses smaller text to fit both pages. Choose
-  One page or enlarge text if you prefer bigger print.
+Note: 1px is intentionally very small and will be almost unreadable; this option is available by user request. Large font sizes still create more pages. The selected size persists in reading settings.
+
+The files were syntax-checked with Node and the motion layers checked in Chromium simulation; actual Samsung device verification remains necessary.

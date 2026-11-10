@@ -1,10 +1,10 @@
 import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference} from './core.mjs';
 import {pageForAnchor} from './book-layout.mjs';
-import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled21';
+import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled23';
 import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled16';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
 const cache=new Map();
-const textSize={min:10,max:32,step:2,initial:18};
+const textSize={min:1,max:32,step:1,initial:18};
 const clampSize=value=>Math.max(textSize.min,Math.min(textSize.max,Number(value)||textSize.initial));
 export async function loadBible(version){
  if(!cache.has(version))cache.set(version,fetch(`data/${version}.json`).then(r=>{if(!r.ok)throw Error();return r.json();}).catch(e=>{cache.delete(version);throw e;}));

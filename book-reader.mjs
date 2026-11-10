@@ -115,9 +115,12 @@ const TURN_CSS = `
 #reader-workspace .book-turn-scene.single .book-turn-base{left:0;width:100%}
 #reader-workspace .book-turn-base>.paper-page{
  position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;
- overflow:clip;
+ overflow:clip;background:var(--book-dye,#65404a)!important;
 }
 #reader-workspace .book-turn-base>.paper-page>.book-leaf-art{display:block}
+/* The old verses live on the MOVING sheet, not the temporary cover.
+   Duplicating them underneath was leaving page 8's words over page 10. */
+#reader-workspace .book-turn-base .book-page-content{visibility:hidden!important}
 #reader-workspace .book-turn-underlay>.paper-page{overflow:clip}
 #reader-workspace .book-turn-scene.single .book-turn-underlay{grid-template-columns:minmax(0,1fr)}
 #reader-workspace .book-turn-strip{
@@ -150,16 +153,13 @@ const TURN_CSS = `
 #reader-workspace .book-turn-crop>.paper-page>.book-leaf-art{display:block}
 /* Shade the already masked paper, NEVER its rectangular containing strip. */
 #reader-workspace .book-turn-crop .book-leaf-shade{
- fill:#061227;opacity:var(--curl-shade,.04);
+ fill:#061227;opacity:0;
 }
 #reader-workspace .book-turn-strip.outermost .book-turn-crop>.paper-page{
- filter:drop-shadow(1px 1px 2px #07132888);
+ filter:none;
 }
 #reader-workspace .book-turn-spine-shadow{
- position:absolute;left:50%;top:0;bottom:0;width:24px;
- z-index:2;transform:translateX(-50%);pointer-events:none;
- background:linear-gradient(90deg,transparent,#071328c0,transparent);
- opacity:var(--curl-spine-shade,0);
+ display:none!important;
 }
 #reader-workspace .book-turn-scene.single .book-turn-spine-shadow{
  left:0;transform:translateX(-50%);
@@ -331,7 +331,7 @@ function createScene(spread,originalPages,dir,destinationPages){
   scene.append(strip);
   strips.push(strip);
  }
- let hidden=[],angle=0,settled=false;
+ let hidden=[],angle=0,settled=false,edgeProjection=pageWidth;
  function hideActual(pages){
   hidden.forEach(page=>page.style.removeProperty('visibility'));
   hidden=pages;
@@ -372,10 +372,9 @@ function createScene(spread,originalPages,dir,destinationPages){
  function drag(value){
   angle=Math.max(0,Math.min(180,value));
   const progress=angle/180;
-  // At 0 degrees the next page is completely covered. At 90 degrees
-  // only half has been uncovered. The revealed area moves continuously
-  // with the curling sheet, rather than jumping to the next page.
-  updatePeel();
+  // The revealed area follows the REAL projected outer edge, not
+  // an arbitrary percentage of rotation. At 90° the old leaf has lifted
+  // clear and must not leave its words hovering over the destination.
   const bend=84*Math.pow(Math.sin(Math.PI*progress),.85);
   let x=0,z=0;
   strips.forEach((strip,i)=>{
@@ -388,19 +387,24 @@ function createScene(spread,originalPages,dir,destinationPages){
    x+=stripWidth*Math.cos(rad);
    z+=stripWidth*Math.sin(rad);
   });
-  scene.style.setProperty('--curl-spine-shade',(Math.sin(Math.PI*progress)*.74).toFixed(3));
+  edgeProjection=x;
+  updatePeel();
  }
  function updatePeel(){
-  const peel=(1-Math.cos(radians(angle)))*50;
+  // Integration of the actual 3D strip mesh determines where the paper
+  // edge lies on the original leaf. 90° reveals the whole destination;
+  // after 90° the reverse side folds onto the facing leaf.
+  const peel=Math.max(0,Math.min(100,(1-Math.max(0,edgeProjection/pageWidth))*100));
+  const oldEdge=Math.min(100,peel+0.15);
   const exposed=underlay.children[dir>0?count-1:0];
   if(flipSide>0){
    // Right leaf: uncover from the right-hand outside edge inward.
-   base.style.clipPath=`inset(0 ${peel}% 0 0)`;
+   base.style.clipPath=`inset(0 ${oldEdge}% 0 0)`;
    if(exposed)exposed.style.clipPath=`inset(0 0 0 ${100-peel}%)`;
   }else{
    // Left leaf: only the leftmost part is uncovered, moving toward
    // the right-hand (centre) spine. Applies to both single-page turns.
-   base.style.clipPath=`inset(0 0 0 ${peel}%)`;
+   base.style.clipPath=`inset(0 0 0 ${oldEdge}%)`;
    if(exposed)exposed.style.clipPath=`inset(0 ${100-peel}% 0 0)`;
   }
  }

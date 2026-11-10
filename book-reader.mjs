@@ -35,11 +35,26 @@ export function bookColour(ctx){
  return typeof stored==='string'&&Object.hasOwn(bookColours,stored)?stored:'navy';
 }
 
+export function bookViewMode(ctx){
+ return matchMedia('(max-width:960px)').matches && ctx.readerPageView==='single'
+  ? 'single' : 'spread';
+}
+
+export function bookViewChoices(ctx){
+ const view=bookViewMode(ctx);
+ return `<div class="book-view-control" role="group" aria-label="Bible page view">
+  <span>Pages</span>
+  <button type="button" data-book-view="spread" aria-pressed="${view==='spread'}"><span class="view-icon" aria-hidden="true">▣</span> Two pages</button>
+  <button type="button" data-book-view="single" aria-pressed="${view==='single'}"><span class="view-icon" aria-hidden="true">▯</span> One page</button>
+ </div>`;
+}
+
 export function bookCoverImage(ctx){
  return `assets/bible-cover-${bookColour(ctx)}.webp`;
 }
 
 export function bookColourChoices(ctx){
+ installTurnStyles();
  const selected=bookColour(ctx);
  return `<div class="book-colour-choices" role="group" aria-label="Bible cover colour">
   <span>Bible colour</span>
@@ -137,9 +152,36 @@ const TURN_CSS = `
 #reader-workspace .book-turn-scene[data-pending-destination] :is(.book-turn-underlay,.back) .book-page-content{
  visibility:hidden;
 }
+/* Mobile opens a true two-leaf book. Single page is a reversible preference. */
+#reader-workspace .book-view-control{display:flex;align-items:center;gap:6px;justify-content:flex-start;margin:7px 0 11px;color:#b9cadf;font-size:11px}
+#reader-workspace .book-view-control>span{margin-right:4px}
+#reader-workspace .book-view-control button{display:inline-flex;align-items:center;gap:6px;min-height:32px;border:1px solid #38516d;border-radius:6px;background:#14283e;color:#c9d5e7;padding:5px 11px;font-size:11px;box-shadow:none}
+#reader-workspace .book-view-control button[aria-pressed="true"]{border-color:#80b9fa;background:#25435f;color:#f4f8ff}
+#reader-workspace .book-view-control .view-icon{display:inline-block;font-size:15px;line-height:1}
+@media(min-width:961px){#reader-workspace .book-view-control{display:none}}
 @media(max-width:960px){
- #reader-workspace .book-turn-underlay{grid-template-columns:minmax(0,1fr)}
- #reader-workspace .book-turn-scene .paper-page[data-leaf="right"]{display:none}
+ :root #reader-workspace{max-width:100%;}
+ :root #reader-workspace .book-shell[data-book-view="spread"] .book-spread{
+  grid-template-columns:repeat(2,minmax(0,1fr));aspect-ratio:3/2;
+ }
+ #reader-workspace .book-shell[data-book-view="spread"] .book-artwork>svg{width:100%;margin-left:0}
+ #reader-workspace .book-shell[data-book-view="spread"] .book-leaf-art{width:100%;left:0}
+ #reader-workspace .book-shell[data-book-view="spread"] .book-spread>.paper-page[data-leaf="right"]{display:flex}
+ #reader-workspace .book-shell[data-book-view="spread"] .paper-page[data-leaf="left"]>.book-page-content{
+  inset-inline:42.7% 7.7%
+ }
+ #reader-workspace .book-shell[data-book-view="spread"] .paper-page[data-leaf="right"]>.book-page-content{
+  inset-inline:7.7% 42.7%
+ }
+ #reader-workspace .book-shell[data-book-view="spread"] :is(.paper-running,.chapter-heading){margin-bottom:3px;padding-bottom:2px}
+ #reader-workspace .book-shell[data-book-view="spread"] .chapter-heading h2{font-size:clamp(11px,2.6vw,19px)}
+ #reader-workspace .book-turn-scene.single .book-turn-underlay{grid-template-columns:minmax(0,1fr)}
+ #reader-workspace .book-turn-scene.single .paper-page[data-leaf="right"]{display:none}
+}
+@media(max-width:480px){
+ #reader-workspace .book-view-control{margin:5px 0 10px}
+ #reader-workspace .book-shell[data-book-view="spread"] .paper-running{font-size:6px!important;letter-spacing:.025em!important}
+ #reader-workspace .book-shell[data-book-view="spread"] .page-number{font-size:7px!important}
 }
 @media(prefers-reduced-motion:reduce){
  #reader-workspace .book-turn-strip{will-change:auto}
@@ -355,7 +397,7 @@ function createScene(spread,originalPages,dir,destinationPages){
  };
 }
 
-export function bindBookSwipe(spread,canTurn,turn){
+export function bindBookSwipe(spread,canTurn,turn,previewPages){
  let gesture=null,restoring=false,ignoreClick=false;
  const now=()=>performance.now();
  function begin(x,y,id,kind,source){
@@ -373,7 +415,9 @@ export function bindBookSwipe(spread,canTurn,turn){
    const dir=dx<0?1:-1;
    if(!canTurn(dir)){gesture=null;return false;}
    gesture.dir=dir;
-   gesture.scene=createScene(spread,[...spread.querySelectorAll(':scope > .paper-page')],dir);
+   let destination=null;
+   try{destination=previewPages?.(dir)||null;}catch(error){console.warn('Page preview unavailable',error);}
+   gesture.scene=createScene(spread,[...spread.querySelectorAll(':scope > .paper-page')],dir,destination);
    if(!gesture.scene){gesture=null;return false;}
    gesture.width=Math.max(1,gesture.scene.width);
    ignoreClick=true;

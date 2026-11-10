@@ -1,19 +1,18 @@
-/* The brand’s palm drifts through the background on every route. */
-.ambient-palms{position:absolute;inset:0;overflow:hidden}
-.ambient-palm{
-  position:absolute;top:-50px;left:var(--palm-x);display:block;width:var(--palm-size);height:calc(var(--palm-size) * 1.25);
-  color:#63db90;animation:palm-fall var(--palm-duration) linear var(--palm-delay) infinite;
+/* Each transparent symbol falls independently, with its trail above it. */
+.ambient-fall{position:absolute;inset:0;overflow:hidden}
+.ambient-drop{
+  position:absolute;top:0;left:var(--fall-x);display:block;
+  width:min(var(--fall-size),9vw);height:auto;opacity:0;
+  animation:ambient-drop-fall var(--fall-duration) cubic-bezier(.52,.25,.76,.67) var(--fall-delay) infinite;
 }
-.ambient-palm>.brand-palm{display:block;width:100%;height:100%;color:inherit;margin:0;transform:none}
-@keyframes palm-fall{
-  0%{transform:translate3d(0,-22px,0) rotate(-24deg);opacity:0}
-  13%{opacity:.28}
-  49%{transform:translate3d(var(--palm-sway),56vh,0) rotate(28deg);opacity:.25}
-  87%{opacity:.22}
-  100%{transform:translate3d(0,calc(100vh + 85px),0) rotate(68deg);opacity:0}
+@keyframes ambient-drop-fall{
+  0%{transform:translate3d(0,-100%,0);opacity:0}
+  9%,92%{opacity:var(--fall-opacity)}
+  100%{transform:translate3d(0,100vh,0);opacity:0}
 }
-body[data-motion="off"] .ambient-palms{display:none}
-@media(prefers-reduced-motion:reduce){.ambient-palms{display:none}}
+body[data-motion="off"] .ambient-fall{display:none}
+@media(max-width:600px){.ambient-drop:nth-child(n+11){display:none}}
+@media(prefers-reduced-motion:reduce){.ambient-fall{display:none}}
 
 /* The desktop rooms share one reading measure and their own visual structure. */
 @media(min-width:901px){

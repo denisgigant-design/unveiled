@@ -1,13 +1,18 @@
-import {palm} from './brand-assets.mjs?v=unveiled6';
-
 export function initMotion(ctx) {
   const reduce=matchMedia('(prefers-reduced-motion:reduce)');
   let enabled=ctx.read('motion',!reduce.matches),observer,routeVersion=0;
   const ambient=document.querySelector('#ambient-scene');
   if(ambient){
     const dust=Array.from({length:16},(_,i)=>`<span class="ambient-dust" style="--dust-x:${(i*37+11)%100}%;--dust-y:${(i*53+17)%100}%;--dust-delay:${-i*1.7}s;--dust-duration:${19+i%5*3}s"></span>`).join('');
-    const palms=Array.from({length:15},(_,i)=>`<span class="ambient-palm" style="--palm-x:${5+(i*37)%90}%;--palm-size:${19+(i*7)%19}px;--palm-sway:${i%2?38:-38}px;--palm-duration:${17+(i*5)%12}s;--palm-delay:${-2-i*1.61}s">${palm()}</span>`).join('');
-    ambient.innerHTML=`<i class="ambient-beam beam-blue"></i><i class="ambient-beam beam-purple"></i><i class="ambient-orbit"></i>${dust}<div class="ambient-palms">${palms}</div>`;
+    const symbols=[['palm',194,312],['veil',211,268]];
+    const falling=Array.from({length:15},(_,i)=>{
+      const [name,width,height]=symbols[i%symbols.length];
+      const duration=13+(i*7)%12;
+      const delay=-(duration*(5+(i*37)%94)/100).toFixed(2);
+      const opacity=(.35+(i%4)*.055).toFixed(2);
+      return `<img class="ambient-drop" src="assets/ambient-fall-${name}.webp" width="${width}" height="${height}" alt="" decoding="async" style="--fall-x:${4+(i*37)%89}%;--fall-size:${28+(i*11)%23}px;--fall-duration:${duration}s;--fall-delay:${delay}s;--fall-opacity:${opacity}">`;
+    }).join('');
+    ambient.innerHTML=`<i class="ambient-beam beam-blue"></i><i class="ambient-beam beam-purple"></i><i class="ambient-orbit"></i>${dust}<div class="ambient-fall">${falling}</div>`;
   }
   function sync() {
     document.body.dataset.motion=enabled&&!reduce.matches?'on':'off';

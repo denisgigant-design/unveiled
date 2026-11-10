@@ -60,13 +60,18 @@ export function syncBookColour(ctx){
  });
 }
 
-// A bendable leaf is rendered as connected narrow 3D strips. Each strip
-// samples the existing live Bible page. This keeps the ornate artwork,
-// coloured paper, verse layout and the text exactly where the reader put them.
-// Unlike a rigid rotateY(), adjacent strips have different angles, so the
-// paper forms an actual arc with moving light and shadow as it turns.
+// Unveiled Bible: the paper curls, not its ornamental veil-and-palm border.
+// A physically connected strip mesh samples the existing verse text and leaf art;
+// its complete sheet is clipped against the ACTIVE irregular SVG paper contour.
 const TURN_CSS = `
-#reader-workspace .book-spread{position:relative;transform-style:preserve-3d}
+#reader-workspace .book-spread{
+ position:relative;transform-style:preserve-3d;
+ perspective:clamp(1120px,185vw,2400px);
+ touch-action:pan-y pinch-zoom;
+}
+#reader-workspace .book-spread :is(.paper-page,.verse-line,.verse-text){
+ touch-action:pan-y pinch-zoom;
+}
 #reader-workspace .book-turn-scene{
  position:absolute;inset:0;z-index:15;pointer-events:none;
  transform-style:preserve-3d;overflow:visible;
@@ -112,29 +117,23 @@ const TURN_CSS = `
  margin:0!important;aspect-ratio:auto!important;overflow:clip;
 }
 #reader-workspace .book-turn-crop>.paper-page>.book-leaf-art{display:block}
-#reader-workspace .book-turn-surface::after{
- content:'';position:absolute;inset:0;z-index:5;pointer-events:none;
- background:rgba(5,18,39,.78);
- opacity:var(--curl-shade,.09);
+/* Shade the already masked paper, NEVER its rectangular containing strip. */
+#reader-workspace .book-turn-crop .book-leaf-shade{
+ fill:#061227;opacity:var(--curl-shade,.04);
 }
-#reader-workspace .book-turn-surface.back::after{
- background:rgba(5,18,39,.68);
-}
-#reader-workspace .book-turn-strip.outermost .book-turn-surface{
- box-shadow:2px 0 5px #05102130;
+#reader-workspace .book-turn-strip.outermost .book-turn-crop>.paper-page{
+ filter:drop-shadow(1px 1px 2px #07132888);
 }
 #reader-workspace .book-turn-spine-shadow{
- position:absolute;left:50%;top:0;bottom:0;width:15px;
+ position:absolute;left:50%;top:0;bottom:0;width:24px;
  z-index:2;transform:translateX(-50%);pointer-events:none;
- background:linear-gradient(90deg,transparent,#071328a8,transparent);
+ background:linear-gradient(90deg,transparent,#071328c0,transparent);
  opacity:var(--curl-spine-shade,0);
 }
 #reader-workspace .book-turn-scene.single .book-turn-spine-shadow{
  left:0;transform:translateX(-50%);
 }
-#reader-workspace .book-turn-scene.single.backward .book-turn-spine-shadow{
- left:100%;
-}
+#reader-workspace .book-turn-scene.single.backward .book-turn-spine-shadow{left:100%}
 #reader-workspace .book-turn-scene[data-pending-destination] :is(.book-turn-underlay,.back) .book-page-content{
  visibility:hidden;
 }
@@ -158,6 +157,51 @@ function motionAllowed(){return document.body.dataset.motion!=='off' && !matchMe
 const radians=angle=>angle*Math.PI/180;
 let pendingTurn=null;
 
+// All five Bible designs already declare the precise paper boundary in
+// book-art.mjs. Reuse that SVG path instead of guessing at a rectangular mask.
+// On phones the original left-hand paper is cropped from x=112..768.
+let curlId=0;
+function addPaperMasks(scene,spread,count){
+ const path=document.querySelector('#reader-workspace .book-artwork #bible-paper-shape');
+ if(!path)return null;
+ const d=path.getAttribute('d');
+ if(!d)return null;
+ const id='unveiled-turn-'+(++curlId);
+ const phone=count===1;
+ const shell=spread.closest('.book-shell');
+ const vars=shell?getComputedStyle(shell):null;
+ const crop=phone?(parseFloat(vars?.getPropertyValue('--phone-crop-start'))||112):0;
+ const leafWidth=phone?(parseFloat(vars?.getPropertyValue('--phone-leaf-width'))||656):768;
+ const viewScale=1/leafWidth;
+ const leftTx=phone?(-crop/leafWidth):0;
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ svg.setAttribute('width','0');svg.setAttribute('height','0');
+ svg.setAttribute('aria-hidden','true');
+ svg.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+ const defs=document.createElementNS(svg.namespaceURI,'defs');
+ for(const side of ['left','right']){
+  const clip=document.createElementNS(svg.namespaceURI,'clipPath');
+  clip.setAttribute('id',id+'-'+side);
+  clip.setAttribute('clipPathUnits','objectBoundingBox');
+  const outline=document.createElementNS(svg.namespaceURI,'path');
+  outline.setAttribute('d',d);
+  // The right page mirrors the same shaped piece about the centre spine.
+  outline.setAttribute('transform',side==='right'
+   ?`translate(1 0) scale(${-1/768} ${1/1024})`
+   :`translate(${leftTx} 0) scale(${viewScale} ${1/1024})`);
+  clip.append(outline);defs.append(clip);
+ }
+ svg.append(defs);scene.prepend(svg);
+ return {left:id+'-left',right:id+'-right'};
+}
+function maskLeaf(page,masks,count){
+ if(!masks)return;
+ const side=count===2&&page.dataset.leaf==='right'?'right':'left';
+ const url=`url(#${masks[side]})`;
+ page.style.clipPath=url;
+ page.style.webkitClipPath=url;
+}
+
 // originalPages are the old position; destinationPages may be populated later
 // after reader.js has paginated the next chapter or replaced the spread DOM.
 function createScene(spread,originalPages,dir,destinationPages){
@@ -171,9 +215,8 @@ function createScene(spread,originalPages,dir,destinationPages){
  const pageWidth=mounted[dir>0?Math.min(count-1,mounted.length-1):0]?.getBoundingClientRect().width
   || leaf.getBoundingClientRect().width || spread.getBoundingClientRect().width/count;
  if(pageWidth<30)return null;
- // 12-20 segments: smooth curvature without dozens of full-page copies
- // on a mobile browser. The final segment has no unpainted edge.
- const segments=Math.max(22,Math.min(28,Math.round(pageWidth/18)));
+ // Enough sections to read as curved paper, capped for mobile performance.
+ const segments=Math.max(26,Math.min(36,Math.round(pageWidth/13)));
  const stripWidth=pageWidth/segments;
  const scene=document.createElement('div');
  scene.className=`book-turn-scene ${dir>0?'forward':'backward'} ${count===1?'single':''}`;
@@ -182,7 +225,8 @@ function createScene(spread,originalPages,dir,destinationPages){
  scene.innerHTML='<div class="book-turn-underlay"></div><div class="book-turn-stationary"></div>'+ 
   '<div class="book-turn-spine-shadow"></div>';
  scene.style.setProperty('--curl-page-width',pageWidth+'px');
- scene.style.setProperty('--curl-strip-width',(stripWidth+0.6)+'px');
+ scene.style.setProperty('--curl-strip-width',(stripWidth+0.45)+'px');
+ const masks=addPaperMasks(scene,spread,count);
  const underlay=scene.querySelector('.book-turn-underlay');
  const stationary=scene.querySelector('.book-turn-stationary');
  if(count===2){
@@ -203,6 +247,7 @@ function createScene(spread,originalPages,dir,destinationPages){
   const front=leaf.cloneNode(true);
   front.classList.add('flip-front');
   front.style.removeProperty('visibility');
+  maskLeaf(front,masks,count);
   crop.append(front);
   scene.append(strip);
   strips.push(strip);
@@ -234,6 +279,7 @@ function createScene(spread,originalPages,dir,destinationPages){
    const back=landing.cloneNode(true);
    back.classList.add('flip-back');
    back.style.removeProperty('visibility');
+   maskLeaf(back,masks,count);
    crop.replaceChildren(back);
   });
  }
@@ -243,24 +289,25 @@ function createScene(spread,originalPages,dir,destinationPages){
 
  function drag(value){
   angle=Math.max(0,Math.min(180,value));
-  const p=angle/180;
-  // A cylindrical bend that starts at the free edge and travels toward
-  // the spine. At the two resting positions every slice is flat.
-  const bend=52*Math.sin(Math.PI*p);
+  const progress=angle/180;
+  // At mid-turn the inside of the sheet leans toward the viewer while the
+  // outer edge rolls ahead: an obvious curved arch, not a rotating plank.
+  // An 84-degree local spread makes the arc legible even on a small phone.
+  const bend=84*Math.pow(Math.sin(Math.PI*progress),.85);
   let x=0,z=0;
   strips.forEach((strip,i)=>{
    const u=(i+.5)/segments;
-   const a=angle+bend*(2*u-1);
-   const rad=radians(a);
-   const tilt=Math.sin(rad);
-   strip.style.transform=`translate3d(${(dir*x).toFixed(2)}px,0,${z.toFixed(2)}px) rotateY(${(-dir*a).toFixed(2)}deg)`;
-   // The highlight crawls over the curved surface instead of remaining
-   // painted on a single stiff sheet.
-   strip.style.setProperty('--curl-shade',(0.07+0.26*Math.abs(tilt)*(0.35+0.65*u)).toFixed(3));
+   const localAngle=angle+bend*(2*u-1);
+   const rad=radians(localAngle);
+   strip.style.transform=`translate3d(${(dir*x).toFixed(2)}px,0,${z.toFixed(2)}px) rotateY(${(-dir*localAngle).toFixed(2)}deg)`;
+   // Highlights and shadows are painted INSIDE the actual ornate paper edge.
+   const shade=.045+.48*Math.abs(Math.sin(rad))*(.3+.7*u);
+   strip.style.setProperty('--curl-shade',shade.toFixed(3));
+   // Integrate all strip endpoints as a continuous sheet in 3D.
    x+=stripWidth*Math.cos(rad);
-   z+=stripWidth*Math.sin(rad)*.18;
+   z+=stripWidth*Math.sin(rad);
   });
-  scene.style.setProperty('--curl-spine-shade',(Math.sin(Math.PI*p)*0.58).toFixed(3));
+  scene.style.setProperty('--curl-spine-shade',(Math.sin(Math.PI*progress)*.74).toFixed(3));
  }
  drag(0);
 
@@ -270,16 +317,18 @@ function createScene(spread,originalPages,dir,destinationPages){
   const initial=angle;
   if(motionAllowed()&&Math.abs(initial-target)>.1){
    const distance=Math.abs(initial-target);
-   const duration=Math.max(185,Math.round(distance*(target===180?3.8:2.5)));
+   // ~2.1 seconds for a complete button turn, scaled for a partly dragged page.
+   // Gentle initial lift, full curling sweep, and unhurried settling.
+   const duration=target===180
+     ?Math.max(700,Math.min(2200,Math.round(distance*11.6)))
+     :Math.max(430,Math.min(1350,Math.round(distance*7.4)));
    const start=performance.now();
    await new Promise(resolve=>{
     function tick(now){
      if(!scene.isConnected){resolve();return;}
-     const t=Math.min(1,(now-start)/duration);
-     // smooth acceleration, then deceleration, keeping continuous speed
-     // from the finger position through the rest of the motion.
-     const ease=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-     drag(initial+(target-initial)*ease);
+     const t=Math.max(0,Math.min(1,(now-start)/duration));
+     const eased=(1-Math.cos(Math.PI*t))/2;
+     drag(initial+(target-initial)*eased);
      if(t<1)requestAnimationFrame(tick);else resolve();
     }
     requestAnimationFrame(tick);
@@ -288,6 +337,7 @@ function createScene(spread,originalPages,dir,destinationPages){
   drag(target);
   scene.remove();releaseActual();
  }
+
  return {
   node:scene,dir,width:pageWidth,
   get angle(){return angle;},
@@ -307,41 +357,51 @@ function createScene(spread,originalPages,dir,destinationPages){
 
 export function bindBookSwipe(spread,canTurn,turn){
  let gesture=null,restoring=false,ignoreClick=false;
- spread.addEventListener('pointerdown',event=>{
-  if(!event.isPrimary||event.button!==0||gesture||restoring)return;
+ const now=()=>performance.now();
+ function begin(x,y,id,kind,source){
+  if(gesture||restoring)return;
   ignoreClick=false;
-  gesture={id:event.pointerId,x:event.clientX,y:event.clientY,start:performance.now()};
- });
- spread.addEventListener('pointermove',event=>{
-  if(gesture?.id!==event.pointerId)return;
-  const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
+  gesture={id,kind,x,y,start:now(),scene:null,canEdgeTap:!source?.closest?.('button,a,input,textarea,select')};
+ }
+ function move(x,y){
+  if(!gesture)return false;
+  const dx=x-gesture.x,dy=y-gesture.y;
   if(!gesture.scene){
-   // A vertical gesture is always a scroll, not a page turn.
-   if(Math.abs(dy)>11&&Math.abs(dy)>Math.abs(dx)){gesture=null;return;}
-   if(Math.abs(dx)<9||Math.abs(dx)<Math.abs(dy)*1.25)return;
+   // Leave vertical document scrolling and pinch zoom alone.
+   if(Math.abs(dy)>23&&Math.abs(dy)>Math.abs(dx)*1.35){gesture=null;return false;}
+   if(Math.abs(dx)<9||Math.abs(dx)<Math.abs(dy)*1.08)return false;
    const dir=dx<0?1:-1;
-   if(!canTurn(dir)){gesture=null;return;}
+   if(!canTurn(dir)){gesture=null;return false;}
    gesture.dir=dir;
    gesture.scene=createScene(spread,[...spread.querySelectorAll(':scope > .paper-page')],dir);
-   if(!gesture.scene){gesture=null;return;}
+   if(!gesture.scene){gesture=null;return false;}
    gesture.width=Math.max(1,gesture.scene.width);
    ignoreClick=true;
-   try{spread.setPointerCapture(event.pointerId);}catch{}
   }
-  if(event.cancelable)event.preventDefault();
   const distance=Math.max(0,-gesture.dir*dx);
-  gesture.scene.drag(Math.min(171,distance/gesture.width*165));
- });
- function end(event,commit){
-  if(gesture?.id!==event.pointerId)return;
-  const {scene,dir,x,width,start}=gesture;
+  // The sheet follows the finger; small motions already show a lifted curl.
+  gesture.scene.drag(Math.min(176,distance/gesture.width*190));
+  return true;
+ }
+ function end(x,y,commit){
+  if(!gesture)return;
+  const {scene,dir,start,width,x:originX,y:originY,canEdgeTap}=gesture;
   gesture=null;
-  if(!scene)return;
-  const distance=Math.max(0,-dir*(event.clientX-x));
-  const enough=distance>=Math.min(65,width*.16);
-  const flick=distance>=24&&performance.now()-start<280;
+  if(!scene){
+   // Outer-paper taps are an additional phone-friendly way to turn pages.
+   // Preserve ordinary verse taps, which open word study/highlighting.
+   if(commit&&canEdgeTap&&Math.abs(x-originX)<12&&Math.abs(y-originY)<12){
+    const box=spread.getBoundingClientRect();
+    const ratio=(x-box.left)/box.width;
+    if(ratio<.14&&canTurn(-1)){ignoreClick=true;turn(-1,0);}
+    else if(ratio>.86&&canTurn(1)){ignoreClick=true;turn(1,0);}
+   }
+   return;
+  }
+  const distance=Math.max(0,-dir*(x-originX));
+  const enough=distance>=Math.min(48,width*.12);
+  const flick=distance>=19&&now()-start<340;
   if(commit&&(enough||flick)&&canTurn(dir)){
-   // Retain the SAME sheet object; the reader may now replace its page DOM.
    const progress=scene.angle;
    scene.detach();
    pendingTurn=scene;
@@ -351,14 +411,61 @@ export function bindBookSwipe(spread,canTurn,turn){
    scene.cancel().finally(()=>{restoring=false;});
   }
  }
- spread.addEventListener('pointerup',event=>end(event,true));
- spread.addEventListener('pointercancel',event=>end(event,false));
- spread.addEventListener('lostpointercapture',event=>end(event,false));
+
+ // TouchEvent input is handled explicitly: Android can cancel pointer capture
+ // once the browser takes over a gesture. Do not rely on PointerEvents for touch.
+ let activeTouch=null;
+ spread.addEventListener('touchstart',event=>{
+  if(activeTouch!==null||event.touches.length!==1)return;
+  const t=event.changedTouches[0];
+  activeTouch=t.identifier;
+  begin(t.clientX,t.clientY,t.identifier,'touch',event.target);
+ },{passive:true});
+ spread.addEventListener('touchmove',event=>{
+  if(activeTouch===null)return;
+  if(event.touches.length!==1){
+   if(gesture?.scene)end(gesture.x,gesture.y,false);
+   activeTouch=null;return;
+  }
+  const t=Array.from(event.changedTouches).find(item=>item.identifier===activeTouch)
+   ||Array.from(event.touches).find(item=>item.identifier===activeTouch);
+  if(!t)return;
+  if(move(t.clientX,t.clientY)&&event.cancelable)event.preventDefault();
+ },{passive:false});
+ function finishTouch(event,commit){
+  if(activeTouch===null)return;
+  const t=Array.from(event.changedTouches).find(item=>item.identifier===activeTouch);
+  if(!t)return;
+  activeTouch=null;
+  if(gesture?.kind==='touch')end(t.clientX,t.clientY,commit);
+ }
+ spread.addEventListener('touchend',event=>finishTouch(event,true),{passive:true});
+ spread.addEventListener('touchcancel',event=>finishTouch(event,false),{passive:true});
+
+ // Stylus and mouse have their own pointer path and do not double-trigger touch.
+ spread.addEventListener('pointerdown',event=>{
+  if(event.pointerType==='touch'||!event.isPrimary||event.button!==0)return;
+  begin(event.clientX,event.clientY,event.pointerId,'pointer',event.target);
+ });
+ spread.addEventListener('pointermove',event=>{
+  if(gesture?.kind!=='pointer'||gesture.id!==event.pointerId)return;
+  if(move(event.clientX,event.clientY)){
+   if(event.cancelable)event.preventDefault();
+   try{spread.setPointerCapture(event.pointerId);}catch{}
+  }
+ });
+ const stopPointer=(event,commit)=>{
+  if(gesture?.kind==='pointer'&&gesture.id===event.pointerId)
+   end(event.clientX,event.clientY,commit);
+ };
+ spread.addEventListener('pointerup',event=>stopPointer(event,true));
+ spread.addEventListener('pointercancel',event=>stopPointer(event,false));
+ spread.addEventListener('lostpointercapture',event=>stopPointer(event,false));
  spread.addEventListener('pointerleave',event=>{
-  if(gesture?.id===event.pointerId&&!gesture.scene)gesture=null;
+  if(gesture?.kind==='pointer'&&gesture.id===event.pointerId&&!gesture.scene)gesture=null;
  });
  spread.addEventListener('click',event=>{
-  if(ignoreClick&&event.detail){event.preventDefault();event.stopImmediatePropagation();ignoreClick=false;}
+  if(ignoreClick){event.preventDefault();event.stopImmediatePropagation();ignoreClick=false;}
  },true);
 }
 

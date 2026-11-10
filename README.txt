@@ -1,28 +1,32 @@
-UNVEILED — REALISTIC CURLING BIBLE PAGES
+UNVEILED BIBLE — Natural shaped-paper curl (v3)
+===========================================
 
-WHAT CHANGED
-The page now bends into a continuous arc instead of rotating like a rigid sheet.
-It uses 22–28 narrow, synchronized 3D sections to create a visible curl,
-changing shadows and a finger-following swipe. It supports forward/back turns,
-cancelled swipes, keyboard arrows and the existing one-page phone and two-page
-desktop layouts. The five Bible designs, Scripture and settings are preserved.
+ONE FILE TO REPLACE: book-reader.mjs
 
-HOW TO UPDATE YOUR LIVE WEBSITE
 1. Open https://github.com/denisgigant-design/unveiled
-2. In the main branch, open book-reader.mjs (in the repository root).
-3. Select Edit (pencil icon), then replace the ENTIRE file with the supplied
-   book-reader.mjs, or upload the new file over the old one.
-4. Commit changes to the main branch.
-5. Open https://denisgigant-design.github.io/unveiled/ in a new Chrome
-   Incognito tab after GitHub Pages deploys.
-6. In the Bible section, swipe slowly to see the bend, then try arrows both
-   directions. Text should continue to sit in the selected coloured artwork.
+2. In the main branch, replace the existing book-reader.mjs in the ROOT
+   folder with the file inside this ZIP. Commit the change.
+3. Open https://denisgigant-design.github.io/unveiled/ in a fresh Chrome
+   Incognito tab after the GitHub Pages publish finishes.
+4. Open the Bible and test: swipe LEFT to advance, swipe RIGHT to go back,
+   use the arrows for a deliberately slow full flip, or tap an outer page edge.
 
-Only book-reader.mjs needs replacing. README.txt is instructions; you do not
-need to upload it to the site. No external JavaScript libraries are required.
+What changed:
+- A dedicated TouchEvent gesture path makes Android swipes work even if
+  pointer capture is interrupted by touch scroll handling.
+- Vertical scrolling remains available; ordinary verse taps still work.
+- The turn clips to the EXACT active paper contour from book-art.mjs,
+  including the mobile crop, rather than turning a rectangular border.
+- A strongly curved strip mesh with actual accumulated 3D depth.
+- Shadows follow the paper shape and travel across the bend.
+- A full turn is approximately 2.1 seconds, with gentle acceleration
+  and gradual settling; partially dragged pages take proportionally less.
+- Five colour themes, verse pagination and layout are left unchanged.
 
-TESTING
-JavaScript syntax check: PASS.
-Automated Chromium interaction checks: PASS (425px phone and 1200px desktop;
-forward/backward buttons, drag movement, and cleanup after animation).
-These are local UI tests, not a verification of the live GitHub Pages deployment.
+Only book-reader.mjs is modified. No changes are required to HTML, CSS,
+reader.js or the current Bible artwork.
+
+Note: The file has been syntax-checked and tested in Chromium with
+simulated phone swipes, reverse gestures, vertical scrolling, edge taps,
+verse taps, and forward/backward buttons. Production phone appearance
+still requires visual confirmation after deployment.

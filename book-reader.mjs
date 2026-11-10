@@ -60,114 +60,234 @@ export function syncBookColour(ctx){
  });
 }
 
-function pageMotion(){
- return !matchMedia('(prefers-reduced-motion:reduce)').matches;
+// A single page-turn scene is used for finger tracking and for the rest of the flip.
+// This stylesheet is deliberately scoped to the Bible reader; the five book artworks
+// and the existing responsive text layout are retained unchanged.
+const TURN_CSS = `
+#reader-workspace .book-spread{position:relative;transform-style:preserve-3d}
+#reader-workspace .book-turn-scene{
+ position:absolute;inset:0;z-index:15;pointer-events:none;
+ transform-style:preserve-3d
+}
+#reader-workspace .book-turn-underlay{
+ position:absolute;inset:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))
+}
+#reader-workspace .book-turn-underlay>.paper-page{
+ position:relative;width:100%;height:100%;min-width:0;aspect-ratio:auto
+}
+#reader-workspace .book-turn-stationary{
+ position:absolute;top:0;left:0;width:50%;height:100%;z-index:1;pointer-events:none
+}
+#reader-workspace .book-turn-scene.backward .book-turn-stationary{left:50%}
+#reader-workspace .book-turn-stationary>.paper-page{
+ position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto
+}
+#reader-workspace .book-turn-sheet{
+ position:absolute;top:0;bottom:0;left:50%;width:50%;z-index:3;
+ transform-origin:left center;transform-style:preserve-3d;will-change:transform
+}
+#reader-workspace .book-turn-scene.backward .book-turn-sheet{left:0;transform-origin:right center}
+#reader-workspace .book-turn-face{
+ position:absolute;inset:0;transform-style:preserve-3d;
+ backface-visibility:hidden;-webkit-backface-visibility:hidden
+}
+#reader-workspace .book-turn-face.turn-back{transform:rotateY(180deg)}
+#reader-workspace .book-turn-face>.paper-page{
+ position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;overflow:clip
+}
+#reader-workspace .book-turn-scene :is(.flip-front,.flip-back,.flip-still)>.book-leaf-art{display:block}
+#reader-workspace .book-turn-face>.paper-page::before{
+ content:'';position:absolute;inset:0;z-index:4;pointer-events:none;
+ background:linear-gradient(90deg,#05122666,transparent 30%,#ffffff19 70%,#07122144);
+ opacity:.5
+}
+#reader-workspace .book-turn-face.turn-back>.paper-page::before{
+ background:linear-gradient(270deg,#07122160,transparent 44%,#ffffff19)
+}
+#reader-workspace .book-turn-scene.single .book-turn-sheet{left:0;width:100%}
+#reader-workspace .book-turn-scene.single .book-turn-stationary{display:none}
+@media(max-width:960px){
+ #reader-workspace .book-turn-underlay{grid-template-columns:minmax(0,1fr)}
+ #reader-workspace .book-turn-scene .paper-page[data-leaf="right"]{display:none}
+ #reader-workspace .book-turn-scene.single .book-turn-sheet{left:0;width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+ #reader-workspace .book-turn-sheet{will-change:auto}
+}`;
+
+function installTurnStyles(){
+ if(document.getElementById('unveiled-book-turn-css'))return;
+ const style=document.createElement('style');
+ style.id='unveiled-book-turn-css';
+ style.textContent=TURN_CSS;
+ document.head.append(style);
 }
 
-function leafPose(angle,dir){
+function motionAllowed(){return !matchMedia('(prefers-reduced-motion:reduce)').matches;}
+function pose(angle,dir){
  const lift=Math.sin(angle*Math.PI/180);
- return `translateZ(${lift*12}px) rotateY(${-dir*angle}deg) rotateZ(${-dir*lift*1.15}deg)`;
+ return `translateZ(${(lift*9).toFixed(2)}px) rotateY(${(-dir*angle).toFixed(2)}deg) rotateZ(${(-dir*lift*.85).toFixed(2)}deg)`;
+}
+let pendingTurn=null;
+
+// originalPages represent the old reading position. The actual pages in spread
+// are either those same pages during a drag, or the new destination for arrows.
+function createScene(spread,originalPages,dir,destinationPages){
+ installTurnStyles();
+ const count=originalPages.length;
+ if(!count)return null;
+ const scene=document.createElement('div');
+ scene.className=`book-turn-scene ${dir>0?'forward':'backward'} ${count===1?'single':''}`;
+ scene.setAttribute('aria-hidden','true');scene.inert=true;
+ scene.innerHTML='<div class="book-turn-underlay"></div><div class="book-turn-stationary"></div>'+
+  '<div class="book-turn-sheet"><div class="book-turn-face turn-front"></div>'+
+  '<div class="book-turn-face turn-back"></div></div>';
+ const underlay=scene.querySelector('.book-turn-underlay');
+ const stationary=scene.querySelector('.book-turn-stationary');
+ const sheet=scene.querySelector('.book-turn-sheet');
+ const turningIndex=dir>0?count-1:0,landingIndex=dir>0?0:count-1;
+ const front=originalPages[turningIndex].cloneNode(true);
+ front.style.removeProperty('visibility');
+ front.classList.add('flip-front');
+ scene.querySelector('.turn-front').append(front);
+ if(count===2){
+  const still=originalPages[1-turningIndex].cloneNode(true);
+  still.style.removeProperty('visibility');
+  still.classList.add('flip-still');
+  stationary.append(still);
+ }
+ let hidden=[],angle=0,settled=false;
+ function hideActual(pages){
+  hidden.forEach(page=>page.style.removeProperty('visibility'));
+  hidden=pages;
+  hidden.forEach(page=>{page.style.visibility='hidden';});
+ }
+ function setDestination(pages){
+  underlay.replaceChildren(...pages.map(p=>{
+   const clone=p.cloneNode(true);clone.style.removeProperty('visibility');return clone;
+  }));
+  const target=underlay.children[landingIndex];
+  if(target){
+   const back=target.cloneNode(true);back.classList.add('flip-back');
+   scene.querySelector('.turn-back').replaceChildren(back);
+  }
+ }
+ setDestination(destinationPages||originalPages);
+ const actualPages=[...spread.querySelectorAll(':scope > .paper-page')];
+ hideActual(actualPages);
+ spread.append(scene);
+ function drag(value){
+  angle=Math.max(0,Math.min(180,value));
+  sheet.style.transform=pose(angle,dir);
+  scene.style.setProperty('--page-fold',String(Math.sin(angle*Math.PI/180)));
+ }
+ drag(0);
+ function releaseActual(){
+  hidden.forEach(page=>page.style.removeProperty('visibility'));
+  hidden=[];
+ }
+ async function settle(target){
+  if(settled)return;
+  settled=true;
+  const start=angle;
+  if(motionAllowed()&&Math.abs(start-target)>.1){
+   const distance=Math.abs(start-target);
+   const anim=sheet.animate([
+    {transform:pose(start,dir)},
+    {transform:pose(start+(target-start)*.52,dir),offset:.52},
+    {transform:pose(target,dir)}
+   ],{
+    duration:Math.max(175,Math.round(distance*(target===180?3.4:2.4))),
+    easing:target===180?'cubic-bezier(.3,.68,.22,1)':'cubic-bezier(.2,.7,.25,1)',
+    fill:'forwards'
+   });
+   try{await anim.finished;}catch{}
+   anim.cancel();
+  }
+  drag(target);scene.remove();releaseActual();
+ }
+ return {
+  node:scene,dir,
+  get angle(){return angle;},
+  drag,
+  detach(){releaseActual();scene.remove();},
+  moveTo(nextSpread){
+   const nextPages=[...nextSpread.querySelectorAll(':scope > .paper-page')];
+   setDestination(nextPages);
+   hideActual(nextPages);
+   nextSpread.append(scene);
+  },
+  cancel:()=>settle(0),
+  finish:()=>settle(180)
+ };
 }
 
 export function bindBookSwipe(spread,canTurn,turn){
- let gesture,restoring,ignoreClick=false;
+ let gesture=null,restoring=false,ignoreClick=false;
  spread.addEventListener('pointerdown',event=>{
-  if(!event.isPrimary||event.button!==0||gesture)return;
-  restoring?.cancel();
+  if(!event.isPrimary||event.button!==0||gesture||restoring)return;
   ignoreClick=false;
-  gesture={id:event.pointerId,x:event.clientX,y:event.clientY,time:performance.now()};
+  gesture={id:event.pointerId,x:event.clientX,y:event.clientY,start:performance.now()};
  });
  spread.addEventListener('pointermove',event=>{
   if(gesture?.id!==event.pointerId)return;
   const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
-  if(!gesture.leaf){
-   if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){gesture=null;return;}
-   if(Math.abs(dx)<9||Math.abs(dx)<Math.abs(dy)*1.2)return;
+  if(!gesture.scene){
+   // A vertical gesture is always a scroll, not a page turn.
+   if(Math.abs(dy)>11&&Math.abs(dy)>Math.abs(dx)){gesture=null;return;}
+   if(Math.abs(dx)<9||Math.abs(dx)<Math.abs(dy)*1.25)return;
    const dir=dx<0?1:-1;
    if(!canTurn(dir)){gesture=null;return;}
-   const leaves=spread.querySelectorAll(':scope > .paper-page');
-   gesture.leaf=dir>0?leaves[leaves.length-1]:leaves[0];
    gesture.dir=dir;
-   gesture.width=gesture.leaf.offsetWidth;
+   gesture.scene=createScene(spread,[...spread.querySelectorAll(':scope > .paper-page')],dir);
+   if(!gesture.scene){gesture=null;return;}
+   gesture.width=Math.max(1,gesture.scene.node.querySelector('.book-turn-sheet').offsetWidth);
    ignoreClick=true;
-   spread.setPointerCapture(event.pointerId);
+   try{spread.setPointerCapture(event.pointerId);}catch{}
   }
   if(event.cancelable)event.preventDefault();
-  const {leaf,dir}=gesture;
-  const distance=Math.max(0,-dir*dx);
-  gesture.angle=Math.min(76,distance/gesture.width*170);
-  if(pageMotion()){
-   leaf.classList.add('swipe-leaf',dir<0?'swipe-backward':'swipe-forward');
-   leaf.style.transform=leafPose(gesture.angle,dir);
-   leaf.style.setProperty('--swipe-shade',Math.min(.8,gesture.angle/92));
-  }
+  const distance=Math.max(0,-gesture.dir*dx);
+  gesture.scene.drag(Math.min(171,distance/gesture.width*165));
  });
  function end(event,commit){
   if(gesture?.id!==event.pointerId)return;
-  const {leaf,dir,x,width,angle=0,time}=gesture;
+  const {scene,dir,x,width,start}=gesture;
   gesture=null;
-  if(!leaf)return;
+  if(!scene)return;
   const distance=Math.max(0,-dir*(event.clientX-x));
-  const farEnough=distance>=Math.min(60,width*.18);
-  const flick=distance>=25&&performance.now()-time<260;
-  const pose=leaf.style.transform;
-  leaf.classList.remove('swipe-leaf','swipe-backward','swipe-forward');
-  leaf.style.removeProperty('transform');
-  leaf.style.removeProperty('--swipe-shade');
-  if(commit&&(farEnough||flick)&&canTurn(dir)){turn(dir,angle);return;}
-  if(pose&&pageMotion()){
-   leaf.style.transformOrigin=dir>0?'left center':'right center';
-   const animation=leaf.animate([{transform:pose},{transform:leafPose(0,dir)}],{
-    duration:200,easing:'cubic-bezier(.22,.8,.32,1)'
-   });
-   restoring=animation;
-   animation.finished.catch(()=>{}).finally(()=>{
-    if(restoring===animation)restoring=null;
-    leaf.style.removeProperty('transform-origin');
-   });
+  const enough=distance>=Math.min(65,width*.16);
+  const flick=distance>=24&&performance.now()-start<280;
+  if(commit&&(enough||flick)&&canTurn(dir)){
+   // Retain the SAME sheet object; the reader may now replace its page DOM.
+   const progress=scene.angle;
+   scene.detach();
+   pendingTurn=scene;
+   try{turn(dir,progress);}catch(error){pendingTurn=null;scene.cancel();throw error;}
+  }else{
+   restoring=true;
+   scene.cancel().finally(()=>{restoring=false;});
   }
  }
  spread.addEventListener('pointerup',event=>end(event,true));
  spread.addEventListener('pointercancel',event=>end(event,false));
  spread.addEventListener('lostpointercapture',event=>end(event,false));
- spread.addEventListener('pointerleave',event=>{if(gesture?.id===event.pointerId&&!gesture.leaf)gesture=null;});
+ spread.addEventListener('pointerleave',event=>{
+  if(gesture?.id===event.pointerId&&!gesture.scene)gesture=null;
+ });
  spread.addEventListener('click',event=>{
-  if(ignoreClick&&event.detail){event.preventDefault();event.stopPropagation();ignoreClick=false;}
+  if(ignoreClick&&event.detail){event.preventDefault();event.stopImmediatePropagation();ignoreClick=false;}
  },true);
 }
 
 export async function animateBookTurn(spread,oldPages,count,dir,angle=0){
- if(!pageMotion())return;
- const overlay=document.createElement('div');
- overlay.className=`book-flip ${dir>0?'forward':'backward'} ${count===1?'single':''}`;
- overlay.setAttribute('aria-hidden','true');
- overlay.inert=true;
- const nextPages=spread.querySelectorAll(':scope > .paper-page');
- const turningIndex=dir>0?count-1:0,landingIndex=dir>0?0:count-1;
- const front=oldPages[turningIndex];
- front.classList.add('flip-front');
- overlay.append(front);
-
- // The underside lands on the opposite side of a two-page spread.
- let still;
- if(count===2){
-  const back=nextPages[landingIndex].cloneNode(true);
-  back.classList.add('flip-back');
-  overlay.append(back);
-  still=oldPages[landingIndex];
-  still.classList.add('flip-still',dir>0?'left':'right');
-  still.setAttribute('aria-hidden','true');
-  still.inert=true;
-  spread.append(still);
- }
- spread.append(overlay);
- const finish=count===2?180:99;
- const duration=(count===2?610:430)-Math.round(angle*1.8);
- const animation=overlay.animate([
-  {transform:leafPose(angle,dir)},
-  {transform:leafPose(angle+(finish-angle)*.63,dir),offset:.55},
-  {transform:leafPose(finish,dir)}
- ],{duration,easing:'cubic-bezier(.23,.62,.25,1)',fill:'both'});
- try{await animation.finished.catch(()=>{});}
- finally{still?.remove();overlay.remove();}
+ const sameSheet=pendingTurn?.dir===dir?pendingTurn:null;
+ pendingTurn=null;
+ const nextPages=[...spread.querySelectorAll(':scope > .paper-page')];
+ const scene=sameSheet||createScene(spread,oldPages,dir,nextPages);
+ if(!scene)return;
+ if(sameSheet)scene.moveTo(spread);
+ // Arrow-initiated turns start flat; swipes continue from their exact drag angle.
+ if(!sameSheet)scene.drag(0);
+ try{await scene.finish();}
+ finally{scene.node.remove();}
 }

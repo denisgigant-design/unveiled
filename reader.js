@@ -1,6 +1,6 @@
 import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference} from './core.mjs';
 import {pageForAnchor} from './book-layout.mjs';
-import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled23';
+import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled24';
 import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled16';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
 const cache=new Map();

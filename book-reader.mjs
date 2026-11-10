@@ -118,9 +118,10 @@ const TURN_CSS = `
  overflow:clip;background:var(--book-dye,#65404a)!important;
 }
 #reader-workspace .book-turn-base>.paper-page>.book-leaf-art{display:block}
-/* The old verses live on the MOVING sheet, not the temporary cover.
-   Duplicating them underneath was leaving page 8's words over page 10. */
-#reader-workspace .book-turn-base .book-page-content{visibility:hidden!important}
+/* The old page stays readable on the stationary area while its edge curls.
+   The mask on .book-turn-base removes these verses exactly where the sheet
+   has peeled away, so text never vanishes when the finger first moves. */
+#reader-workspace .book-turn-base .book-page-content{visibility:visible!important}
 #reader-workspace .book-turn-underlay>.paper-page{overflow:clip}
 #reader-workspace .book-turn-scene.single .book-turn-underlay{grid-template-columns:minmax(0,1fr)}
 #reader-workspace .book-turn-strip{
@@ -395,7 +396,7 @@ function createScene(spread,originalPages,dir,destinationPages){
   // edge lies on the original leaf. 90° reveals the whole destination;
   // after 90° the reverse side folds onto the facing leaf.
   const peel=Math.max(0,Math.min(100,(1-Math.max(0,edgeProjection/pageWidth))*100));
-  const oldEdge=Math.min(100,peel+0.15);
+  const oldEdge=peel; // Match the boundary exactly; no premature cut-off.
   const exposed=underlay.children[dir>0?count-1:0];
   if(flipSide>0){
    // Right leaf: uncover from the right-hand outside edge inward.

@@ -1,23 +1,31 @@
-UNVEILED BIBLE — PAGE TURN FIX V6 (10 November 2026)
+UNVEILED BIBLE — V7 swipe text visibility fix
 
-Replace the following files in the ROOT of the GitHub repository:
+Problem fixed
+  Starting a finger swipe hid the Scripture on the still-covered part
+  of the page. The effect looked like a blank block or narrow, chopped
+  column of text on both mobile and desktop.
+
+Change
+  - Keep the old Scripture visible on the stationary portion of the
+    current leaf until the moving paper actually uncovers it.
+  - Move the masking boundary exactly with the physical paper curl.
+  - Do not reveal the incoming page outside the uncovered area.
+  - Retain the existing decorative art, page-curl speed, 1–32px font
+    settings, one-page mode, and two-page default on phones.
+
+Upload these THREE replacement files to the ROOT of the main branch
+of https://github.com/denisgigant-design/unveiled
   1. book-reader.mjs
   2. reader.js
   3. index.html
 
-Repository: https://github.com/denisgigant-design/unveiled
-Live site: https://denisgigant-design.github.io/unveiled/
+Choose Add file > Upload files (or edit/replace the corresponding files)
+and commit the changes. Do NOT upload this README or test files into
+root unless you want the instructions stored there.
 
-Changes:
-- Scripture text size minimum is now 1px, maximum remains 32px, and A−/A+ steps are 1px. The Font & page slider also allows 1px.
-- Removed the artificial black spine-shadow gradient, the dark leaf overlay and the shadow on the moving page edge.
-- The revealed portion of a page is now computed from the position of the curling paper strips, not a percentage of the rotation angle.
-- The static old-page covering layer no longer renders a second copy of the old Scripture text. Old text stays on the turning leaf; the new page text appears underneath as it becomes exposed.
-- index.html includes an import map so the unchanged app.js's older reader.js import is redirected to this updated reader.js. Cache identifiers are advanced to unveiled23.
+After GitHub Pages finishes deploying, open the site in a fresh Chrome
+Incognito tab and slowly drag either page a short distance. Verse text
+should remain intact until the curved edge passes over it.
 
-Keep the names exactly as shown, without v6 in their filenames. Upload into the repository root (not inside a folder).
-Commit the changes to main. GitHub Pages will republish automatically. In Chrome, test in a NEW incognito tab to avoid stale caches.
-
-Note: 1px is intentionally very small and will be almost unreadable; this option is available by user request. Large font sizes still create more pages. The selected size persists in reading settings.
-
-The files were syntax-checked with Node and the motion layers checked in Chromium simulation; actual Samsung device verification remains necessary.
+Note: GitHub's ChatGPT connection currently rejects writes with HTTP
+403, so the files have NOT been committed by ChatGPT. You must upload.

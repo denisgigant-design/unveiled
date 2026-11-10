@@ -1,32 +1,31 @@
-UNVEILED BIBLE — Natural shaped-paper curl (v3)
-===========================================
+UNVEILED BIBLE — PAGE-TURN REPAIR V5
 
-ONE FILE TO REPLACE: book-reader.mjs
+Replace ONE file in your GitHub repository:
+  book-reader.mjs  (repository root, on main)
 
-1. Open https://github.com/denisgigant-design/unveiled
-2. In the main branch, replace the existing book-reader.mjs in the ROOT
-   folder with the file inside this ZIP. Commit the change.
-3. Open https://denisgigant-design.github.io/unveiled/ in a fresh Chrome
-   Incognito tab after the GitHub Pages publish finishes.
-4. Open the Bible and test: swipe LEFT to advance, swipe RIGHT to go back,
-   use the arrows for a deliberately slow full flip, or tap an outer page edge.
+Use the included book-reader.mjs to replace the existing file. This version
+works with the existing Version 4 reader.js, book-art.mjs and index.html.
+No other files need replacing.
 
-What changed:
-- A dedicated TouchEvent gesture path makes Android swipes work even if
-  pointer capture is interrupted by touch scroll handling.
-- Vertical scrolling remains available; ordinary verse taps still work.
-- The turn clips to the EXACT active paper contour from book-art.mjs,
-  including the mobile crop, rather than turning a rectangular border.
-- A strongly curved strip mesh with actual accumulated 3D depth.
-- Shadows follow the paper shape and travel across the bend.
-- A full turn is approximately 2.1 seconds, with gentle acceleration
-  and gradual settling; partially dragged pages take proportionally less.
-- Five colour themes, verse pagination and layout are left unchanged.
+CHANGES
+- The destination page now reveals gradually in the real uncovered part of
+  the old leaf (including during touch drags). It no longer flashes through
+  the entire leaf as soon as a swipe starts.
+- The currently turning page remains over the still-uncovered area until
+  the curl lifts it away.
+- The cropped single-page mobile view hinges at the right-hand spine and
+  accepts ONLY left-to-right finger swipes for NEXT; the reverse swipe is
+  deliberately ignored. Both arrow buttons remain available for navigation.
+- A small extension of the actual irregular paper mask includes photographed
+  veil/palm ornaments near the outer edge instead of using a square clip.
+- Existing five book colours, two-page mobile default, one-page switch,
+  Scripture pagination and slow curl duration are retained.
 
-Only book-reader.mjs is modified. No changes are required to HTML, CSS,
-reader.js or the current Bible artwork.
+After GitHub Pages deploys: open the site in a fresh Chrome Incognito tab,
+then test Genesis 4 with the two-page and one-page views. To see the
+mask/reveal behavior, hold a drag halfway across before releasing.
 
-Note: The file has been syntax-checked and tested in Chromium with
-simulated phone swipes, reverse gestures, vertical scrolling, edge taps,
-verse taps, and forward/backward buttons. Production phone appearance
-still requires visual confirmation after deployment.
+Tested in Chromium at 425/430px mobile and 1100/1200px desktop widths:
+forward and reverse spread turns, single-page forward swipe, disabled reverse
+single-page swipe; next-page reveal remains clipped until uncovered.
+The final appearance on your own Samsung phone still needs checking.

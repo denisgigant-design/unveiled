@@ -104,6 +104,22 @@ const TURN_CSS = `
 #reader-workspace .book-turn-stationary>.paper-page{
  position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;
 }
+/* A second, opaque copy of the OLD leaf sits over the destination.
+   Its mask recedes as the paper peels; the next text can only appear
+   in the genuinely uncovered region. */
+#reader-workspace .book-turn-base{
+ position:absolute;inset-block:0;left:50%;width:50%;z-index:2;
+ pointer-events:none;overflow:hidden;
+}
+#reader-workspace .book-turn-scene.backward .book-turn-base{left:0}
+#reader-workspace .book-turn-scene.single .book-turn-base{left:0;width:100%}
+#reader-workspace .book-turn-base>.paper-page{
+ position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;
+ overflow:clip;
+}
+#reader-workspace .book-turn-base>.paper-page>.book-leaf-art{display:block}
+#reader-workspace .book-turn-underlay>.paper-page{overflow:clip}
+#reader-workspace .book-turn-scene.single .book-turn-underlay{grid-template-columns:minmax(0,1fr)}
 #reader-workspace .book-turn-strip{
  position:absolute;top:0;bottom:0;width:var(--curl-strip-width);z-index:3;
  transform-style:preserve-3d;will-change:transform;
@@ -175,7 +191,6 @@ const TURN_CSS = `
  }
  #reader-workspace .book-shell[data-book-view="spread"] :is(.paper-running,.chapter-heading){margin-bottom:3px;padding-bottom:2px}
  #reader-workspace .book-shell[data-book-view="spread"] .chapter-heading h2{font-size:clamp(11px,2.6vw,19px)}
- #reader-workspace .book-turn-scene.single .book-turn-underlay{grid-template-columns:minmax(0,1fr)}
  #reader-workspace .book-turn-scene.single .paper-page[data-leaf="right"]{display:none}
 }
 @media(max-width:480px){
@@ -216,6 +231,7 @@ function addPaperMasks(scene,spread,count){
  const leafWidth=phone?(parseFloat(vars?.getPropertyValue('--phone-leaf-width'))||656):768;
  const viewScale=1/leafWidth;
  const leftTx=phone?(-crop/leafWidth):0;
+ const ornamentFringe=phone?Math.min(100,crop+72):102;
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
  svg.setAttribute('width','0');svg.setAttribute('height','0');
  svg.setAttribute('aria-hidden','true');
@@ -231,7 +247,17 @@ function addPaperMasks(scene,spread,count){
   outline.setAttribute('transform',side==='right'
    ?`translate(1 0) scale(${-1/768} ${1/1024})`
    :`translate(${leftTx} 0) scale(${viewScale} ${1/1024})`);
-  clip.append(outline);defs.append(clip);
+  clip.append(outline);
+  // The photographed veils and palm ornament sit partly outside the dark
+  // parchment. Include a narrow, irregular fringe of THAT SAME photograph
+  // on the moving leaf; it is not replaced with a flat rectangular edge.
+  const fringe=document.createElementNS(svg.namespaceURI,'path');
+  fringe.setAttribute('d',d);
+  fringe.setAttribute('transform',side==='right'
+   ?`translate(${1+ornamentFringe/768} 0) scale(${-1/768} ${1/1024})`
+   :`translate(${leftTx-ornamentFringe/leafWidth} 0) scale(${viewScale} ${1/1024})`);
+  clip.append(fringe);
+  defs.append(clip);
  }
  svg.append(defs);scene.prepend(svg);
  return {left:id+'-left',right:id+'-right'};
@@ -242,6 +268,10 @@ function maskLeaf(page,masks,count){
  const url=`url(#${masks[side]})`;
  page.style.clipPath=url;
  page.style.webkitClipPath=url;
+ // Remove the internal parchment-only clipping from the moving SVG image.
+ // Our full leaf mask now supplies the irregular contour, including a
+ // small amount of the original veil/palm ornament at the outside edge.
+ page.querySelectorAll('.book-leaf-art use[clip-path]').forEach(use=>use.removeAttribute('clip-path'));
 }
 
 // originalPages are the old position; destinationPages may be populated later
@@ -250,6 +280,7 @@ function createScene(spread,originalPages,dir,destinationPages){
  installTurnStyles();
  const count=originalPages.length;
  if(!count)return null;
+ const flipSide=count===1?-1:dir; // Left-side single leaf hinges at RIGHT (centre spine).
  const leaf=originalPages[dir>0?count-1:0];
  // Button-driven turns pass detached page clones. Measure the currently
  // mounted leaf instead, so arrows and finger swipes use identical geometry.
@@ -261,16 +292,22 @@ function createScene(spread,originalPages,dir,destinationPages){
  const segments=Math.max(26,Math.min(36,Math.round(pageWidth/13)));
  const stripWidth=pageWidth/segments;
  const scene=document.createElement('div');
- scene.className=`book-turn-scene ${dir>0?'forward':'backward'} ${count===1?'single':''}`;
+ scene.className=`book-turn-scene ${flipSide>0?'forward':'backward'} ${count===1?'single':''}`;
  scene.setAttribute('aria-hidden','true');scene.inert=true;
  if(!destinationPages)scene.dataset.pendingDestination='true';
  scene.innerHTML='<div class="book-turn-underlay"></div><div class="book-turn-stationary"></div>'+ 
-  '<div class="book-turn-spine-shadow"></div>';
+  '<div class="book-turn-base"></div><div class="book-turn-spine-shadow"></div>';
  scene.style.setProperty('--curl-page-width',pageWidth+'px');
  scene.style.setProperty('--curl-strip-width',(stripWidth+0.45)+'px');
  const masks=addPaperMasks(scene,spread,count);
  const underlay=scene.querySelector('.book-turn-underlay');
  const stationary=scene.querySelector('.book-turn-stationary');
+ const base=scene.querySelector('.book-turn-base');
+ const baseLeaf=leaf.cloneNode(true);
+ baseLeaf.classList.add('flip-base');
+ baseLeaf.style.removeProperty('visibility');
+ maskLeaf(baseLeaf,masks,count);
+ base.append(baseLeaf);
  if(count===2){
   const still=originalPages[dir>0?0:1].cloneNode(true);
   still.style.removeProperty('visibility');
@@ -283,7 +320,7 @@ function createScene(spread,originalPages,dir,destinationPages){
   strip.className='book-turn-strip'+(i===segments-1?' outermost':'');
   strip.innerHTML='<div class="book-turn-surface front"><div class="book-turn-crop"></div></div>'+ 
                   '<div class="book-turn-surface back"><div class="book-turn-crop"></div></div>';
-  const sourceX=dir>0?i*stripWidth:pageWidth-(i+1)*stripWidth;
+  const sourceX=flipSide>0?i*stripWidth:pageWidth-(i+1)*stripWidth;
   const crop=strip.querySelector('.front .book-turn-crop');
   crop.style.setProperty('--curl-crop-x',(-sourceX)+'px');
   const front=leaf.cloneNode(true);
@@ -316,7 +353,7 @@ function createScene(spread,originalPages,dir,destinationPages){
    const crop=strip.querySelector('.back .book-turn-crop');
    // At 180deg the back is reversed relative to the front: sample from
    // the opposite edge so words remain readable in their new page order.
-   const targetX=dir>0?pageWidth-(i+1)*stripWidth:i*stripWidth;
+   const targetX=flipSide>0?pageWidth-(i+1)*stripWidth:i*stripWidth;
    crop.style.setProperty('--curl-crop-x',(-targetX)+'px');
    const back=landing.cloneNode(true);
    back.classList.add('flip-back');
@@ -324,6 +361,9 @@ function createScene(spread,originalPages,dir,destinationPages){
    maskLeaf(back,masks,count);
    crop.replaceChildren(back);
   });
+  // After moving the scene onto a newly rendered spread, reapply the
+  // exact peel boundary; otherwise the upcoming text flashes full-width.
+  if(typeof updatePeel==='function')updatePeel();
  }
  setDestination(destinationPages||originalPages);
  hideActual([...spread.querySelectorAll(':scope > .paper-page')]);
@@ -332,26 +372,38 @@ function createScene(spread,originalPages,dir,destinationPages){
  function drag(value){
   angle=Math.max(0,Math.min(180,value));
   const progress=angle/180;
-  // At mid-turn the inside of the sheet leans toward the viewer while the
-  // outer edge rolls ahead: an obvious curved arch, not a rotating plank.
-  // An 84-degree local spread makes the arc legible even on a small phone.
+  // At 0 degrees the next page is completely covered. At 90 degrees
+  // only half has been uncovered. The revealed area moves continuously
+  // with the curling sheet, rather than jumping to the next page.
+  updatePeel();
   const bend=84*Math.pow(Math.sin(Math.PI*progress),.85);
   let x=0,z=0;
   strips.forEach((strip,i)=>{
    const u=(i+.5)/segments;
    const localAngle=angle+bend*(2*u-1);
    const rad=radians(localAngle);
-   strip.style.transform=`translate3d(${(dir*x).toFixed(2)}px,0,${z.toFixed(2)}px) rotateY(${(-dir*localAngle).toFixed(2)}deg)`;
-   // Highlights and shadows are painted INSIDE the actual ornate paper edge.
+   strip.style.transform=`translate3d(${(flipSide*x).toFixed(2)}px,0,${z.toFixed(2)}px) rotateY(${(-flipSide*localAngle).toFixed(2)}deg)`;
    const shade=.045+.48*Math.abs(Math.sin(rad))*(.3+.7*u);
    strip.style.setProperty('--curl-shade',shade.toFixed(3));
-   // Integrate all strip endpoints as a continuous sheet in 3D.
    x+=stripWidth*Math.cos(rad);
    z+=stripWidth*Math.sin(rad);
   });
   scene.style.setProperty('--curl-spine-shade',(Math.sin(Math.PI*progress)*.74).toFixed(3));
  }
- drag(0);
+ function updatePeel(){
+  const peel=(1-Math.cos(radians(angle)))*50;
+  const exposed=underlay.children[dir>0?count-1:0];
+  if(flipSide>0){
+   // Right leaf: uncover from the right-hand outside edge inward.
+   base.style.clipPath=`inset(0 ${peel}% 0 0)`;
+   if(exposed)exposed.style.clipPath=`inset(0 0 0 ${100-peel}%)`;
+  }else{
+   // Left leaf: only the leftmost part is uncovered, moving toward
+   // the right-hand (centre) spine. Applies to both single-page turns.
+   base.style.clipPath=`inset(0 0 0 ${peel}%)`;
+   if(exposed)exposed.style.clipPath=`inset(0 ${100-peel}% 0 0)`;
+  }
+ }
 
  async function settle(target){
   if(settled)return;
@@ -412,9 +464,14 @@ export function bindBookSwipe(spread,canTurn,turn,previewPages){
    // Leave vertical document scrolling and pinch zoom alone.
    if(Math.abs(dy)>23&&Math.abs(dy)>Math.abs(dx)*1.35){gesture=null;return false;}
    if(Math.abs(dx)<9||Math.abs(dx)<Math.abs(dy)*1.08)return false;
-   const dir=dx<0?1:-1;
+   const single=spread.closest('.book-shell')?.dataset.bookView==='single';
+   // The cropped LEFT page has its hinge at the RIGHT (middle of book).
+   // On touch, only peel its outside LEFT edge toward that hinge.
+   if(single&&dx<0){gesture=null;return false;}
+   const dir=single?1:(dx<0?1:-1);
    if(!canTurn(dir)){gesture=null;return false;}
    gesture.dir=dir;
+   gesture.pullSign=single?-1:dir;
    let destination=null;
    try{destination=previewPages?.(dir)||null;}catch(error){console.warn('Page preview unavailable',error);}
    gesture.scene=createScene(spread,[...spread.querySelectorAll(':scope > .paper-page')],dir,destination);
@@ -422,14 +479,14 @@ export function bindBookSwipe(spread,canTurn,turn,previewPages){
    gesture.width=Math.max(1,gesture.scene.width);
    ignoreClick=true;
   }
-  const distance=Math.max(0,-gesture.dir*dx);
+  const distance=Math.max(0,-gesture.pullSign*dx);
   // The sheet follows the finger; small motions already show a lifted curl.
   gesture.scene.drag(Math.min(176,distance/gesture.width*190));
   return true;
  }
  function end(x,y,commit){
   if(!gesture)return;
-  const {scene,dir,start,width,x:originX,y:originY,canEdgeTap}=gesture;
+  const {scene,dir,pullSign,start,width,x:originX,y:originY,canEdgeTap}=gesture;
   gesture=null;
   if(!scene){
    // Outer-paper taps are an additional phone-friendly way to turn pages.
@@ -437,12 +494,15 @@ export function bindBookSwipe(spread,canTurn,turn,previewPages){
    if(commit&&canEdgeTap&&Math.abs(x-originX)<12&&Math.abs(y-originY)<12){
     const box=spread.getBoundingClientRect();
     const ratio=(x-box.left)/box.width;
-    if(ratio<.14&&canTurn(-1)){ignoreClick=true;turn(-1,0);}
+    const single=spread.closest('.book-shell')?.dataset.bookView==='single';
+    if(single){
+     if(ratio<.14&&canTurn(1)){ignoreClick=true;turn(1,0);}
+    }else if(ratio<.14&&canTurn(-1)){ignoreClick=true;turn(-1,0);}
     else if(ratio>.86&&canTurn(1)){ignoreClick=true;turn(1,0);}
    }
    return;
   }
-  const distance=Math.max(0,-dir*(x-originX));
+  const distance=Math.max(0,-pullSign*(x-originX));
   const enough=distance>=Math.min(48,width*.12);
   const flick=distance>=19&&now()-start<340;
   if(commit&&(enough||flick)&&canTurn(dir)){

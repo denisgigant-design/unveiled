@@ -1,6 +1,6 @@
 import {esc,uid,safeLink,youtubeID} from './core.mjs';
 import {RESOURCES} from './data.mjs?v=unveiled9';
-import {musicRoomIntro} from './visuals.js?v=unveiled14';
+import {musicRoomIntro} from './visuals.js?v=unveiled15';
 import {featuredVideo} from './playback.js?v=unveiled12';
 import {findYoutubeVideos,youtubeResultsURL,youtubeSearchEndpoint} from './youtube-search.mjs?v=unveiled13';
 
@@ -33,8 +33,7 @@ function frameMarkup(kind){
 function watchSection(ctx,kind){
  const {name,playlist}=rooms[kind];
  return `<section class="watch-section" data-watch-section="${kind}" aria-labelledby="watch-${kind}-title">
-  <header class="section-heading watch-branded-heading">
-   <img class="watch-room-badge" src="assets/unveiled-badge-${kind}.webp" alt="" width="72" height="72" loading="lazy">
+  <header class="section-heading">
    <div><p class="eyebrow">${kind==='music'?'MUSIC &amp; STUDIO':'TEACHING &amp; CONVERSATIONS'}</p><h2 id="watch-${kind}-title" tabindex="-1">${name}</h2></div>
    <button class="plain-link" data-add-video="${kind}">${ctx.icon('plus')} Add a link</button>
   </header>

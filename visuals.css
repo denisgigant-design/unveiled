@@ -255,3 +255,19 @@ body[data-page="team"] .members-spread{margin-top:15px;border-top:0;padding-top:
   .members-knights>.section-heading>.muted{display:none}
   .room-character .music-room-emblem{width:min(100%,215px)}
 }
+
+.bible-cover-entry .open-cover-button{max-width:100%;padding-inline:8px}
+.closed-book-stage .book-colour-choices{position:relative;z-index:3;justify-content:center;margin:0 0 8px}
+.closed-book-stage .book-colour-choices>span{flex-basis:100%;margin:0;text-align:center}
+@media(min-width:850px){
+  body[data-page="bible"] .bible-cover-entry .closed-book-stage .leather-volume{--cover-width:340px}
+}
+@media(max-width:700px){
+  .closed-book-stage .book-colour-choices>button{min-height:32px}
+}
+@media(max-width:480px){
+  .bible-cover-entry .closed-book-stage{min-height:0;padding-top:8px}
+  .bible-cover-entry .open-cover-button{padding-block:8px 10px}
+  .bible-cover-entry .cover-introduction{padding-top:4px}
+  .cover-afterword{grid-template-columns:1fr}
+}

@@ -191,3 +191,21 @@ body[data-book-colour] #reader-workspace .book-ribbon{
 .detailed-map .map-point:hover .map-point-pin{fill:#fff1d8}
 
 .members-teaching-link{margin:18px 0 22px}
+
+/* Tint the paper itself while keeping each reading theme's text colours. */
+:root body[data-book-colour] #reader-workspace .book-spread[data-theme] .paper-page,
+:root body[data-book-colour] #reader-workspace .book-spread[data-theme] .paper-page:nth-child(2){
+  background:linear-gradient(var(--page-direction,90deg),var(--coloured-paper) 89%,var(--coloured-gutter));
+}
+:root body[data-book-colour] #reader-workspace .book-spread[data-theme] .paper-page:nth-child(2){
+  --page-direction:270deg;
+}
+.book-spread[data-theme="paper"]{--paper-base:#f8f3e8;--paper-tint:23%}
+.book-spread[data-theme="sepia"]{--paper-base:#f2e5c8;--paper-tint:25%}
+:root[data-appearance="dark"] .book-spread[data-theme="paper"]{--paper-base:#182333;--paper-tint:24%}
+:root[data-appearance="dark"] .book-spread[data-theme="sepia"]{--paper-base:#30251d;--paper-tint:24%}
+.book-spread[data-theme="night"]{--paper-base:#192529;--paper-tint:19%}
+.book-spread[data-theme]{
+  --coloured-paper:color-mix(in srgb,var(--paper-base),var(--bible-swatch) var(--paper-tint));
+  --coloured-gutter:color-mix(in srgb,var(--coloured-paper),var(--bible-leather) 22%);
+}

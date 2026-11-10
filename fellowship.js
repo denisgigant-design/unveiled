@@ -12,7 +12,7 @@ export function fellowship(ctx,root){
   <div class="garden-drapes" aria-hidden="true">${veilPanels('fellowship','garden')}</div>
   <div class="garden-mist" aria-hidden="true"></div>
   <header class="fellowship-header">
-   <img class="fellowship-emblem" src="assets/unveiled-badge-fellowship.webp" width="124" height="124" alt="Unveiled Women’s Fellowship emblem">
+   <img class="fellowship-emblem" src="assets/womens-fellowship-logo.jpg" width="124" height="124" alt="Unveiled Women’s Fellowship emblem">
    <p class="eyebrow">UNVEILED / THE GARDEN</p>
    <h1 id="fellowship-heading">Women’s Fellowship.</h1>
    <p>Rooted in the Word. Growing together.</p>

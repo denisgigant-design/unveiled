@@ -41,7 +41,7 @@ export function enhanceHome(ctx,root){
  const reading=ctx.read('reading',null),names=reading?.version==='bg'?PL_BOOKS:EN_BOOKS;
  const location=reading?`${names[reading.book]||'John'} ${reading.chapter||1} · ${VERSIONS[reading.version]?.short||'KJV'}`:'66 books. A little room to begin.';
  root.querySelector('.personal-strip')?.insertAdjacentHTML('beforebegin',`<a class="fellowship-feature" href="#fellowship" data-route="fellowship">
-  <img src="assets/unveiled-badge-fellowship.webp" width="84" height="84" loading="lazy" alt="">
+  <img src="assets/womens-fellowship-logo.jpg" width="84" height="84" loading="lazy" alt="">
   <span><span class="eyebrow">UNVEILED / THE GARDEN</span><strong>Women’s Fellowship.</strong><span>Rooted in the Word. Growing together.</span></span>
   ${ctx.icon('arrow')}
  </a>`);
@@ -133,12 +133,11 @@ export function musicRoomIntro(ctx){
 
 export function showBibleCover(ctx,root,openReader,prepareReader){
  const reading=ctx.read('reading',null),names=reading?.version==='bg'?PL_BOOKS:EN_BOOKS;
- root.innerHTML=`<section class="bible-cover-entry"><div class="cover-introduction"><p class="eyebrow">THE WORD, HELD CLOSE</p><h1>A book to<br>live by.</h1><p>Open the cover.<br>Make a little room for the Word.</p><div class="cover-reading-note">${ctx.icon('bookmark')}<span>${reading?'Your place is waiting.':'Begin wherever you are.'}<strong>${reading?esc((names[reading.book]||'John')+' '+(reading.chapter||1)):'66 books · English & Polish'}</strong></span></div><button class="button" data-open-book>Open your Bible ${ctx.icon('arrow')}</button><p class="cover-edition-note">KJV · ASV 1901 · Biblia Gdańska 1881</p>${bookColourChoices(ctx)}</div><div class="closed-book-stage"><span class="book-pool-light" aria-hidden="true"></span><button class="open-cover-button" data-open-book aria-label="Open the Unveiled Bible cover">${leatherCover(ctx)}</button><span class="cover-touch-note">OPEN THE WORD. LET THE LIGHT IN.</span></div></section><section class="cover-afterword"><div>${veilMark()}<p class="eyebrow">BEYOND THE VEIL</p><h2>The invitation<br>is to come closer.</h2><p>Read at your own pace. Change the type size, save a verse, and return to the place you left.</p><button class="plain-link" data-open-book>Begin reading ${ctx.icon('arrow')}</button></div></section>`;
- let opening=false;
- root.querySelectorAll('[data-open-book]').forEach(button=>button.onclick=async()=>{
-  if(opening)return;opening=true;
+ root.innerHTML=`<section class="bible-cover-entry"><div class="cover-introduction"><p class="eyebrow">THE WORD, HELD CLOSE</p><h1>A book to<br>live by.</h1><p>Open the cover.<br>Make a little room for the Word.</p><div class="cover-reading-note">${ctx.icon('bookmark')}<span>${reading?'Your place is waiting.':'Begin wherever you are.'}<strong>${reading?esc((names[reading.book]||'John')+' '+(reading.chapter||1)):'66 books · English & Polish'}</strong></span></div><p class="cover-edition-note">KJV · ASV 1901 · Biblia Gdańska 1881</p></div><div class="closed-book-stage">${bookColourChoices(ctx)}<span class="book-pool-light" aria-hidden="true"></span><button class="open-cover-button" data-open-book aria-label="Open the Bible">${leatherCover(ctx)}</button><span class="cover-touch-note">TAP THE COVER TO READ</span></div></section><section class="cover-afterword"><div>${veilMark()}<p class="eyebrow">BEYOND THE VEIL</p><h2>The invitation<br>is to come closer.</h2><p>Read at your own pace. Change the type size, save a verse, and return to the place you left.</p></div></section>`;
+ const coverButton=root.querySelector('[data-open-book]');
+ coverButton.onclick=async()=>{
+  coverButton.disabled=true;
   prepareReader();
-  root.querySelectorAll('[data-open-book]').forEach(b=>b.disabled=true);
   const stage=root.querySelector('.closed-book-stage');
   const front=stage.querySelector('.leather-front'),volume=stage.querySelector('.leather-volume');
   if(document.body.dataset.motion!=='off'&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
@@ -160,7 +159,7 @@ export function showBibleCover(ctx,root,openReader,prepareReader){
   }
   if(ctx.route!=='bible'||!root.contains(front))return;
   ctx.bibleOpened=true;openReader();
- });
+ };
 }
 
 export function initVisuals(ctx){
@@ -183,7 +182,7 @@ export function initVisuals(ctx){
   const theme=entrances[route];
   if(reduce.matches||!theme)return;
   const identity=route==='fellowship'
-   ?'<img src="assets/unveiled-badge-fellowship.webp" width="96" height="96" alt=""><span>WOMEN’S FELLOWSHIP</span>'
+   ?'<img src="assets/womens-fellowship-logo.jpg" width="96" height="96" alt=""><span>WOMEN’S FELLOWSHIP</span>'
    :route==='media'
     ?'<img src="assets/unveiled-music-logo.jpg" width="96" height="96" alt=""><span>MUSIC &amp; MEDIA ROOM</span>'
     :`${veilMark()}${wordmark()}<span>${route==='team'?'MEMBERS · DISCIPLED IN THE WORD':'BEYOND THE VEIL. INTO THE LIGHT.'}</span>`;

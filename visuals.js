@@ -1,6 +1,6 @@
 import {esc,EN_BOOKS,PL_BOOKS,VERSIONS} from './core.mjs';
 import {palm,wordmark,veilMark} from './brand-assets.mjs?v=unveiled6';
-import {bookColourChoices,syncBookColour} from './book-reader.mjs?v=unveiled8';
+import {bookColourChoices,bookCoverImage,syncBookColour} from './book-reader.mjs?v=unveiled14';
 import {veilSource,veilPanels} from './veil-art.mjs?v=unveiled8';
 
 const pictures={
@@ -13,7 +13,6 @@ const pictures={
  mark:{file:'unveiled-simple-logo.jpg',title:'The Unveiled mark',alt:'The supplied white cross and opening veil mark on blue'},
  king:{file:'outreach-christ-is-king.png',title:'Christ is King',alt:'Unveiled Christ is King outreach image with a crowd in the city'},
  march:{file:'outreach-march.png',title:'The message, out in the open',alt:'Unveiled outreach image showing people taking part in a March for Jesus'},
- bookCover:{file:'bible-cover-original.jpg',title:'The Unveiled Bible cover',alt:'Ornate navy Bible cover with a silver cross on the front and Moses at the burning bush on the back'},
  knightPair:{file:'tree-of-life-green.jpg',title:'Alex and Denis at the Tree of Life',alt:'Alex, the crescent-helmet knight on the left, and Denis, the square-helmet knight on the right, beside the green Tree of Life'},
  denis:{file:'denis-knight-closeup.jpg',title:'Denis · The square helmet',alt:'Close-up of Denis’s engraved square helmet with gold cross and blue cloak'},
  musicLogo:{file:'unveiled-music-logo.jpg',title:'Unveiled Music',alt:'Unveiled Music emblem with gold lettering, a green palm, draped curtains and a knight with a lyre'},
@@ -30,15 +29,11 @@ const pictures={
 export const imageButton=(key,className='',caption='')=>{const p=pictures[key];return `<button class="brand-photo ${className}" data-brand-image="${key}" aria-label="View ${esc(p.title)}"><img src="assets/${p.file}" alt="${esc(p.alt)}" loading="lazy"><span class="photo-enlarge" aria-hidden="true">↗</span>${caption?`<span class="photo-caption">${caption}</span>`:''}</button>`;};
 const bars=(className='')=>`<span class="room-wave ${className}" aria-hidden="true">${Array.from({length:13},(_,i)=>`<i style="--bar-height:${12+(i*17)%31}px;--bar-delay:${-i*.19}s"></i>`).join('')}</span>`;
 
-export function leatherCover(mini=false){
+function leatherCover(ctx,mini=false){
+ const cover=`<img class="leather-cover-art" data-bible-cover-image src="${bookCoverImage(ctx)}" width="1050" height="960" alt="">`;
  return `<span class="leather-volume ${mini?'mini-volume':''}" aria-hidden="true">
-  <span class="leather-leaves"></span>
-  <span class="leather-endpaper">${veilMark()}<span>THE HOLY BIBLE</span></span>
-  <span class="leather-front">
-   <span class="leather-face"><span class="cover-imprint">${veilMark()}<span>THE HOLY BIBLE</span></span></span>
-   <span class="leather-inside">${veilMark()}</span>
-  </span>
-  <span class="leather-ribbon"></span>
+  ${mini?cover:`<span class="leather-endpaper">${veilMark()}<span>THE HOLY BIBLE</span></span>
+   <span class="leather-front">${cover}<span class="leather-inside">${veilMark()}</span></span>`}
  </span>`;
 }
 
@@ -46,13 +41,13 @@ export function enhanceHome(ctx,root){
  const reading=ctx.read('reading',null),names=reading?.version==='bg'?PL_BOOKS:EN_BOOKS;
  const location=reading?`${names[reading.book]||'John'} ${reading.chapter||1} · ${VERSIONS[reading.version]?.short||'KJV'}`:'66 books. A little room to begin.';
  root.querySelector('.personal-strip')?.insertAdjacentHTML('beforebegin',`<a class="fellowship-feature" href="#fellowship" data-route="fellowship">
-  <img src="assets/womens-fellowship-logo.jpg" width="84" height="84" loading="lazy" alt="">
+  <img src="assets/unveiled-badge-fellowship.webp" width="84" height="84" loading="lazy" alt="">
   <span><span class="eyebrow">UNVEILED / THE GARDEN</span><strong>Women’s Fellowship.</strong><span>Rooted in the Word. Growing together.</span></span>
   ${ctx.icon('arrow')}
  </a>`);
  root.querySelector('.home-welcome')?.insertAdjacentHTML('beforeend',`<button class="plain-link replay-opening" data-replay-veil>${ctx.icon('veil')} Replay opening</button>`);
  const grid=root.querySelector('.rhythm-grid');
- if(grid)grid.outerHTML=`<div class="home-pathways"><button class="word-feature" data-route="bible"><span class="word-feature-copy"><span class="eyebrow">01 / READ &amp; REFLECT</span><h3>${reading?'Pick up the Word.':'Open something eternal.'}</h3><p>${esc(location)}</p><span class="plain-link">Open your Bible ${ctx.icon('arrow')}</span></span><span class="mini-book-scene">${leatherCover(true)}</span></button><div class="home-quiet-paths"><button class="quiet-path" data-route="prayer"><span class="path-number">02</span><span class="path-symbol">${ctx.icon('heart')}</span><span><span class="small-label">PRAY &amp; REMEMBER</span><h3>Room for what’s on your heart.</h3><p>Your private prayer and reflection journal.</p></span>${ctx.icon('arrow')}</button><button class="quiet-path" data-route="games"><span class="path-number">03</span><span class="path-symbol">${ctx.icon('games')}</span><span><span class="small-label">PLAY &amp; DISCOVER</span><h3>A little play. A deeper truth.</h3><p>Discover body, soul and spirit.</p></span>${ctx.icon('arrow')}</button></div></div>`;
+ if(grid)grid.outerHTML=`<div class="home-pathways"><button class="word-feature" data-route="bible"><span class="word-feature-copy"><span class="eyebrow">01 / READ &amp; REFLECT</span><h3>${reading?'Pick up the Word.':'Open something eternal.'}</h3><p>${esc(location)}</p><span class="plain-link">Open your Bible ${ctx.icon('arrow')}</span></span><span class="mini-book-scene">${leatherCover(ctx,true)}</span></button><div class="home-quiet-paths"><button class="quiet-path" data-route="prayer"><span class="path-number">02</span><span class="path-symbol">${ctx.icon('heart')}</span><span><span class="small-label">PRAY &amp; REMEMBER</span><h3>Room for what’s on your heart.</h3><p>Your private prayer and reflection journal.</p></span>${ctx.icon('arrow')}</button><button class="quiet-path" data-route="games"><span class="path-number">03</span><span class="path-symbol">${ctx.icon('games')}</span><span><span class="small-label">PLAY &amp; DISCOVER</span><h3>A little play. A deeper truth.</h3><p>Discover body, soul and spirit.</p></span>${ctx.icon('arrow')}</button></div></div>`;
  const bottom=root.querySelector('.home-bottom-grid');
  if(bottom)bottom.outerHTML=`<section class="home-music-feature"><div class="room-feature-copy"><p class="eyebrow">UNVEILED MUSIC</p><h2>Step into<br>the Music &amp; Media Room.</h2><p>A space for the message to be heard.</p><button class="button" data-route="media">Enter the Music &amp; Media Room ${ctx.icon('arrow')}</button></div><div class="home-room-instrument" aria-hidden="true"><span class="room-orbit orbit-a"></span><span class="room-orbit orbit-b"></span><span class="vinyl-record"><span>${veilMark()}</span></span>${bars()}</div><div class="gold-knight-portrait home-gold-knight" aria-hidden="true"><img src="assets/knights-night.png" alt=""></div></section><section class="home-reflection"><div class="reflection-picture">${imageButton('city')}</div><div class="reflection-copy"><p class="eyebrow">A MOMENT TO BE STILL</p><h2>Slow down.<br>Let the Word settle.</h2><p>Make a little space to read, pray and remember who God is.</p><button class="plain-link" data-passage="18,46,10,kjv">Read Psalm 46:10 ${ctx.icon('arrow')}</button><div class="reflection-brand">${veilMark()}<span>THE VEIL IS OPEN.<br>THE INVITATION IS YOURS.</span></div></div></section><section class="home-outreach-feature"><div><p class="eyebrow">BEYOND THESE PAGES</p><h2>Faith steps<br>into the world.</h2><p>Share the message. Serve the people.<br>Start with the person near you.</p><button class="button outline" data-route="outreach">Explore outreach ${ctx.icon('arrow')}</button></div>${imageButton('together','home-outreach-photo')}</section><section class="identity-spread"><div class="identity-copy"><button class="identity-mark" data-brand-image="mark" aria-label="View the Unveiled mark">${veilMark()}</button><p class="eyebrow">THE WORLD OF UNVEILED</p><h2>One message.<br>Many expressions.</h2><p>Scripture. Music. Prayer.<br>A faith that finds expression in life.</p></div><div class="identity-pictures">${imageButton('day','identity-day')}${imageButton('night','identity-night')}</div></section>`;
 }
@@ -138,7 +133,7 @@ export function musicRoomIntro(ctx){
 
 export function showBibleCover(ctx,root,openReader,prepareReader){
  const reading=ctx.read('reading',null),names=reading?.version==='bg'?PL_BOOKS:EN_BOOKS;
- root.innerHTML=`<section class="bible-cover-entry"><div class="cover-introduction"><p class="eyebrow">THE WORD, HELD CLOSE</p><h1>A book to<br>live by.</h1><p>Open the cover.<br>Make a little room for the Word.</p><div class="cover-reading-note">${ctx.icon('bookmark')}<span>${reading?'Your place is waiting.':'Begin wherever you are.'}<strong>${reading?esc((names[reading.book]||'John')+' '+(reading.chapter||1)):'66 books · English & Polish'}</strong></span></div><button class="button" data-open-book>Open your Bible ${ctx.icon('arrow')}</button><p class="cover-edition-note">KJV · ASV 1901 · Biblia Gdańska 1881</p>${bookColourChoices(ctx)}</div><div class="closed-book-stage"><span class="book-pool-light" aria-hidden="true"></span><button class="open-cover-button" data-open-book aria-label="Open the Unveiled Bible cover">${leatherCover()}</button><span class="cover-touch-note">OPEN THE WORD. LET THE LIGHT IN.</span></div></section><section class="cover-afterword">${imageButton('bookCover','cover-art-picture')}<div>${veilMark()}<p class="eyebrow">BEYOND THE VEIL</p><h2>The invitation<br>is to come closer.</h2><p>Read at your own pace. Change the type size, save a verse, and return to the place you left.</p><button class="plain-link" data-open-book>Begin reading ${ctx.icon('arrow')}</button></div></section>`;
+ root.innerHTML=`<section class="bible-cover-entry"><div class="cover-introduction"><p class="eyebrow">THE WORD, HELD CLOSE</p><h1>A book to<br>live by.</h1><p>Open the cover.<br>Make a little room for the Word.</p><div class="cover-reading-note">${ctx.icon('bookmark')}<span>${reading?'Your place is waiting.':'Begin wherever you are.'}<strong>${reading?esc((names[reading.book]||'John')+' '+(reading.chapter||1)):'66 books · English & Polish'}</strong></span></div><button class="button" data-open-book>Open your Bible ${ctx.icon('arrow')}</button><p class="cover-edition-note">KJV · ASV 1901 · Biblia Gdańska 1881</p>${bookColourChoices(ctx)}</div><div class="closed-book-stage"><span class="book-pool-light" aria-hidden="true"></span><button class="open-cover-button" data-open-book aria-label="Open the Unveiled Bible cover">${leatherCover(ctx)}</button><span class="cover-touch-note">OPEN THE WORD. LET THE LIGHT IN.</span></div></section><section class="cover-afterword"><div>${veilMark()}<p class="eyebrow">BEYOND THE VEIL</p><h2>The invitation<br>is to come closer.</h2><p>Read at your own pace. Change the type size, save a verse, and return to the place you left.</p><button class="plain-link" data-open-book>Begin reading ${ctx.icon('arrow')}</button></div></section>`;
  let opening=false;
  root.querySelectorAll('[data-open-book]').forEach(button=>button.onclick=async()=>{
   if(opening)return;opening=true;
@@ -188,7 +183,7 @@ export function initVisuals(ctx){
   const theme=entrances[route];
   if(reduce.matches||!theme)return;
   const identity=route==='fellowship'
-   ?'<img src="assets/womens-fellowship-logo.jpg" width="96" height="96" alt=""><span>WOMEN’S FELLOWSHIP</span>'
+   ?'<img src="assets/unveiled-badge-fellowship.webp" width="96" height="96" alt=""><span>WOMEN’S FELLOWSHIP</span>'
    :route==='media'
     ?'<img src="assets/unveiled-music-logo.jpg" width="96" height="96" alt=""><span>MUSIC &amp; MEDIA ROOM</span>'
     :`${veilMark()}${wordmark()}<span>${route==='team'?'MEMBERS · DISCIPLED IN THE WORD':'BEYOND THE VEIL. INTO THE LIGHT.'}</span>`;

@@ -92,29 +92,23 @@
   color:#c3d5e5;background:#13243a;font-size:12px
 }
 .book-colour-choices>button[aria-pressed="true"]{border-color:#9dc7f0;background:#203956;color:#eff6fd}
-.book-colour-choices i{width:10px;height:10px;border-radius:50%;background:#415c94;box-shadow:0 0 0 1px #819eca99}
-.book-colour-choices [data-book-colour="pink"] i{background:#cf639a;box-shadow:0 0 0 1px #e1a0c7aa}
-.book-colour-choices [data-book-colour="pink"][aria-pressed="true"]{border-color:#d58cb5;background:#512e4b}
+.book-colour-choices i{
+  width:11px;height:11px;border-radius:50%;background:var(--bible-swatch);
+  box-shadow:0 0 0 1px #d8e6fa80
+}
+.book-colour-choices>button[aria-pressed="true"]{border-color:var(--bible-swatch)}
+:root,[data-book-colour="navy"]{--bible-swatch:#6199ff;--bible-glow:#376bdb77;--bible-accent:#244f91;--bible-leather:#0b1d43}
+[data-book-colour="pink"]{--bible-swatch:#ff80c0;--bible-glow:#db4f9877;--bible-accent:#7a285b;--bible-leather:#37142f}
+[data-book-colour="red"]{--bible-swatch:#ff7179;--bible-glow:#d63c4677;--bible-accent:#7d2931;--bible-leather:#39151c}
+[data-book-colour="green"]{--bible-swatch:#4cdb9e;--bible-glow:#23a76e77;--bible-accent:#23644d;--bible-leather:#102e29}
+[data-book-colour="purple"]{--bible-swatch:#c591ff;--bible-glow:#8c4be377;--bible-accent:#5e348d;--bible-leather:#27193f}
 #reader-workspace .book-colour-choices{margin:12px 0 5px}
-body[data-book-colour="pink"] .leather-face{
-  box-shadow:0 0 0 1px #c77eac87,0 0 27px #e46ca975,0 0 65px #b8578c56,10px 16px 30px #010710b3
+body[data-book-colour] #reader-workspace .book-spread{
+  border-color:var(--bible-accent);
+  box-shadow:0 0 0 5px var(--bible-leather),0 0 27px var(--bible-glow),0 16px 35px #030c2080
 }
-body[data-book-colour="pink"] .leather-face::before{
-  content:"";position:absolute;inset:0;border-radius:inherit;background:inherit;filter:url(#rose-leather)
-}
-body[data-book-colour="pink"] .cover-imprint{z-index:1;color:#ffe2f0;text-shadow:0 1px 2px #21041b,0 0 13px #e397bd}
-body[data-book-colour="pink"] .cover-imprint>.brand-seal{filter:drop-shadow(0 0 6px #e397bd)}
-body[data-book-colour="pink"] :is(.leather-endpaper,.leather-inside){background:radial-gradient(ellipse,#623455,#29162f 70%);color:#ffe0ef}
-body[data-book-colour="pink"] :is(.book-ribbon,.leather-ribbon){background:linear-gradient(90deg,#943f76,#e885b6)}
-body[data-book-colour="pink"] .book-pool-light{background:radial-gradient(ellipse,#d866a865,transparent 65%)}
-:root[data-appearance="dark"] body[data-book-colour="pink"] #reader-workspace .book-spread{
-  background:#30243a;border-color:#a86287;box-shadow:0 0 0 5px #54374f,0 0 29px 5px #d666a458,0 16px 45px #030c20b3
-}
-:root[data-appearance="dark"] body[data-book-colour="pink"] #reader-workspace .book-spread[data-theme="paper"] .paper-page{
-  background:linear-gradient(90deg,#35283d 90%,#2a2034);color:#f1e1ec
-}
-:root[data-appearance="dark"] body[data-book-colour="pink"] #reader-workspace .book-spread[data-theme="paper"]>.paper-page:nth-child(2){
-  background:linear-gradient(90deg,#291d33,#35283d 9%)
+body[data-book-colour] #reader-workspace .book-ribbon{
+  background:linear-gradient(90deg,var(--bible-accent),var(--bible-swatch))
 }
 /* A swipe turns the leaf, while an up/down drag scrolls the document. */
 #reader-workspace :is(.book-spread,.paper-page,.verse-text,.verse-line){touch-action:pan-y pinch-zoom}
@@ -197,5 +191,3 @@ body[data-book-colour="pink"] .book-pool-light{background:radial-gradient(ellips
 .detailed-map .map-point:hover .map-point-pin{fill:#fff1d8}
 
 .members-teaching-link{margin:18px 0 22px}
-
-.book-colour-filters{position:absolute;width:0;height:0;pointer-events:none}

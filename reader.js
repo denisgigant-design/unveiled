@@ -1,6 +1,6 @@
 import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference} from './core.mjs';
 import {pageForAnchor} from './book-layout.mjs';
-import {measureBook,animateBookTurn,bindBookSwipe,bookColourChoices} from './book-reader.mjs?v=unveiled10';
+import {measureBook,animateBookTurn,bindBookSwipe,bookColourChoices} from './book-reader.mjs?v=unveiled14';
 const cache=new Map();
 const textSize = {min: 10, max: 32, step: 2, initial: 18};
 const clampSize = value => Math.max(textSize.min, Math.min(textSize.max, Number(value) || textSize.initial));

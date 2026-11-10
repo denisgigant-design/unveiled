@@ -38,53 +38,29 @@
 .quiet-path>.icon{width:16px;color:var(--blue);transition:transform .2s}
 .quiet-path:hover>.icon{transform:translateX(4px)}
 
-/* The supplied cover is one face of a hinged volume. */
+/* The supplied cover artwork sits on the animated front leaf. */
 .leather-volume{
   --cover-width:278px;
-  position:relative;display:block;flex-shrink:0;width:var(--cover-width);aspect-ratio:672/810;
-  transform:rotateY(-13deg) rotateZ(-5deg);transform-style:preserve-3d;transition:transform .45s
+  position:relative;display:block;width:var(--cover-width);max-width:100%;aspect-ratio:1312/1199;
+  transform:rotateY(-7deg) rotateZ(-3deg);transform-style:preserve-3d;transition:transform .45s
 }
-.leather-front{position:absolute;inset:0;z-index:3;transform-origin:left center;transform-style:preserve-3d}
-.leather-face,.leather-inside{
-  position:absolute;inset:0;border-radius:5px 8px 8px 5px;backface-visibility:hidden
+.leather-front{position:absolute;inset:0;z-index:3;transform-origin:12% center;transform-style:preserve-3d}
+.leather-cover-art{
+  display:block;width:100%;height:auto;backface-visibility:hidden;
+  filter:drop-shadow(0 0 17px var(--bible-glow)) drop-shadow(4px 12px 9px #010710a0);
 }
-.leather-face{
-  background:#06112b url("assets/bible-cover-original.jpg") no-repeat 7.75% 42.52% / 228.57% 126.42%;
-  box-shadow:0 0 0 1px #8aabd36b,0 0 21px #4e92f262,0 0 68px #4c87e347,10px 16px 30px #010710b3;
-  transform:translateZ(1px)
+.leather-inside,.leather-endpaper{
+  position:absolute;inset:8% 34% 14% 13%;border-radius:5px 8px 8px 5px;
+  display:grid;place-content:center;justify-items:center;gap:10px;
+  background:radial-gradient(ellipse at 55% 45%,var(--bible-accent),var(--bible-leather) 74%);
+  border:1px solid #c2cfde88;box-shadow:inset 0 0 0 5px #050b19a8;color:#edf3ff
 }
-.leather-inside{
-  display:grid;place-items:center;transform:rotateY(180deg);
-  background:radial-gradient(ellipse at 50% 45%,#163d68,#091833 72%);
-  box-shadow:inset 0 0 0 1px #8aabd362,inset 0 0 0 9px #0c1d3a,inset 0 0 0 10px #8cabc536;
-  color:#afc9e6
-}
-.leather-inside>.brand-seal{width:32%;height:auto;filter:drop-shadow(0 0 12px #64aef48a)}
-.cover-imprint{
-  position:absolute;left:16%;right:13%;top:57%;display:grid;justify-items:center;gap:6px;
-  color:#dce6f1;text-shadow:0 1px 2px #000,0 0 16px #599eee
-}
-.cover-imprint>.brand-seal{width:30%;height:auto;filter:drop-shadow(0 0 5px #599eee)}
-.cover-imprint>span{font:600 clamp(7px,1.2vw,13px)/1.2 Georgia,serif;letter-spacing:.13em}
-.leather-leaves,.leather-endpaper{position:absolute;border-radius:3px 6px 6px 3px}
-.leather-leaves{
-  inset:7px -8px 1px 7px;background:repeating-linear-gradient(#344a62 0 1px,#889caf 1px 2px,#263d58 2px 3px);
-  box-shadow:3px 5px 0 #102b4d,5px 11px 19px #0009
-}
-.leather-endpaper{
-  inset:5px 1px 6px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-  color:#d7e7fc;border:1px solid #516c89;background:radial-gradient(ellipse at 60% 44%,#2c4f75,#13283f 62%,#071626);
-  font:600 12px/1.4 Georgia,serif;letter-spacing:2px;box-shadow:inset 7px 0 11px #031329a8
-}
-.leather-endpaper>.brand-seal{width:32%;height:auto}
-.leather-ribbon{
-  position:absolute;right:20%;top:96%;height:34px;width:9px;background:linear-gradient(90deg,#356bb8,#79a5e1);
-  clip-path:polygon(0 0,100% 0,100% 100%,50% 84%,0 100%)
-}
+.leather-inside{transform:rotateY(180deg);backface-visibility:hidden}
+.leather-endpaper{visibility:hidden;font:600 10px/1.4 Georgia,serif;letter-spacing:.12em}
+.book-opening .leather-endpaper{visibility:visible}
+.leather-endpaper>.brand-seal,.leather-inside>.brand-seal{width:44px;height:auto}
 .mini-volume{--cover-width:125px}
-.mini-volume .cover-imprint{gap:4px}
-.mini-volume .cover-imprint>span{font-size:6px}
-.mini-volume .leather-ribbon{height:19px;width:6px}
+
 
 .home-music-feature{position:relative;display:grid;grid-template-columns:1.05fr .75fr 175px;align-items:center;gap:10px;min-height:330px;margin-top:31px;padding:32px 29px 30px 34px;border:1px solid #41567a;border-radius:17px;background:radial-gradient(ellipse at 65% 50%,#4d324d66,transparent 60%),linear-gradient(110deg,#0a1d37,#07162b 70%);color:#e4edf8;overflow:hidden;isolation:isolate}
 .room-feature-copy{position:relative;z-index:2}
@@ -205,10 +181,9 @@
 .closed-book-stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;perspective:1400px;min-height:450px;isolation:isolate}
 .open-cover-button{transform-style:preserve-3d;position:relative;z-index:2;display:grid;place-items:center;background:none;padding:22px 20px 28px;border-radius:14px}
 .open-cover-button:hover .leather-volume{transform:rotateY(-10deg) rotateZ(-3deg) translateY(-5px)}
-.book-pool-light{position:absolute;left:10%;right:0;bottom:14%;height:27%;border-radius:50%;background:radial-gradient(ellipse,#6a8eae30,transparent 70%);filter:blur(20px);z-index:-1}
+.book-pool-light{position:absolute;left:10%;right:0;bottom:14%;height:27%;border-radius:50%;background:radial-gradient(ellipse,var(--bible-glow),transparent 70%);filter:blur(20px);z-index:-1}
 .cover-touch-note{position:relative;z-index:3;font-size:6px;letter-spacing:2px;line-height:1.8;text-align:center;color:var(--visual-muted);margin-top:8px}
-.cover-afterword{display:grid;grid-template-columns:.65fr 1.35fr;align-items:center;gap:35px;max-width:760px;margin:20px auto 5px;padding:25px;border:1px solid var(--visual-line);border-radius:13px;background:var(--visual-surface)}
-.cover-art-picture{max-width:330px;border-radius:6px}
+.cover-afterword{display:grid;grid-template-columns:1fr;align-items:center;max-width:760px;margin:20px auto 5px;padding:25px;border:1px solid var(--visual-line);border-radius:13px;background:var(--visual-surface)}
 .cover-afterword>div{padding:7px}
 .cover-afterword .brand-seal{color:var(--blue);width:44px;height:36px;margin-bottom:14px}
 .cover-afterword .eyebrow{font-size:7px}

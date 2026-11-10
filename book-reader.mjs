@@ -23,21 +23,32 @@ export function measureBook(verses, actual, options, chapter) {
   } finally {wrapper.remove();}
 }
 
+const bookColours={navy:'Blue',pink:'Pink',red:'Red',green:'Green',purple:'Purple'};
+
 function bookColour(ctx){
- return ctx.read('book-colour','navy')==='pink'?'pink':'navy';
+ const stored=ctx.read('book-colour','navy');
+ return typeof stored==='string'&&Object.hasOwn(bookColours,stored)?stored:'navy';
+}
+
+export function bookCoverImage(ctx){
+ return `assets/bible-cover-${bookColour(ctx)}.webp`;
 }
 
 export function bookColourChoices(ctx){
  const selected=bookColour(ctx);
  return `<div class="book-colour-choices" role="group" aria-label="Bible cover colour">
   <span>Bible colour</span>
-  ${[['navy','Navy'],['pink','Pink']].map(([value,label])=>`<button type="button" data-book-colour="${value}" aria-pressed="${selected===value}"><i aria-hidden="true"></i>${label}</button>`).join('')}
+  ${Object.entries(bookColours).map(([value,label])=>`<button type="button" data-book-colour="${value}" aria-pressed="${selected===value}"><i aria-hidden="true"></i>${label}</button>`).join('')}
  </div>`;
 }
 
 export function syncBookColour(ctx){
  const colour=bookColour(ctx);
  document.body.dataset.bookColour=colour;
+ const cover=bookCoverImage(ctx);
+ document.querySelectorAll('[data-bible-cover-image]').forEach(image=>{
+  if(image.getAttribute('src')!==cover)image.src=cover;
+ });
  document.querySelectorAll('button[data-book-colour]').forEach(button=>{
   button.setAttribute('aria-pressed',String(button.dataset.bookColour===colour));
  });

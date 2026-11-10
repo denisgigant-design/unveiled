@@ -1,0 +1,24 @@
+/* Cover and first-paper cinematic transition. Only visible while opening. */
+.unveiled-book-cinema{position:fixed;inset:0;z-index:150;pointer-events:none;perspective:1800px;isolation:isolate}
+.cinema-backdrop{position:absolute;inset:0;background:#07111f;opacity:0}
+.cinema-book,.cinema-cover{position:fixed;display:block;transform-style:preserve-3d;transform-origin:left center}
+.cinema-book{perspective:1800px;opacity:1}
+.cinema-open-image{width:100%;height:100%;object-fit:fill;display:block;opacity:0}
+.cinema-cover{z-index:3;transform-origin:left center;will-change:left,top,width,height,transform}
+.cinema-cover-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
+.cinema-cover-face.front img{width:100%;height:100%;object-fit:fill;filter:drop-shadow(0 8px 14px #0008)}
+.cinema-cover-face.back{transform:rotateY(180deg);background:#122238;border:1px solid #7b8197;border-radius:5px}
+.cinema-endpaper{width:100%;height:100%;display:grid;align-content:center;justify-items:center;gap:13px;background:radial-gradient(ellipse at center,#192e46,#0b182a 73%);color:#e4edf5}
+.cinema-endpaper img{width:min(42%,115px);height:auto;mix-blend-mode:screen;opacity:.85;aspect-ratio:1;object-fit:contain}
+.cinema-endpaper span{font:600 clamp(9px,1.6vw,17px)/1.2 Georgia,serif;letter-spacing:.22em}
+.cinema-endpaper small{font:8px system-ui,sans-serif;letter-spacing:.25em;opacity:.75}
+.cinema-first-leaf{position:absolute;inset:0;transform-style:preserve-3d;opacity:0;pointer-events:none}
+.cinema-first-leaf.visible{opacity:1}
+.cinema-first-strip{position:absolute;left:50%;top:0;height:100%;transform-style:preserve-3d;transform-origin:left center;will-change:transform}
+.cinema-first-face{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.cinema-first-face.back{transform:rotateY(180deg)}
+.cinema-first-crop{position:absolute;inset-block:0;background-repeat:no-repeat;overflow:hidden}
+.cinema-leaf-logo{position:absolute;top:37%;left:34%;width:32%;display:grid;justify-items:center;gap:4px;opacity:.73;color:#f0f1f5;text-align:center}
+.cinema-leaf-logo img{width:100%;max-width:105px;aspect-ratio:1;object-fit:contain;mix-blend-mode:screen}
+.cinema-leaf-logo span{font:600 clamp(6px,1vw,12px)/1.2 Georgia,serif;letter-spacing:.22em}
+@media(prefers-reduced-motion:reduce){.unveiled-book-cinema{display:none}}

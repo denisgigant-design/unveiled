@@ -1,7 +1,7 @@
 import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference} from './core.mjs';
 import {pageForAnchor} from './book-layout.mjs';
-import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled24';
-import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled16';
+import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled30';
+import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled30';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
 const cache=new Map();
 const textSize={min:1,max:32,step:1,initial:18};
@@ -21,7 +21,7 @@ export function createReader(ctx){
   // An unsaved mobile two-page spread starts at legible small type, with
   // Scripture reflow measured against the actual narrow paper panels.
   const defaultSize=matchMedia('(max-width:600px)').matches&&step()===2?10:textSize.initial;
-  return {font:'georgia',theme:'paper',brightness:100,...saved,size:clampSize(saved?.size??defaultSize)};
+  return {font:saved?.font||'georgia',size:clampSize(saved?.size??defaultSize),theme:'night',brightness:100};
  };
  const key=v=>`${s.version}:${s.book}:${s.chapter}:${v}`;
  let pendingAnchor=null,pendingEnd=false;
@@ -136,7 +136,7 @@ export function createReader(ctx){
   <button class="type-step" data-font-step="-1" ${opts.size<=textSize.min?'disabled':''} aria-label="Decrease Bible text size">A−</button>
   <output id="reader-size-value">${opts.size}px</output>
   <button class="type-step" data-font-step="1" ${opts.size>=textSize.max?'disabled':''} aria-label="Increase Bible text size">A+</button>
-  <button class="plain-link" data-settings>Font &amp; page</button>
+  <button class="plain-link" data-settings>Text settings</button>
   <button class="small-button reader-word-study" data-word-study>${ctx.icon('book')} Word study</button>
   <button class="plain-link return-to-cover" data-reader-cover aria-label="Close the Bible to its cover">${ctx.icon('book')} Cover</button>
  </div></div>
@@ -246,16 +246,15 @@ export function createReader(ctx){
  function preferences(){
   const o=settings();
   ctx.modal('Make this space yours',
-   `<p class="muted">The book keeps its shape. Larger text flows into more pages.</p><form class="settings-form"><label>Typeface<select name="font"><option value="georgia">Classic serif · Georgia</option><option value="palatino">Book serif · Palatino</option><option value="sans">Clean sans serif</option></select></label><label>Text size <output id="size-out">${o.size}px</output><input type="range" name="size" min="${textSize.min}" max="${textSize.max}" value="${o.size}"></label><label>Page tone<select name="theme"><option value="paper">Coloured parchment</option><option value="sepia">Warm dark</option><option value="night">Quiet night</option></select></label><label>Brightness <output id="bright-out">${o.brightness}%</output><input type="range" name="brightness" min="55" max="110" value="${o.brightness}"></label></form><p class="fine-print">Your choices are remembered in this browser.</p>`,
+   `<p class="muted">All five books use dark parchment. Choose your typeface and Scripture size.</p><form class="settings-form"><label>Typeface<select name="font"><option value="georgia">Classic serif · Georgia</option><option value="palatino">Book serif · Palatino</option><option value="sans">Clean sans serif</option></select></label><label>Text size <output id="size-out">${o.size}px</output><input type="range" name="size" min="${textSize.min}" max="${textSize.max}" step="1" value="${o.size}"></label></form><p class="fine-print">Dark mode is used for every Bible colour. Your choices are remembered.</p>`,
    body=>{
     const form=body.querySelector('form');
-    form.elements.font.value=o.font;form.elements.theme.value=o.theme;
+    form.elements.font.value=o.font;
     form.oninput=()=>{
      const data=new FormData(form);
-     const next={font:data.get('font'),size:+data.get('size'),theme:data.get('theme'),brightness:+data.get('brightness')};
+     const next={font:data.get('font'),size:+data.get('size')};
      ctx.save('reader-settings',next);
      body.querySelector('#size-out').textContent=next.size+'px';
-     body.querySelector('#bright-out').textContent=next.brightness+'%';
      paginateCurrent();draw();
     };
    }

@@ -269,10 +269,8 @@ function maskLeaf(page,masks,count){
  const url=`url(#${masks[side]})`;
  page.style.clipPath=url;
  page.style.webkitClipPath=url;
- // Remove the internal parchment-only clipping from the moving SVG image.
- // Our full leaf mask now supplies the irregular contour, including a
- // small amount of the original veil/palm ornament at the outside edge.
- page.querySelectorAll('.book-leaf-art use[clip-path]').forEach(use=>use.removeAttribute('clip-path'));
+ // Keep the internal PAPER clipping: only parchment curls, never silver clasps.
+ // The supplied full-page books have stationary metal hardware outside this path.
 }
 
 // originalPages are the old position; destinationPages may be populated later

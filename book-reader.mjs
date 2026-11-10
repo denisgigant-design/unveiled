@@ -1,18 +1,23 @@
 import {paginateMeasured} from './book-layout.mjs';
 import {esc} from './core.mjs';
+import {syncBookArtwork} from './book-art.mjs?v=unveiled16';
 
-export function measureBook(verses, actual, options, chapter) {
+export function paperHeading(book, edition, chapter) {
+  return `<div class="paper-running"><span>${esc(book)}</span><span>${esc(edition)}</span></div>${chapter
+    ?`<div class="chapter-heading"><span>CHAPTER</span><h2>${chapter}</h2><span class="chapter-line"></span></div>` : ''}`;
+}
+
+export function measureBook(verses, actual, options, {book, edition, chapter}) {
   const box=actual.getBoundingClientRect();
-  if(box.width<80||box.height<80)return null;
+  if(box.width<60||box.height<80)return null;
   const wrapper=document.createElement('div');
   wrapper.className='book-measure';wrapper.setAttribute('aria-hidden','true');wrapper.inert=true;
-  wrapper.style.width=box.width+'px';wrapper.style.height=box.height+'px';
+  wrapper.style.width=Math.floor(box.width)+'px';wrapper.style.height=Math.floor(box.height)+'px';
   wrapper.style.setProperty('--reader-size',options.size+'px');
   wrapper.style.setProperty('--reader-font',{georgia:'Georgia,serif',palatino:'Palatino,serif',sans:'system-ui,sans-serif'}[options.font]||'Georgia,serif');
-  wrapper.innerHTML=`<article class="paper-page"><div class="paper-running"><span>THE HOLY BIBLE</span><span>CHAPTER</span></div><div class="chapter-heading"><span>CHAPTER</span><h2>${chapter}</h2><span class="chapter-line"></span></div><div class="verse-text"></div><div class="page-number">1</div></article>`;
+  wrapper.innerHTML=`<div class="book-page-content">${paperHeading(book,edition,chapter)}<div class="verse-text"></div><div class="page-number">1</div></div>`;
   document.body.append(wrapper);
-  const paper=wrapper.querySelector('.paper-page'),heading=wrapper.querySelector('.chapter-heading'),body=wrapper.querySelector('.verse-text');
-  paper.style.width=box.width+'px';paper.style.height=box.height+'px';
+  const heading=wrapper.querySelector('.chapter-heading'),body=wrapper.querySelector('.verse-text');
   try {
     return paginateMeasured(verses,(parts,index)=>{
       heading.style.display=index===0?'':'none';
@@ -25,7 +30,7 @@ export function measureBook(verses, actual, options, chapter) {
 
 const bookColours={navy:'Blue',pink:'Pink',red:'Red',green:'Green',purple:'Purple'};
 
-function bookColour(ctx){
+export function bookColour(ctx){
  const stored=ctx.read('book-colour','navy');
  return typeof stored==='string'&&Object.hasOwn(bookColours,stored)?stored:'navy';
 }
@@ -45,6 +50,7 @@ export function bookColourChoices(ctx){
 export function syncBookColour(ctx){
  const colour=bookColour(ctx);
  document.body.dataset.bookColour=colour;
+ syncBookArtwork(colour);
  const cover=bookCoverImage(ctx);
  document.querySelectorAll('[data-bible-cover-image]').forEach(image=>{
   if(image.getAttribute('src')!==cover)image.src=cover;
@@ -157,7 +163,6 @@ export async function animateBookTurn(spread,oldPages,count,dir,angle=0){
  spread.append(overlay);
  const finish=count===2?180:99;
  const duration=(count===2?610:430)-Math.round(angle*1.8);
- overlay.style.setProperty('--leaf-duration',duration+'ms');
  const animation=overlay.animate([
   {transform:leafPose(angle,dir)},
   {transform:leafPose(angle+(finish-angle)*.63,dir),offset:.55},

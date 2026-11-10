@@ -1,6 +1,6 @@
 import {esc,EN_BOOKS,PL_BOOKS,VERSIONS} from './core.mjs';
 import {palm,wordmark,veilMark} from './brand-assets.mjs?v=unveiled6';
-import {bookColourChoices,bookCoverImage,syncBookColour} from './book-reader.mjs?v=unveiled14';
+import {bookColourChoices,bookCoverImage,syncBookColour} from './book-reader.mjs?v=unveiled16';
 import {veilSource,veilPanels} from './veil-art.mjs?v=unveiled8';
 
 const pictures={

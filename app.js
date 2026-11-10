@@ -4,7 +4,7 @@ import {createReader} from './reader.js?v=unveiled10';
 import {renderFeature} from './features.js?v=unveiled15';
 import {wordmark,palm,veilMark} from './brand-assets.mjs?v=unveiled6';
 import {initMotion} from './motion.js?v=unveiled11';
-import {enhanceHome,showBibleCover,initVisuals} from './visuals.js?v=unveiled15';
+import {enhanceHome,showBibleCover,initVisuals} from './visuals.js?v=unveiled16';
 import {createPlayback} from './playback.js?v=unveiled12';
 import {createDeviceAccounts,showDeviceAccount} from './device-accounts.mjs?v=unveiled8';
 const main=document.querySelector('#main'),dialog=document.querySelector('#site-dialog'),memory=new Map();let toastTimer,warned=false;

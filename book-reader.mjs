@@ -1,4 +1,4 @@
-import {paginateMeasured} from './book-layout.mjs';
+import {paginateMeasured,balanceFinalSpread} from './book-layout.mjs?v=unveiled31';
 import {esc} from './core.mjs';
 import {syncBookArtwork} from './book-art.mjs?v=unveiled16';
 
@@ -11,20 +11,33 @@ export function measureBook(verses, actual, options, {book, edition, chapter}) {
   const box=actual.getBoundingClientRect();
   if(box.width<60||box.height<80)return null;
   const wrapper=document.createElement('div');
-  wrapper.className='book-measure';wrapper.setAttribute('aria-hidden','true');wrapper.inert=true;
-  wrapper.style.width=Math.floor(box.width)+'px';wrapper.style.height=Math.floor(box.height)+'px';
+  // Measure inside the real reader so every font, breakpoint and line-height
+  // matches the visible paper. The former body-level copy used older styles.
+  wrapper.className='book-pagination-measure';wrapper.setAttribute('aria-hidden','true');wrapper.inert=true;
+  wrapper.style.cssText='position:fixed;left:-20000px;top:0;visibility:hidden;pointer-events:none;contain:layout style';
+  wrapper.style.width=box.width+'px';wrapper.style.height=box.height+'px';
   wrapper.style.setProperty('--reader-size',options.size+'px');
   wrapper.style.setProperty('--reader-font',{georgia:'Georgia,serif',palatino:'Palatino,serif',sans:'system-ui,sans-serif'}[options.font]||'Georgia,serif');
   wrapper.innerHTML=`<div class="book-page-content">${paperHeading(book,edition,chapter)}<div class="verse-text"></div><div class="page-number">1</div></div>`;
-  document.body.append(wrapper);
+  const content=wrapper.querySelector('.book-page-content');
+  content.style.setProperty('position','static','important');
+  content.style.setProperty('inset','auto','important');
+  content.style.width='100%';content.style.height='100%';
+  actual.parentElement.append(wrapper);
   const heading=wrapper.querySelector('.chapter-heading'),body=wrapper.querySelector('.verse-text');
+  const measure=(parts,index)=>{
+    heading.style.display=index===0?'':'none';
+    body.innerHTML=parts.map(p=>`<button class="verse-line"><sup>${p.v}</sup><span>${esc(p.text)}</span></button>`).join('');
+    const last=body.lastElementChild,top=content.getBoundingClientRect().top;
+    return {used:(last?.getBoundingClientRect().bottom||body.getBoundingClientRect().top)-top,
+      capacity:body.getBoundingClientRect().bottom-top-2};
+  };
   try {
-    return paginateMeasured(verses,(parts,index)=>{
-      heading.style.display=index===0?'':'none';
-      body.innerHTML=parts.map(p=>`<button class="verse-line"><sup>${p.v}</sup><span>${esc(p.text)}</span></button>`).join('');
-      const last=body.lastElementChild;
-      return !last || last.getBoundingClientRect().bottom<=body.getBoundingClientRect().bottom-2;
+    const pages=paginateMeasured(verses,(parts,index)=>{
+      const size=measure(parts,index);return size.used<=size.capacity;
     });
+    return actual.closest('.book-shell')?.dataset.bookView==='spread'
+      ?balanceFinalSpread(pages,measure):pages;
   } finally {wrapper.remove();}
 }
 
@@ -228,7 +241,8 @@ function addPaperMasks(scene,spread,count){
  const phone=count===1;
  const shell=spread.closest('.book-shell');
  const vars=shell?getComputedStyle(shell):null;
- const crop=phone?(parseFloat(vars?.getPropertyValue('--phone-crop-start'))||112):0;
+ const storedCrop=parseFloat(vars?.getPropertyValue('--phone-crop-start'));
+ const crop=phone?(Number.isFinite(storedCrop)?storedCrop:112):0;
  const leafWidth=phone?(parseFloat(vars?.getPropertyValue('--phone-leaf-width'))||656):768;
  const viewScale=1/leafWidth;
  const leftTx=phone?(-crop/leafWidth):0;
@@ -279,7 +293,7 @@ function createScene(spread,originalPages,dir,destinationPages){
  installTurnStyles();
  const count=originalPages.length;
  if(!count)return null;
- const flipSide=count===1?-1:dir; // Left-side single leaf hinges at RIGHT (centre spine).
+ const flipSide=dir; // Next peels left; previous peels right in either view.
  const leaf=originalPages[dir>0?count-1:0];
  // Button-driven turns pass detached page clones. Measure the currently
  // mounted leaf instead, so arrows and finger swipes use identical geometry.
@@ -401,8 +415,7 @@ function createScene(spread,originalPages,dir,destinationPages){
    base.style.clipPath=`inset(0 ${oldEdge}% 0 0)`;
    if(exposed)exposed.style.clipPath=`inset(0 0 0 ${100-peel}%)`;
   }else{
-   // Left leaf: only the leftmost part is uncovered, moving toward
-   // the right-hand (centre) spine. Applies to both single-page turns.
+   // A previous-page turn uncovers from the left edge toward the right hinge.
    base.style.clipPath=`inset(0 0 0 ${oldEdge}%)`;
    if(exposed)exposed.style.clipPath=`inset(0 ${100-peel}% 0 0)`;
   }
@@ -467,14 +480,10 @@ export function bindBookSwipe(spread,canTurn,turn,previewPages){
    // Leave vertical document scrolling and pinch zoom alone.
    if(Math.abs(dy)>23&&Math.abs(dy)>Math.abs(dx)*1.35){gesture=null;return false;}
    if(Math.abs(dx)<9||Math.abs(dx)<Math.abs(dy)*1.08)return false;
-   const single=spread.closest('.book-shell')?.dataset.bookView==='single';
-   // The cropped LEFT page has its hinge at the RIGHT (middle of book).
-   // On touch, only peel its outside LEFT edge toward that hinge.
-   if(single&&dx<0){gesture=null;return false;}
-   const dir=single?1:(dx<0?1:-1);
+   const dir=dx<0?1:-1;
    if(!canTurn(dir)){gesture=null;return false;}
    gesture.dir=dir;
-   gesture.pullSign=single?-1:dir;
+   gesture.pullSign=dir;
    let destination=null;
    try{destination=previewPages?.(dir)||null;}catch(error){console.warn('Page preview unavailable',error);}
    gesture.scene=createScene(spread,[...spread.querySelectorAll(':scope > .paper-page')],dir,destination);
@@ -497,10 +506,7 @@ export function bindBookSwipe(spread,canTurn,turn,previewPages){
    if(commit&&canEdgeTap&&Math.abs(x-originX)<12&&Math.abs(y-originY)<12){
     const box=spread.getBoundingClientRect();
     const ratio=(x-box.left)/box.width;
-    const single=spread.closest('.book-shell')?.dataset.bookView==='single';
-    if(single){
-     if(ratio<.14&&canTurn(1)){ignoreClick=true;turn(1,0);}
-    }else if(ratio<.14&&canTurn(-1)){ignoreClick=true;turn(-1,0);}
+    if(ratio<.14&&canTurn(-1)){ignoreClick=true;turn(-1,0);}
     else if(ratio>.86&&canTurn(1)){ignoreClick=true;turn(1,0);}
    }
    return;
@@ -588,3 +594,4 @@ export async function animateBookTurn(spread,oldPages,count,dir,angle=0){
  try{await scene.finish();}
  finally{scene.node.remove();}
 }
+

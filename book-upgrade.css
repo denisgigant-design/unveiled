@@ -70,3 +70,8 @@
 }
 /* Dark-only Bible controls; the light/sepia/night chooser is removed from JS. */
 #reader-workspace .reader-size-bar{color:#afc5da}
+
+/* Keep verse selection inside its own lines, clear of neighbouring Scripture. */
+#reader-workspace .verse-line.verse-selected{outline:none;outline-offset:0}
+#reader-workspace .verse-line:focus-visible{outline:1px solid #9dc7f0;outline-offset:-1px}
+

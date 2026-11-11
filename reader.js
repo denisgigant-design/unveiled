@@ -1,6 +1,6 @@
 import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference} from './core.mjs';
-import {pageForAnchor} from './book-layout.mjs';
-import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled30';
+import {pageForAnchor} from './book-layout.mjs?v=unveiled31';
+import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled31';
 import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled30';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
 const cache=new Map();
@@ -98,7 +98,9 @@ export function createReader(ctx){
    root.querySelectorAll('[data-turn]').forEach(button=>{button.disabled=!pageAvailable(+button.dataset.turn);});
   }else{
    let paper=root.querySelector('.book-spread > .paper-page .book-page-content');
-   if(!paper){paint();paper=root.querySelector('.book-spread > .paper-page .book-page-content');}
+   if(!paper||root.querySelector('.book-shell')?.dataset.bookView!==bookViewMode(ctx)){
+    paint();paper=root.querySelector('.book-spread > .paper-page .book-page-content');
+   }
    const measured=measureBook(bible[s.book].chapters[s.chapter-1],paper,settings(),{
     book:names()[s.book],edition:VERSIONS[s.version].short,chapter:s.chapter
    });
@@ -337,3 +339,4 @@ export function createReader(ctx){
   }
  };
 }
+

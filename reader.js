@@ -3,6 +3,7 @@ import {pageForAnchor} from './book-layout.mjs?v=unveiled31';
 import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled33';
 import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled30';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
+import {simpleBookMark} from './opening-art.mjs?v=unveiled34';
 const cache=new Map();
 const textSize={min:1,max:32,step:1,initial:18};
 const clampSize=value=>Math.max(textSize.min,Math.min(textSize.max,Number(value)||textSize.initial));
@@ -24,6 +25,8 @@ export function createReader(ctx){
   return {font:saved?.font||'georgia',size:clampSize(saved?.size??defaultSize),theme:'night',brightness:100};
  };
  const key=v=>`${s.version}:${s.book}:${s.chapter}:${v}`;
+ const hasFrontispiece=()=>s.book===0&&s.chapter===1&&step()===2;
+ const openingPages=measured=>hasFrontispiece()?[[],...measured]:measured;
  let pendingAnchor=null,pendingEnd=false;
  function currentAnchor(){const first=pages[s.page]?.[0];return first?{verse:first.v,offset:first.start||0}:s.anchor||{verse:1,offset:0};}
  function paginateCurrent(verse){pendingAnchor=verse?{verse,offset:0}:s.anchor||currentAnchor();}
@@ -41,6 +44,7 @@ export function createReader(ctx){
   return Array.from({length:step()},(_,side)=>{
    const index=s.page+side,page=pages[index],leaf=side?'right':'left';
    const leafArt=bookLeafArtwork(leaf);
+   if(hasFrontispiece()&&index===0)return `<article class="paper-page opening-title-leaf" data-leaf="left">${leafArt}<div class="book-page-content opening-title-content">${simpleBookMark}</div></article>`;
    if(!page)return `<article class="paper-page quiet-page" data-leaf="${leaf}">${leafArt}
     <div class="book-page-content"><span class="small-label">TAKE A MOMENT</span><p>Read. Reflect.<br>Let the Word take root.</p><span>✧</span></div>
    </article>`;
@@ -53,8 +57,8 @@ export function createReader(ctx){
    }).join('');
    return `<article class="paper-page" data-leaf="${leaf}">${leafArt}
     <div class="book-page-content">
-     ${paperHeading(names()[s.book],VERSIONS[s.version].short,index===0?s.chapter:null)}
-     <div class="verse-text">${verses}</div><div class="page-number">${index+1}</div>
+     ${paperHeading(names()[s.book],VERSIONS[s.version].short,index===(hasFrontispiece()?1:0)?s.chapter:null)}
+     <div class="verse-text">${verses}</div><div class="page-number">${index+1-(hasFrontispiece()?1:0)}</div>
     </div>
    </article>`;
   }).join('');
@@ -78,7 +82,7 @@ export function createReader(ctx){
      edition:VERSIONS[s.version].short,chapter:next.chapter
     });
     if(!newPages)return null;
-    s.book=next.book;s.chapter=next.chapter;pages=newPages;
+    s.book=next.book;s.chapter=next.chapter;pages=openingPages(newPages);
     s.page=dir>0?0:Math.floor((pages.length-1)/count)*count;
    }
    const holder=document.createElement('template');
@@ -105,7 +109,7 @@ export function createReader(ctx){
     book:names()[s.book],edition:VERSIONS[s.version].short,chapter:s.chapter
    });
    if(measured){
-    pages=measured;
+    pages=openingPages(measured);
     s.page=ending?Math.floor((pages.length-1)/step())*step():pageForAnchor(pages,place,step());
    }
    paint();
@@ -339,5 +343,6 @@ export function createReader(ctx){
   }
  };
 }
+
 
 

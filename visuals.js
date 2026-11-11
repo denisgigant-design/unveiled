@@ -137,6 +137,8 @@ export function showBibleCover(ctx,root,openReader,prepareReader){
  const coverButton=root.querySelector('[data-open-book]');
  coverButton.onclick=async()=>{
   coverButton.disabled=true;
+  ctx.pendingPassage={book:0,chapter:1,verse:1,version:reading?.version||'kjv'};
+  ctx.readerPageView='spread';
   prepareReader();
   const stage=root.querySelector('.closed-book-stage');
   const front=stage.querySelector('.leather-front'),volume=stage.querySelector('.leather-volume');
@@ -231,3 +233,4 @@ export function initVisuals(ctx){
   opening(ctx.route);
  }};
 }
+

@@ -1,24 +1,22 @@
-/* Cover and first-paper cinematic transition. Only visible while opening. */
+/* One continuous gallery -> front -> clasps -> opening cover sequence. */
 .unveiled-book-cinema{position:fixed;inset:0;z-index:150;pointer-events:none;perspective:1800px;isolation:isolate}
 .cinema-backdrop{position:absolute;inset:0;background:#07111f;opacity:0}
-.cinema-book,.cinema-cover{position:fixed;display:block;transform-style:preserve-3d;transform-origin:left center}
-.cinema-book{perspective:1800px;opacity:1}
-.cinema-open-image{width:100%;height:100%;object-fit:fill;display:block;opacity:0}
-.cinema-cover{z-index:3;transform-origin:left center;will-change:left,top,width,height,transform}
-.cinema-cover-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
-.cinema-cover-face.front img{width:100%;height:100%;object-fit:fill;filter:drop-shadow(0 8px 14px #0008)}
-.cinema-cover-face.back{transform:rotateY(180deg);background:#122238;border:1px solid #7b8197;border-radius:5px}
-.cinema-endpaper{width:100%;height:100%;display:grid;align-content:center;justify-items:center;gap:13px;background:radial-gradient(ellipse at center,#192e46,#0b182a 73%);color:#e4edf5}
-.cinema-endpaper img{width:min(42%,115px);height:auto;mix-blend-mode:screen;opacity:.85;aspect-ratio:1;object-fit:contain}
-.cinema-endpaper span{font:600 clamp(9px,1.6vw,17px)/1.2 Georgia,serif;letter-spacing:.22em}
-.cinema-endpaper small{font:8px system-ui,sans-serif;letter-spacing:.25em;opacity:.75}
-.cinema-first-leaf{position:absolute;inset:0;transform-style:preserve-3d;opacity:0;pointer-events:none}
-.cinema-first-leaf.visible{opacity:1}
-.cinema-first-strip{position:absolute;left:50%;top:0;height:100%;transform-style:preserve-3d;transform-origin:left center;will-change:transform}
-.cinema-first-face{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.cinema-first-face.back{transform:rotateY(180deg)}
-.cinema-first-crop{position:absolute;inset-block:0;background-repeat:no-repeat;overflow:hidden}
-.cinema-leaf-logo{position:absolute;top:37%;left:34%;width:32%;display:grid;justify-items:center;gap:4px;opacity:.73;color:#f0f1f5;text-align:center}
-.cinema-leaf-logo img{width:100%;max-width:105px;aspect-ratio:1;object-fit:contain;mix-blend-mode:screen}
-.cinema-leaf-logo span{font:600 clamp(6px,1vw,12px)/1.2 Georgia,serif;letter-spacing:.22em}
+.cinema-gallery,.cinema-cover,.cinema-landing{position:fixed;transform-style:preserve-3d}
+.cinema-gallery{z-index:3}
+.cinema-gallery img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+.gallery-front{clip-path:inset(0 24% 0 0)}
+.gallery-rear{clip-path:inset(0 0 0 64%)}
+.cinema-cover{z-index:5;transform-origin:left center;opacity:0;will-change:transform,left,top,width,height}
+.cinema-cover-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform-style:preserve-3d}
+.portrait-closed,.portrait-unlatched{position:absolute;inset:0}
+.portrait-unlatched{opacity:0;transform-origin:right center}
+.opening-portrait{display:block;width:100%;height:100%;overflow:visible}
+.cinema-cover-face.back{transform:rotateY(180deg);overflow:hidden}
+.cinema-inside{position:absolute;inset:0;background-size:200% 100%;background-position:left center;background-repeat:no-repeat}
+.opening-simple-mark{display:block;color:#fff;width:38%;height:auto;overflow:visible}
+.cinema-inside>.opening-simple-mark{position:absolute;left:37.5%;top:35%;width:38%}
+.cinema-landing{opacity:0;max-width:none!important;margin:0!important;z-index:2}
+.cinema-landing .book-shell{margin:0!important}
+#reader-workspace .opening-title-content{justify-content:center;align-items:center}
+#reader-workspace .opening-title-content>.opening-simple-mark{width:52%;max-width:190px;color:#fff}
 @media(prefers-reduced-motion:reduce){.unveiled-book-cinema{display:none}}

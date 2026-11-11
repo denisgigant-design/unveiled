@@ -293,7 +293,10 @@ function createScene(spread,originalPages,dir,destinationPages){
  installTurnStyles();
  const count=originalPages.length;
  if(!count)return null;
- const flipSide=dir; // Next peels left; previous peels right in either view.
+ // The cropped left leaf stays bound at the RIGHT edge. Next brings a new
+ // leaf in from that hidden half; previous lifts the current leaf back out.
+ const singleIncoming=count===1&&dir>0;
+ const flipSide=count===1?-1:dir;
  const leaf=originalPages[dir>0?count-1:0];
  // Button-driven turns pass detached page clones. Measure the currently
  // mounted leaf instead, so arrows and finger swipes use identical geometry.
@@ -344,7 +347,7 @@ function createScene(spread,originalPages,dir,destinationPages){
   scene.append(strip);
   strips.push(strip);
  }
- let hidden=[],angle=0,settled=false,edgeProjection=pageWidth;
+ let hidden=[],angle=0,settled=false,edgeProjection=singleIncoming?-pageWidth:pageWidth;
  function hideActual(pages){
   hidden.forEach(page=>page.style.removeProperty('visibility'));
   hidden=pages;
@@ -355,7 +358,7 @@ function createScene(spread,originalPages,dir,destinationPages){
   hidden=[];
  }
  function setDestination(pages){
-  underlay.replaceChildren(...pages.map(page=>{
+  underlay.replaceChildren(...(singleIncoming?originalPages:pages).map(page=>{
    const clone=page.cloneNode(true);
    clone.style.removeProperty('visibility');
    return clone;
@@ -363,12 +366,22 @@ function createScene(spread,originalPages,dir,destinationPages){
   const landing=underlay.children[dir>0?0:count-1];
   if(!landing)return;
   strips.forEach((strip,i)=>{
+   if(singleIncoming){
+    // The arriving leaf itself carries the next page. Keep the old page
+    // beneath it until it has settled, without exposing the new text early.
+    const crop=strip.querySelector('.front .book-turn-crop');
+    const front=pages[0].cloneNode(true);
+    front.classList.add('flip-front');
+    front.style.removeProperty('visibility');
+    maskLeaf(front,masks,count);
+    crop.replaceChildren(front);
+   }
    const crop=strip.querySelector('.back .book-turn-crop');
    // At 180deg the back is reversed relative to the front: sample from
    // the opposite edge so words remain readable in their new page order.
    const targetX=flipSide>0?pageWidth-(i+1)*stripWidth:i*stripWidth;
    crop.style.setProperty('--curl-crop-x',(-targetX)+'px');
-   const back=landing.cloneNode(true);
+   const back=(singleIncoming?pages[0]:landing).cloneNode(true);
    back.classList.add('flip-back');
    back.style.removeProperty('visibility');
    maskLeaf(back,masks,count);
@@ -384,7 +397,8 @@ function createScene(spread,originalPages,dir,destinationPages){
 
  function drag(value){
   angle=Math.max(0,Math.min(180,value));
-  const progress=angle/180;
+  const sheetAngle=singleIncoming?180-angle:angle;
+  const progress=sheetAngle/180;
   // The revealed area follows the REAL projected outer edge, not
   // an arbitrary percentage of rotation. At 90° the old leaf has lifted
   // clear and must not leave its words hovering over the destination.
@@ -392,7 +406,7 @@ function createScene(spread,originalPages,dir,destinationPages){
   let x=0,z=0;
   strips.forEach((strip,i)=>{
    const u=(i+.5)/segments;
-   const localAngle=angle+bend*(2*u-1);
+   const localAngle=sheetAngle+bend*(2*u-1);
    const rad=radians(localAngle);
    strip.style.transform=`translate3d(${(flipSide*x).toFixed(2)}px,0,${z.toFixed(2)}px) rotateY(${(-flipSide*localAngle).toFixed(2)}deg)`;
    const shade=.045+.48*Math.abs(Math.sin(rad))*(.3+.7*u);
@@ -404,6 +418,14 @@ function createScene(spread,originalPages,dir,destinationPages){
   updatePeel();
  }
  function updatePeel(){
+  if(singleIncoming){
+   // A page arriving from the right covers the old leaf. Its projection,
+   // rather than an opposite hinge or a crossfade, supplies the transition.
+   base.style.clipPath='none';
+   const oldPage=underlay.children[0];
+   if(oldPage)oldPage.style.clipPath='none';
+   return;
+  }
   // Integration of the actual 3D strip mesh determines where the paper
   // edge lies on the original leaf. 90° reveals the whole destination;
   // after 90° the reverse side folds onto the facing leaf.

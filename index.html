@@ -1,23 +1,101 @@
 <!doctype html><html lang="en" data-appearance="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#07111f"><meta name="description" content="Unveiled. Scripture, music, prayer and a faith lived out. Read the Bible, explore its world and grow through play."><title>Unveiled — Beyond the veil. Into the light.</title><link rel="icon" href="assets/unveiled-logo.jpg" type="image/jpeg"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="refinement.css?v=unveiled11"><link rel="stylesheet" href="appearance.css?v=unveiled8"><link rel="stylesheet" href="visuals.css?v=unveiled36"><link rel="stylesheet" href="fellowship.css?v=unveiled8"><link rel="stylesheet" href="edition.css?v=unveiled39"><link rel="stylesheet" href="media-room.css?v=unveiled12"><link rel="stylesheet" href="spaces.css?v=unveiled17"><link rel="stylesheet" href="word-study.css?v=unveiled18"><link rel="stylesheet" href="book-upgrade.css?v=unveiled39"><link rel="stylesheet" href="cover-transition.css?v=unveiled36"><link rel="preload" as="image" href="assets/veil-blue.jpg"><script type="importmap">{"imports":{"./reader.js?v=unveiled18":"./reader.js?v=unveiled38","./book-reader.mjs?v=unveiled16":"./book-reader.mjs?v=unveiled38","./visuals.js?v=unveiled16":"./visuals.js?v=unveiled39"}}</script><style>
-/* Focused Unveiled Discovery page: only three knights and five Bible choices. */
-body[data-page="home"] #main { padding-top: clamp(10px,2.5vw,28px); }
-.discover-gallery { width:100%;max-width:1120px;margin:auto;display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2.4vw,24px); }
-.discover-knights { width:100%;display:grid;place-items:center; }
-.discover-knights img { display:block;width:100%;height:auto;max-height:min(64vh,700px);object-fit:contain; }
-.discover-bibles { width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:start;gap:clamp(3px,1.5vw,18px);padding:0 2px 14px;margin:0; }
-.discover-bible { display:flex;flex-direction:column;align-items:center;min-width:0;width:100%;gap:5px;padding:3px 0 9px;background:transparent;border:0;border-radius:6px;box-shadow:none;color:var(--visual-text,var(--ink));text-align:center;transition:transform .18s ease; }
-.discover-bible img { display:block;width:100%;max-width:155px;height:clamp(66px,13vw,145px);object-fit:contain;pointer-events:none; }
-.discover-bible span { font-size:clamp(10px,1.05vw,13px);font-weight:500;letter-spacing:.02em; }
-.discover-bible:hover { transform:translateY(-4px); }
-.discover-bible:active { transform:translateY(-1px); }
-@media (max-width:700px) {
-  body[data-page="home"] #main { padding-top:12px; }
-  .discover-gallery { gap:12px; }
-  .discover-bibles { gap:3px; }
-  .discover-bible img { height:clamp(62px,17vw,100px); }
-  .discover-bible span { font-size:10px; }
+/* Focused Unveiled Discovery page: tighter overlap and larger Bible choices. */
+body[data-page="home"] #main { padding-top: clamp(6px,1.4vw,18px); }
+
+.discover-gallery {
+  width: 100%;
+  max-width: 1160px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
 }
-@media (prefers-reduced-motion:reduce) { .discover-bible { transition:none; } }
+
+.discover-knights {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.discover-knights img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(64vh, 700px);
+  object-fit: contain;
+}
+
+.discover-bibles {
+  position: relative;
+  z-index: 2;
+  width: calc(100% + 42px);
+  margin: clamp(-42px, -4.8vw, -24px) auto 0;
+  transform: translateX(0);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: start;
+  justify-items: center;
+  gap: clamp(0px, 0.9vw, 10px);
+  padding: 0 0 12px;
+}
+
+.discover-bible {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  gap: 5px;
+  padding: 0 0 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  box-shadow: none;
+  color: var(--visual-text, var(--ink));
+  text-align: center;
+  transition: transform .18s ease;
+}
+
+.discover-bible img {
+  display: block;
+  width: 100%;
+  max-width: 185px;
+  height: clamp(88px, 16vw, 185px);
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.discover-bible span {
+  font-size: clamp(10px, 1.1vw, 14px);
+  font-weight: 500;
+  letter-spacing: .02em;
+}
+
+.discover-bible:hover { transform: translateY(-4px); }
+.discover-bible:active { transform: translateY(-1px); }
+
+@media (max-width:700px) {
+  body[data-page="home"] #main { padding-top: 8px; }
+  .discover-gallery { max-width: 100%; }
+  .discover-bibles {
+    width: calc(100% + 30px);
+    margin-top: clamp(-34px, -9vw, -24px);
+    gap: 0;
+    padding-bottom: 8px;
+  }
+  .discover-bible img {
+    max-width: none;
+    height: clamp(88px, 24vw, 122px);
+  }
+  .discover-bible span { font-size: 10px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .discover-bible { transition: none; }
+}
 </style><script type="module" src="app.js?v=unveiled39"></script><script type="module">
 // Page-only adjustment: keep the original Unveiled app, assets and other rooms intact.
 const editions = [

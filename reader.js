@@ -3,7 +3,7 @@ import {pageForAnchor} from './book-layout.mjs?v=unveiled31';
 import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled33';
 import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled30';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
-import {simpleBookMark} from './opening-art.mjs?v=unveiled34';
+import {simpleBookMark} from './opening-art.mjs?v=unveiled36';
 const cache=new Map();
 const textSize={min:1,max:32,step:1,initial:18};
 const clampSize=value=>Math.max(textSize.min,Math.min(textSize.max,Number(value)||textSize.initial));
@@ -21,7 +21,7 @@ export function createReader(ctx){
   const saved=ctx.read('reader-settings',{});
   // An unsaved mobile two-page spread starts at legible small type, with
   // Scripture reflow measured against the actual narrow paper panels.
-  const defaultSize=matchMedia('(max-width:600px)').matches&&step()===2?10:textSize.initial;
+  const defaultSize=matchMedia('(max-width:850px)').matches&&step()===2?10:textSize.initial;
   return {font:saved?.font||'georgia',size:clampSize(saved?.size??defaultSize),theme:'night',brightness:100};
  };
  const key=v=>`${s.version}:${s.book}:${s.chapter}:${v}`;

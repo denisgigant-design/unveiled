@@ -1,7 +1,8 @@
 import {esc,EN_BOOKS,PL_BOOKS,VERSIONS} from './core.mjs';
 import {palm,wordmark,veilMark} from './brand-assets.mjs?v=unveiled6';
-import {bookColourChoices,bookCoverImage,syncBookColour} from './book-reader.mjs?v=unveiled16';
+import {bookColour,bookColourChoices,bookCoverImage,syncBookColour} from './book-reader.mjs?v=unveiled16';
 import {veilSource,veilPanels} from './veil-art.mjs?v=unveiled8';
+import {openCenteredBook} from './cover-transition.mjs?v=unveiled36';
 
 const pictures={
  night:{file:'knights-night.png',title:'The Unveiled world',alt:'Two silver knights and the gold Unveiled Music knight against a black background'},
@@ -135,37 +136,22 @@ export function showBibleCover(ctx,root,openReader,prepareReader){
  const reading=ctx.read('reading',null),names=reading?.version==='bg'?PL_BOOKS:EN_BOOKS;
  root.innerHTML=`<section class="bible-cover-entry"><div class="cover-introduction"><p class="eyebrow">THE WORD, HELD CLOSE</p><h1>A book to<br>live by.</h1><p>Open the cover.<br>Make a little room for the Word.</p><div class="cover-reading-note">${ctx.icon('bookmark')}<span>${reading?'Your place is waiting.':'Begin wherever you are.'}<strong>${reading?esc((names[reading.book]||'John')+' '+(reading.chapter||1)):'66 books · English & Polish'}</strong></span></div><p class="cover-edition-note">KJV · ASV 1901 · Biblia Gdańska 1881</p></div><div class="closed-book-stage">${bookColourChoices(ctx)}<span class="book-pool-light" aria-hidden="true"></span><button class="open-cover-button" data-open-book aria-label="Open the Bible">${leatherCover(ctx)}</button><span class="cover-touch-note">TAP THE COVER TO READ</span></div></section><section class="cover-afterword"><div>${veilMark()}<p class="eyebrow">BEYOND THE VEIL</p><h2>The invitation<br>is to come closer.</h2><p>Read at your own pace. Change the type size, save a verse, and return to the place you left.</p></div></section>`;
  const coverButton=root.querySelector('[data-open-book]');
- coverButton.onclick=async()=>{
+ coverButton.onclick=()=>{
   coverButton.disabled=true;
-  ctx.pendingPassage={book:0,chapter:1,verse:1,version:reading?.version||'kjv'};
-  ctx.readerPageView='spread';
+  const version=reading?.version||'kjv';
   prepareReader();
-  const stage=root.querySelector('.closed-book-stage');
-  const front=stage.querySelector('.leather-front'),volume=stage.querySelector('.leather-volume');
-  if(document.body.dataset.motion!=='off'&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
-   const rest=getComputedStyle(volume).transform;
-   stage.classList.add('book-opening');
-   const wide=matchMedia('(min-width:701px)').matches;
-   const timing={duration:840,easing:'cubic-bezier(.32,.74,.24,1)',fill:'forwards'};
-   const hinge=front.animate([
-    {transform:'rotateY(0deg)'},
-    {transform:'rotateY(-18deg)',offset:.2},
-    {transform:'rotateY(-103deg)',offset:.63},
-    {transform:`rotateY(${wide?-155:-112}deg)`}
-   ],timing);
-   volume.animate([
-    {transform:rest},
-    {transform:`translateX(${wide?'8%':'12%'}) rotateX(8deg) rotateY(0) rotateZ(0)`}
-   ],timing);
-   await hinge.finished.catch(()=>{});
-  }
-  if(ctx.route!=='bible'||!root.contains(front))return;
-  ctx.bibleOpened=true;openReader();
+  return openCenteredBook(coverButton,bookColour(ctx),()=>{
+   if(ctx.route!=='bible'||!root.contains(coverButton))return;
+   ctx.pendingPassage={book:0,chapter:1,verse:1,version};
+   ctx.readerPageView='spread';
+   ctx.bibleOpened=true;
+   return openReader();
+  });
  };
 }
 
 export function initVisuals(ctx){
- let activeOpening=null,openingTimer,lastRoute;
+ let activeOpening=null,openingTimer,lastRoute,restoreEntrance;
  const entrances={home:'home',team:'home',fellowship:'fellowship',media:'media'};
  const reduce=matchMedia('(prefers-reduced-motion:reduce)');
  function syncReplay(){
@@ -178,8 +164,10 @@ export function initVisuals(ctx){
   clearTimeout(openingTimer);
   activeOpening?.remove();
   activeOpening=null;
+  restoreEntrance?.();
+  restoreEntrance=undefined;
  }
- function opening(route){
+ function opening(route,waitForUnveil=false){
   clearOpening();
   const theme=entrances[route];
   if(reduce.matches||!theme)return;
@@ -195,10 +183,9 @@ export function initVisuals(ctx){
   el.dataset.waiting='';
   el.innerHTML=`<div class="opening-art" aria-hidden="true">${veilPanels(theme,'opening')}</div>
    <div class="opening-identity" aria-hidden="true">${identity}</div>
-   <button class="skip-opening" aria-label="Skip opening animation">Skip animation ${ctx.icon('arrow')}</button>`;
+   ${waitForUnveil?'<button class="unveil-entrance" type="button">Unveil</button>':''}`;
   document.body.append(el);
   activeOpening=el;
-  el.querySelector('button').onclick=clearOpening;
   el.querySelector('.opening-identity').onanimationend=()=>{if(activeOpening===el)clearOpening();};
   function reveal(){
    if(activeOpening!==el||!el.hasAttribute('data-waiting'))return;
@@ -206,10 +193,27 @@ export function initVisuals(ctx){
    el.removeAttribute('data-waiting');
    openingTimer=setTimeout(clearOpening,2500);
   }
-  openingTimer=setTimeout(reveal,480);
   const art=new Image();
   art.src=veilSource(theme);
-  art.decode().then(reveal,reveal);
+  if(waitForUnveil){
+   const button=el.querySelector('.unveil-entrance');
+   const background=[...document.querySelectorAll('.site-frame,#sidebar')];
+   const inert=background.map(node=>node.inert);
+   background.forEach(node=>{node.inert=true;});
+   restoreEntrance=()=>{
+    background.forEach((node,index)=>{node.inert=inert[index];});
+    document.querySelector('#main')?.focus({preventScroll:true});
+   };
+   button.focus({preventScroll:true});
+   button.addEventListener('click',()=>{
+    button.disabled=true;
+    openingTimer=setTimeout(reveal,480);
+    art.decode().then(reveal,reveal);
+   },{once:true});
+  }else{
+   openingTimer=setTimeout(reveal,480);
+   art.decode().then(reveal,reveal);
+  }
  }
  document.addEventListener('click',event=>{
   const picture=event.target.closest('[data-brand-image]');
@@ -229,8 +233,9 @@ export function initVisuals(ctx){
   syncReplay();
   syncBookColour(ctx);
   if(ctx.route===lastRoute)return;
+  const firstHome=lastRoute===undefined&&ctx.route==='home';
   lastRoute=ctx.route;
-  opening(ctx.route);
+  opening(ctx.route,firstHome);
  }};
 }
 

@@ -1,10 +1,40 @@
-const genericMark=`<svg class="opening-simple-mark" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><path d="M58 12h4v91h-4zM43 33h34v4H43z"/><path d="M53 44C50 65 38 78 13 88v12c25-9 39-24 40-56ZM67 44c3 21 15 34 40 44v12c-25-9-39-24-40-56Z"/></g></svg>`;
-export const simpleBookMark=`<span class="opening-simple-mark opening-mark-wrapper"><span class="opening-mark-generic">${genericMark}</span><svg class="opening-mark-red" viewBox="320 300 365 252" aria-hidden="true"><defs><clipPath id="red-logo-only"><rect x="430" y="300" width="140" height="252"/><rect x="320" y="380" width="365" height="172"/></clipPath><filter id="red-logo-alpha" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 .25 .5 .25 0 -.48"/><feComponentTransfer><feFuncA type="linear" slope="4"/></feComponentTransfer></filter></defs><image href="assets/bible-red-front-closed.png" width="882" height="1273" filter="url(#red-logo-alpha)" clip-path="url(#red-logo-only)"/></svg></span>`;
-const bounds={navy:[[120,120,880,1115],[115,125,790,1060]],green:[[98,55,940,1195],[100,110,840,1130]],red:[[105,100,920,1160],[95,130,830,1115]],pink:[[100,85,945,1200],[90,125,850,1135]],purple:[[105,90,940,1190],[90,100,835,1160]]};
-let n=0;
-export function coverPortrait(colour,open=false){
- const [x,y,w,h]=(bounds[colour]||bounds.navy)[open?1:0],id='front-cut-'+(++n);
- const right=x+w,top=y+h*.22,bottom=y+h*.64;
- return `<svg class="opening-portrait" viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="none" overflow="visible" aria-hidden="true"><defs><clipPath id="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="35"/><rect x="${right-210}" y="${top}" width="${1152-right+210}" height="${h*.15}"/><rect x="${right-210}" y="${bottom}" width="${1152-right+210}" height="${h*.16}"/><path d="M${x+w*.16} ${y+h-15}h${w*.15}v${1536-y-h+15}l${-w*.075} -40 -${w*.075} 40Z"/></clipPath></defs><image href="assets/bible-front-${colour}-${open?'unlatched':'closed'}.webp" width="1152" height="1536" clip-path="url(#${id})"/></svg>`;
+const frontispiece = 'assets/bible-frontispiece.png';
+const assetVersion = 'unveiled36';
+
+export const simpleBookMark = `<img class="opening-simple-mark" src="${frontispiece}?v=${assetVersion}" alt="Unveiled" width="1254" height="1254">`;
+
+export function coverImages(colour) {
+  return {
+    closed: `assets/bible-front-${colour}-closed-v36.webp?v=${assetVersion}`,
+    open: `assets/bible-front-${colour}-unlatched-v36.webp?v=${assetVersion}`,
+    mark: `${frontispiece}?v=${assetVersion}`,
+  };
 }
 
+// All ten uploads have the same 1200×1600 canvas and hardcover rectangle.
+// Its left edge is the hinge, and the bookmark and clasp tips extend past it.
+export function coverPortrait(source, clip) {
+  const artwork = `<image href="${source}" width="1200" height="1600"${clip ? ` clip-path="url(#${clip.id})"` : ''}/>`;
+  return `<svg class="opening-portrait" viewBox="195 190 810 1080" preserveAspectRatio="none" aria-hidden="true">
+    ${clip ? `<defs><clipPath id="${clip.id}">${clip.shape}</clipPath></defs>` : ''}
+    ${artwork}
+  </svg>`;
+}
+
+export function claspMarkup({closed, open}) {
+  return [0, 426].map((offset, index) => {
+    // Isolate each moving arm. The hinge barrels remain on the book.
+    const closedArm = '<path d="M1000 477 H917 C898 459 867 458 843 470 Q828 478 814 492 Q789 499 770 516 Q791 538 815 546 Q837 573 866 570 Q893 572 915 557 H1000 Z"/>';
+    const openArm = '<rect x="1007" y="449" width="183" height="140"/>';
+    const clip = (state, shape) => ({id: `opening-clasp-${index}-${state}`, shape: `<g transform="translate(0 ${offset})">${shape}</g>`});
+    return `<div class="opening-clasp closed-arm">${coverPortrait(closed, clip('closed', closedArm))}</div>
+      <div class="opening-clasp open-arm">${coverPortrait(open, clip('open', openArm))}</div>`;
+  }).join('');
+}
+
+export function claspBase(open) {
+  return coverPortrait(open, {
+    id: 'opening-clasp-base',
+    shape: '<rect width="1007" height="1600"/>',
+  });
+}

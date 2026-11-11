@@ -1,4 +1,5 @@
-import {coverPortrait,simpleBookMark} from './opening-art.mjs?v=unveiled34';
+import {openRedCover} from './red-cover-opening.mjs?v=unveiled35';
+import {coverPortrait,simpleBookMark} from './opening-art.mjs?v=unveiled35';
 const reduced=()=>document.body.dataset.motion==='off'||matchMedia('(prefers-reduced-motion:reduce)').matches;
 const frame=()=>new Promise(requestAnimationFrame);
 const animate=(el,keys,duration)=>el.animate(keys,{duration,easing:'cubic-bezier(.35,.05,.2,1)',fill:'forwards'}).finished.catch(()=>{});
@@ -9,6 +10,7 @@ async function readerReady(){
  throw Error('Reader did not finish loading');
 }
 async function openBook(button,original){
+ if(document.body.dataset.bookColour==='red')return openRedCover(button,original);
  if(button.dataset.unveiledOpening)return;
  button.dataset.unveiledOpening='true';
  const source=button.querySelector('.leather-volume')||button;
@@ -67,3 +69,4 @@ document.addEventListener('click',event=>{
  if(reduced()){button.onclick.call(button);return;}
  openBook(button,button.onclick);
 },true);
+

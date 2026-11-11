@@ -348,6 +348,7 @@ function createScene(spread,originalPages,dir,destinationPages){
   strips.push(strip);
  }
  let hidden=[],angle=0,settled=false,edgeProjection=singleIncoming?-pageWidth:pageWidth;
+ let destinationReady=Boolean(destinationPages);
  function hideActual(pages){
   hidden.forEach(page=>page.style.removeProperty('visibility'));
   hidden=pages;
@@ -373,6 +374,7 @@ function createScene(spread,originalPages,dir,destinationPages){
     const front=pages[0].cloneNode(true);
     front.classList.add('flip-front');
     front.style.removeProperty('visibility');
+    if(!destinationReady)front.querySelector('.book-page-content')?.remove();
     maskLeaf(front,masks,count);
     crop.replaceChildren(front);
    }
@@ -384,6 +386,9 @@ function createScene(spread,originalPages,dir,destinationPages){
    const back=(singleIncoming?pages[0]:landing).cloneNode(true);
    back.classList.add('flip-back');
    back.style.removeProperty('visibility');
+   // In the cropped view this is the hidden reverse of one physical leaf,
+   // not a second reading page. It must never show another chapter.
+   if(count===1)back.querySelector('.book-page-content')?.remove();
    maskLeaf(back,masks,count);
    crop.replaceChildren(back);
   });
@@ -402,7 +407,9 @@ function createScene(spread,originalPages,dir,destinationPages){
   // The revealed area follows the REAL projected outer edge, not
   // an arbitrary percentage of rotation. At 90° the old leaf has lifted
   // clear and must not leave its words hovering over the destination.
-  const bend=84*Math.pow(Math.sin(Math.PI*progress),.85);
+  // Keep the entire curve in front of the stationary paper. Overshooting
+  // either endpoint puts strips behind the old page just before landing.
+  const bend=Math.min(84*Math.pow(Math.sin(Math.PI*progress),.85),sheetAngle,180-sheetAngle);
   let x=0,z=0;
   strips.forEach((strip,i)=>{
    const u=(i+.5)/segments;
@@ -419,11 +426,13 @@ function createScene(spread,originalPages,dir,destinationPages){
  }
  function updatePeel(){
   if(singleIncoming){
-   // A page arriving from the right covers the old leaf. Its projection,
-   // rather than an opposite hinge or a crossfade, supplies the transition.
-   base.style.clipPath='none';
+   // Hide the old print exactly where the arriving sheet covers it, so it
+   // cannot resurface through the last part of the curl.
+   const covered=Math.max(0,Math.min(100,edgeProjection/pageWidth*100));
+   const remaining=`inset(0 ${covered}% 0 0)`;
+   base.style.clipPath=remaining;
    const oldPage=underlay.children[0];
-   if(oldPage)oldPage.style.clipPath='none';
+   if(oldPage)oldPage.style.clipPath=remaining;
    return;
   }
   // Integration of the actual 3D strip mesh determines where the paper
@@ -477,7 +486,12 @@ function createScene(spread,originalPages,dir,destinationPages){
   detach(){releaseActual();scene.remove();},
   moveTo(nextSpread){
    const pages=[...nextSpread.querySelectorAll(':scope > .paper-page')];
-   setDestination(pages);
+   // Keep the printed arriving face fixed from drag through release, even
+   // when crossing a chapter rebuilds the reader underneath the same sheet.
+   if(!singleIncoming||!destinationReady){
+    destinationReady=true;
+    setDestination(pages);
+   }
    delete scene.dataset.pendingDestination;
    hideActual(pages);
    nextSpread.append(scene);
@@ -616,4 +630,5 @@ export async function animateBookTurn(spread,oldPages,count,dir,angle=0){
  try{await scene.finish();}
  finally{scene.node.remove();}
 }
+
 

@@ -1,6 +1,6 @@
 import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference} from './core.mjs';
 import {pageForAnchor} from './book-layout.mjs?v=unveiled31';
-import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled32';
+import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled33';
 import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled30';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
 const cache=new Map();
@@ -339,4 +339,5 @@ export function createReader(ctx){
   }
  };
 }
+
 

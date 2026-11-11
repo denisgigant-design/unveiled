@@ -1,6 +1,6 @@
 import {paginateMeasured,balanceFinalSpread} from './book-layout.mjs?v=unveiled31';
 import {esc} from './core.mjs';
-import {syncBookArtwork} from './book-art.mjs?v=unveiled37';
+import {syncBookArtwork} from './book-art.mjs?v=unveiled38';
 
 export function paperHeading(book, edition, chapter) {
   return `<div class="paper-running"><span>${esc(book)}</span><span>${esc(edition)}</span></div>${chapter

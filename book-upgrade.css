@@ -9,7 +9,13 @@
  --book-dye:transparent;
 }
 #reader-workspace .book-spread .paper-page {color:var(--book-ink)!important}
-#reader-workspace .book-artwork>svg{display:block}
+/* Paint the original outer edges above the curl even when perspective
+   projects the moving sheet toward the clasps. */
+#reader-workspace .book-clasp-guard{
+ display:none;position:absolute;inset:0;z-index:20;overflow:hidden;pointer-events:none
+}
+#reader-workspace .book-shell:has(.book-turn-scene) > .book-clasp-guard{display:block}
+#reader-workspace :is(.book-artwork,.book-clasp-guard)>svg{display:block;height:100%}
 #reader-workspace .book-paper-dye,#reader-workspace .book-paper-fallback{display:none}
 :root #reader-workspace .book-shell .book-spread,
 :root #reader-workspace .book-shell[data-book-view="spread"] .book-spread {
@@ -49,7 +55,7 @@
 #reader-workspace .book-turn-spine-shadow{display:none!important}
 #reader-workspace .book-turn-strip.outermost .book-turn-crop>.paper-page{filter:none!important}
 #reader-workspace .book-turn-crop .book-leaf-shade{display:none!important}
-:root #reader-workspace .book-shell[data-book-view="spread"] .book-artwork > svg{
+:root #reader-workspace .book-shell[data-book-view="spread"] :is(.book-artwork,.book-clasp-guard) > svg{
  width:100%;margin-left:0
 }
 :root #reader-workspace .book-shell[data-book-view="spread"] .book-leaf-art{
@@ -67,7 +73,7 @@
  overflow-x:clip;overflow-y:visible;
  width:min(100%,520px);margin-inline:auto
 }
-:root #reader-workspace .book-shell[data-book-view="single"] .book-artwork > svg{
+:root #reader-workspace .book-shell[data-book-view="single"] :is(.book-artwork,.book-clasp-guard) > svg{
  width:200%;margin-left:0
 }
 :root #reader-workspace .book-shell[data-book-view="single"] .book-leaf-art{

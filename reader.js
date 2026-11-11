@@ -1,7 +1,7 @@
 import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference} from './core.mjs';
 import {pageForAnchor} from './book-layout.mjs?v=unveiled31';
-import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled37';
-import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled37';
+import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled38';
+import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled38';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
 import {simpleBookMark} from './opening-art.mjs?v=unveiled36';
 const cache=new Map();

@@ -666,6 +666,162 @@ mobileBible.addEventListener('change',()=>{
   }
 });
 queueBibleLayout();
+</script><style id="unveiled-entry-fixes-css">
+/* Reader entry fixes v45: true top position, fresh verse state, centred colour selector. */
+/* Selection never appears while a fresh Bible entry is being resolved. */
+body[data-page="bible"]:not([data-verse-entry-ready="true"]) #reader-workspace #selected-tools:has(.verse-selection){
+  display:none!important;
+}
+/* The verse tools are an extension of the selected book's frosted-glass palette. */
+body[data-page="bible"] #reader-workspace #selected-tools:has(.verse-selection){
+  width:100%; max-width:1120px; margin:12px auto 0;
+}
+body[data-page="bible"] #reader-workspace .verse-selection{
+  display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+  gap:clamp(9px,2vw,18px);width:100%;margin:0!important;
+  padding:clamp(13px,2.3vw,23px)!important;
+  color:#edf3f8!important;
+  border:1px solid color-mix(in srgb,var(--bible-swatch) 51%,#c7d0da 12%)!important;
+  border-radius:clamp(16px,3vw,30px)!important;
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--bible-accent) 30%,#080b0de6),
+    #08090cdb 65%,color-mix(in srgb,var(--bible-leather) 20%,#050608e8))!important;
+  box-shadow:inset 0 1px #ffffff21,0 14px 36px #0008,
+    0 0 22px color-mix(in srgb,var(--bible-swatch) 11%,transparent)!important;
+  backdrop-filter:blur(22px) saturate(1.25);
+  -webkit-backdrop-filter:blur(22px) saturate(1.25);
+}
+body[data-page="bible"] #reader-workspace .verse-selection>span{
+  color:#f0f5fa;font-family:Georgia,serif;font-size:clamp(15px,2vw,21px);
+}
+body[data-page="bible"] #reader-workspace .verse-selection :is(.small-button,.icon-button){
+  color:#eaf0f5!important;background:#ffffff0a!important;
+  border:1px solid #ffffff32!important;border-radius:11px!important;
+  box-shadow:none!important;min-height:36px;
+}
+body[data-page="bible"] #reader-workspace .verse-selection .highlight-colours{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+}
+body[data-page="bible"] #reader-workspace .verse-selection .colour-dot{
+  display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;
+  border:2px solid #f0f5f7a8!important;border-radius:50%!important;
+  box-shadow:0 1px 5px #0006!important;
+}
+body[data-page="bible"] #reader-workspace .verse-selection .colour-dot.clear{
+  color:#313b41;background:#f1f3e8!important;
+}
+/* The selected swatch's outline is an actual centred circle, not a shifted border. */
+body[data-page="bible"] #reader-workspace .book-colour-choices button{
+  position:relative!important;display:grid!important;place-items:center!important;
+  flex-shrink:0;padding:0!important;border:0!important;
+  border-radius:50%!important;line-height:0!important;
+}
+body[data-page="bible"] #reader-workspace .book-colour-choices button i{
+  display:block!important;position:absolute!important;
+  top:50%!important;left:50%!important;
+  margin:0!important;border-radius:50%!important;
+  transform:translate(-50%,-50%)!important;
+}
+body[data-page="bible"] #reader-workspace .book-colour-choices button[aria-pressed="true"]{
+  border:0!important;box-shadow:none!important;
+}
+body[data-page="bible"] #reader-workspace .book-colour-choices button[aria-pressed="true"]::after{
+  content:"";position:absolute;inset:0;
+  border-radius:50%;border:2px solid #f4f7fa;
+  box-sizing:border-box;pointer-events:none;
+  box-shadow:0 0 10px color-mix(in srgb,var(--bible-swatch) 65%,transparent);
+}
+@media(max-width:700px){
+  body[data-page="bible"] #reader-workspace .verse-selection{gap:12px;padding:15px 10px!important}
+  body[data-page="bible"] #reader-workspace .verse-selection :is(.small-button,.icon-button){font-size:11px}
+  body[data-page="bible"] #reader-workspace .verse-selection .highlight-colours{gap:7px}
+}
+</style>
+<script type="module" id="unveiled-bible-entry-v45">
+// Scroll restoration must not resume midway through Discovery or an open book.
+// This runs only at a route entrance and after the initial async reader render.
+if ('scrollRestoration' in history) history.scrollRestoration='manual';
+const pageMain=document.querySelector('#main');
+let activeRoute=document.body.dataset.page||null;
+let entryIsPending=false;
+let entryReaderSeen=false;
+let entrySelectionCleared=false;
+let scrollInterrupted=false;
+let scrollJobs=[];
+let scrollCycle=0;
+
+function entryAtTop(){
+  if(scrollInterrupted)return;
+  window.scrollTo(0,0);
+  if(document.scrollingElement)document.scrollingElement.scrollTop=0;
+}
+function cancelTopJobs(){
+  scrollJobs.forEach(clearTimeout);scrollJobs=[];
+}
+function ensureEntryAtTop(){
+  const route=document.body.dataset.page||activeRoute;
+  if(route!=='home'&&route!=='bible')return;
+  cancelTopJobs();
+  if(scrollInterrupted)return;
+  const cycle=++scrollCycle;
+  entryAtTop();
+  requestAnimationFrame(()=>{if(cycle===scrollCycle)entryAtTop()});
+  for(const delay of [45,140,330,650]){
+    scrollJobs.push(setTimeout(()=>{if(cycle===scrollCycle)entryAtTop()},delay));
+  }
+}
+function onReaderArrival(){
+  const host=pageMain.querySelector('#reader-workspace');
+  if(!host || document.body.dataset.page!=='bible')return;
+  if(!entryReaderSeen){
+    entryReaderSeen=true;
+    // The legacy cover transition scrolls the spread into the viewport;
+    // undo that once the real open book is mounted.
+    ensureEntryAtTop();
+  }
+  if(entrySelectionCleared)return;
+  const selection=host.querySelector('#selected-tools .verse-selection');
+  if(selection){
+    const deselect=selection.querySelector('button[data-deselect]');
+    entrySelectionCleared=true;
+    deselect?.click(); // The reader's own action clears its internal selected verse.
+  }else if(host.querySelector('#selected-tools')){
+    entrySelectionCleared=true;
+  }else return;
+  document.body.dataset.verseEntryReady='true';
+}
+function onRouteArrival(){
+  const route=document.body.dataset.page||null;
+  if(route!==activeRoute){
+    activeRoute=route;
+    entryReaderSeen=false;
+    entrySelectionCleared=false;
+    scrollInterrupted=false;
+    delete document.body.dataset.verseEntryReady;
+    if(route==='bible'||route==='home')ensureEntryAtTop();
+    else cancelTopJobs();
+  }
+  if(route==='bible')onReaderArrival();
+}
+// Stop automatic scroll protection as soon as someone starts interacting.
+for(const name of ['touchstart','wheel','pointerdown','keydown']){
+  document.addEventListener(name,()=>{scrollInterrupted=true;cancelTopJobs()}, {capture:true,passive:true});
+}
+const entryObserver=new MutationObserver(onRouteArrival);
+entryObserver.observe(document.body,{attributes:true,attributeFilter:['data-page']});
+entryObserver.observe(pageMain,{childList:true,subtree:true});
+window.addEventListener('pageshow',()=>{
+  scrollInterrupted=false;
+  ensureEntryAtTop();
+});
+window.addEventListener('hashchange',()=>{
+  scrollInterrupted=false;
+  ensureEntryAtTop();
+});
+window.addEventListener('load',()=>ensureEntryAtTop());
+// The site can enter with its route already rendered before this module runs.
+onRouteArrival();
+if(activeRoute==='home'||activeRoute==='bible')ensureEntryAtTop();
 </script></head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
 <section id="persistent-player" class="persistent-player" data-mode="parked" aria-label="Unveiled video player">
   <div class="floating-player-bar"><strong data-dock-title></strong><a href="#media" data-route="media">Room</a><button type="button" class="icon-button" data-player-size aria-label="Minimize to bubble" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path class="minimize-glyph" d="M4 5l6 6m0-5v5H5m15 8-6-6m0 5v-5h5"/><path class="expand-glyph" d="M10 10 4 4m0 5V4h5m5 10 6 6m-5 0h5v-5"/></svg></button><button type="button" class="icon-button" data-close-player aria-label="Close mini-player">×</button></div>

@@ -1,10 +1,11 @@
 import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference} from './core.mjs';
 import {pageForAnchor} from './book-layout.mjs?v=unveiled31';
-import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled33';
-import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled30';
+import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled37';
+import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled37';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
 import {simpleBookMark} from './opening-art.mjs?v=unveiled36';
 const cache=new Map();
+const printArea='.book-spread > .paper-page:not(.opening-title-leaf) > .book-page-content';
 const textSize={min:1,max:32,step:1,initial:18};
 const clampSize=value=>Math.max(textSize.min,Math.min(textSize.max,Number(value)||textSize.initial));
 export async function loadBible(version){
@@ -22,7 +23,7 @@ export function createReader(ctx){
   // An unsaved mobile two-page spread starts at legible small type, with
   // Scripture reflow measured against the actual narrow paper panels.
   const defaultSize=matchMedia('(max-width:850px)').matches&&step()===2?10:textSize.initial;
-  return {font:saved?.font||'georgia',size:clampSize(saved?.size??defaultSize),theme:'night',brightness:100};
+  return {size:clampSize(saved?.size??defaultSize),theme:'night'};
  };
  const key=v=>`${s.version}:${s.book}:${s.chapter}:${v}`;
  const hasFrontispiece=()=>s.book===0&&s.chapter===1&&step()===2;
@@ -75,7 +76,7 @@ export function createReader(ctx){
    else{
     const next=adjacentChapter(bible,s.book,s.chapter,dir);
     if(!next)return null;
-    const page=root?.querySelector('.book-spread > .paper-page .book-page-content');
+    const page=root?.querySelector(printArea);
     if(!page)return null;
     const newPages=measureBook(bible[next.book].chapters[next.chapter-1],page,settings(),{
      book:(s.version==='bg'?PL_BOOKS:EN_BOOKS)[next.book],
@@ -101,9 +102,9 @@ export function createReader(ctx){
    root.querySelector('#selected-tools').innerHTML=selectionTip;
    root.querySelectorAll('[data-turn]').forEach(button=>{button.disabled=!pageAvailable(+button.dataset.turn);});
   }else{
-   let paper=root.querySelector('.book-spread > .paper-page .book-page-content');
+   let paper=root.querySelector(printArea);
    if(!paper||root.querySelector('.book-shell')?.dataset.bookView!==bookViewMode(ctx)){
-    paint();paper=root.querySelector('.book-spread > .paper-page .book-page-content');
+    paint();paper=root.querySelector(printArea);
    }
    const measured=measureBook(bible[s.book].chapters[s.chapter-1],paper,settings(),{
     book:names()[s.book],edition:VERSIONS[s.version].short,chapter:s.chapter
@@ -125,7 +126,6 @@ export function createReader(ctx){
  function paint(){
   if(ctx.route!=='bible'||!bible||!ctx.bibleOpened)return;
   const opts=settings();
-  const font={georgia:'Georgia,serif',palatino:'Palatino,serif',sans:'system-ui,sans-serif'}[opts.font]||'Georgia,serif';
   root.innerHTML=`<div class="page-heading reader-heading"><div><p class="eyebrow">THE WORD, ONE PAGE AT A TIME</p><h1>Open the book.</h1><p>A little space. A deeper understanding.</p></div><span class="pill">66 books · English & Polish</span></div>
 <section id="reader-workspace">
  <div class="reader-toolbar">
@@ -148,9 +148,9 @@ export function createReader(ctx){
  </div></div>
  ${bookColourChoices(ctx)}${bookViewChoices(ctx)}
  <div class="book-heading"><span id="reader-location" class="small-label">${names()[s.book]} ${s.chapter}</span><span class="small-label">THE HOLY BIBLE</span></div>
- <div class="book-luminosity" style="--page-brightness:${opts.brightness/100}"><div class="book-shell" data-paper-tone="${opts.theme}" data-book-view="${bookViewMode(ctx)}">
+ <div class="book-luminosity"><div class="book-shell" data-paper-tone="${opts.theme}" data-book-view="${bookViewMode(ctx)}">
   ${bookArtwork(bookColour(ctx))}
-  <div class="book-spread" data-theme="${opts.theme}" style="--reader-size:${opts.size}px;--reader-font:${font}">${paperMarkup()}</div>
+  <div class="book-spread" data-theme="${opts.theme}" style="--reader-size:${opts.size}px">${paperMarkup()}</div>
  </div></div>
  <div class="page-controls"><button class="round-button" data-turn="-1" aria-label="Previous page" ${pageAvailable(-1)?'':'disabled'}>${ctx.icon('chevron','flipped')}</button>
   <span id="page-status" aria-live="polite">${pageStatus()}</span>
@@ -251,17 +251,13 @@ export function createReader(ctx){
  }
  function preferences(){
   const o=settings();
-  ctx.modal('Make this space yours',
-   `<p class="muted">All five books use dark parchment. Choose your typeface and Scripture size.</p><form class="settings-form"><label>Typeface<select name="font"><option value="georgia">Classic serif · Georgia</option><option value="palatino">Book serif · Palatino</option><option value="sans">Clean sans serif</option></select></label><label>Text size <output id="size-out">${o.size}px</output><input type="range" name="size" min="${textSize.min}" max="${textSize.max}" step="1" value="${o.size}"></label></form><p class="fine-print">Dark mode is used for every Bible colour. Your choices are remembered.</p>`,
+  ctx.modal('Bible text size',
+   `<form class="settings-form"><label>Text size <output id="size-out">${o.size}px</output><input type="range" name="size" min="${textSize.min}" max="${textSize.max}" step="${textSize.step}" value="${o.size}"></label></form>`,
    body=>{
-    const form=body.querySelector('form');
-    form.elements.font.value=o.font;
-    form.oninput=()=>{
-     const data=new FormData(form);
-     const next={font:data.get('font'),size:+data.get('size')};
-     ctx.save('reader-settings',next);
-     body.querySelector('#size-out').textContent=next.size+'px';
-     paginateCurrent();draw();
+    const input=body.querySelector('input[name="size"]');
+    input.oninput=()=>{
+     changeSize(input.valueAsNumber);
+     body.querySelector('#size-out').textContent=settings().size+'px';
     };
    }
   );

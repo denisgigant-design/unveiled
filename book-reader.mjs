@@ -1,6 +1,6 @@
 import {paginateMeasured,balanceFinalSpread} from './book-layout.mjs?v=unveiled31';
 import {esc} from './core.mjs';
-import {syncBookArtwork} from './book-art.mjs?v=unveiled16';
+import {syncBookArtwork} from './book-art.mjs?v=unveiled37';
 
 export function paperHeading(book, edition, chapter) {
   return `<div class="paper-running"><span>${esc(book)}</span><span>${esc(edition)}</span></div>${chapter
@@ -17,7 +17,6 @@ export function measureBook(verses, actual, options, {book, edition, chapter}) {
   wrapper.style.cssText='position:fixed;left:-20000px;top:0;visibility:hidden;pointer-events:none;contain:layout style';
   wrapper.style.width=box.width+'px';wrapper.style.height=box.height+'px';
   wrapper.style.setProperty('--reader-size',options.size+'px');
-  wrapper.style.setProperty('--reader-font',{georgia:'Georgia,serif',palatino:'Palatino,serif',sans:'system-ui,sans-serif'}[options.font]||'Georgia,serif');
   wrapper.innerHTML=`<div class="book-page-content">${paperHeading(book,edition,chapter)}<div class="verse-text"></div><div class="page-number">1</div></div>`;
   const content=wrapper.querySelector('.book-page-content');
   content.style.setProperty('position','static','important');
@@ -49,8 +48,7 @@ export function bookColour(ctx){
 }
 
 export function bookViewMode(ctx){
- return matchMedia('(max-width:960px)').matches && ctx.readerPageView==='single'
-  ? 'single' : 'spread';
+ return ctx.readerPageView==='single'?'single':'spread';
 }
 
 export function bookViewChoices(ctx){
@@ -182,29 +180,15 @@ const TURN_CSS = `
 #reader-workspace .book-turn-scene[data-pending-destination] :is(.book-turn-underlay,.back) .book-page-content{
  visibility:hidden;
 }
-/* Mobile opens a true two-leaf book. Single page is a reversible preference. */
+/* Both reading views are available at every screen size. */
 #reader-workspace .book-view-control{display:flex;align-items:center;gap:6px;justify-content:flex-start;margin:7px 0 11px;color:#b9cadf;font-size:11px}
 #reader-workspace .book-view-control>span{margin-right:4px}
 #reader-workspace .book-view-control button{display:inline-flex;align-items:center;gap:6px;min-height:32px;border:1px solid #38516d;border-radius:6px;background:#14283e;color:#c9d5e7;padding:5px 11px;font-size:11px;box-shadow:none}
 #reader-workspace .book-view-control button[aria-pressed="true"]{border-color:#80b9fa;background:#25435f;color:#f4f8ff}
 #reader-workspace .book-view-control .view-icon{display:inline-block;font-size:15px;line-height:1}
-@media(min-width:961px){#reader-workspace .book-view-control{display:none}}
 @media(max-width:960px){
  :root #reader-workspace{max-width:100%;}
- :root #reader-workspace .book-shell[data-book-view="spread"] .book-spread{
-  grid-template-columns:repeat(2,minmax(0,1fr));aspect-ratio:3/2;
- }
- #reader-workspace .book-shell[data-book-view="spread"] .book-artwork>svg{width:100%;margin-left:0}
- #reader-workspace .book-shell[data-book-view="spread"] .book-leaf-art{width:100%;left:0}
- #reader-workspace .book-shell[data-book-view="spread"] .book-spread>.paper-page[data-leaf="right"]{display:flex}
- #reader-workspace .book-shell[data-book-view="spread"] .paper-page[data-leaf="left"]>.book-page-content{
-  inset-inline:42.7% 7.7%
- }
- #reader-workspace .book-shell[data-book-view="spread"] .paper-page[data-leaf="right"]>.book-page-content{
-  inset-inline:7.7% 42.7%
- }
  #reader-workspace .book-shell[data-book-view="spread"] :is(.paper-running,.chapter-heading){margin-bottom:3px;padding-bottom:2px}
- #reader-workspace .book-shell[data-book-view="spread"] .chapter-heading h2{font-size:clamp(11px,2.6vw,19px)}
  #reader-workspace .book-turn-scene.single .paper-page[data-leaf="right"]{display:none}
 }
 @media(max-width:480px){
@@ -230,7 +214,6 @@ let pendingTurn=null;
 
 // All five Bible designs already declare the precise paper boundary in
 // book-art.mjs. Reuse that SVG path instead of guessing at a rectangular mask.
-// On phones the original left-hand paper is cropped from x=112..768.
 let curlId=0;
 function addPaperMasks(scene,spread,count){
  const path=document.querySelector('#reader-workspace .book-artwork #bible-paper-shape');
@@ -238,15 +221,14 @@ function addPaperMasks(scene,spread,count){
  const d=path.getAttribute('d');
  if(!d)return null;
  const id='unveiled-turn-'+(++curlId);
- const phone=count===1;
+ const single=count===1;
  const shell=spread.closest('.book-shell');
  const vars=shell?getComputedStyle(shell):null;
  const storedCrop=parseFloat(vars?.getPropertyValue('--phone-crop-start'));
- const crop=phone?(Number.isFinite(storedCrop)?storedCrop:112):0;
- const leafWidth=phone?(parseFloat(vars?.getPropertyValue('--phone-leaf-width'))||656):768;
+ const crop=single?(Number.isFinite(storedCrop)?storedCrop:112):0;
+ const leafWidth=single?(parseFloat(vars?.getPropertyValue('--phone-leaf-width'))||656):768;
  const viewScale=1/leafWidth;
- const leftTx=phone?(-crop/leafWidth):0;
- const ornamentFringe=phone?Math.min(100,crop+72):102;
+ const leftTx=single?(-crop/leafWidth):0;
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
  svg.setAttribute('width','0');svg.setAttribute('height','0');
  svg.setAttribute('aria-hidden','true');
@@ -263,15 +245,6 @@ function addPaperMasks(scene,spread,count){
    ?`translate(1 0) scale(${-1/768} ${1/1024})`
    :`translate(${leftTx} 0) scale(${viewScale} ${1/1024})`);
   clip.append(outline);
-  // The photographed veils and palm ornament sit partly outside the dark
-  // parchment. Include a narrow, irregular fringe of THAT SAME photograph
-  // on the moving leaf; it is not replaced with a flat rectangular edge.
-  const fringe=document.createElementNS(svg.namespaceURI,'path');
-  fringe.setAttribute('d',d);
-  fringe.setAttribute('transform',side==='right'
-   ?`translate(${1+ornamentFringe/768} 0) scale(${-1/768} ${1/1024})`
-   :`translate(${leftTx-ornamentFringe/leafWidth} 0) scale(${viewScale} ${1/1024})`);
-  clip.append(fringe);
   defs.append(clip);
  }
  svg.append(defs);scene.prepend(svg);

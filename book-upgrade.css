@@ -1,5 +1,4 @@
-/* Unveiled open Bible v8 — exact 4:3 geometry of the five supplied designs.
-   Dark parchment is already rendered in the artwork. */
+/* Layout follows the paper inside the five illustrated book covers. */
 :root[data-appearance="light"]{color-scheme:dark}
 #reader-workspace .book-shell{
  --book-ink:#f4f1eb;--book-notes:#d2d5df;--book-rule:#f0e8dc45;
@@ -17,62 +16,71 @@
  aspect-ratio:1448/1086!important;
  grid-template-columns:repeat(2,minmax(0,1fr))!important;
 }
+/* The outer inset includes the artwork’s silver frame and stack of pages.
+   The remaining space between print and paper edge is even on each side. */
 :root #reader-workspace .book-shell .paper-page > .book-page-content{
- inset:10.6% 7.5% 18.6% 20.5%;
+ inset:13% 8% 23% 27%;
 }
 :root #reader-workspace .book-shell .paper-page[data-leaf="right"] > .book-page-content{
- inset:10.6% 20.5% 18.6% 7.5%;
+ inset-inline:8% 27%;
 }
-#reader-workspace .book-page-content .paper-running{margin-bottom:6px;padding-bottom:4px}
+:root #reader-workspace .book-shell .opening-title-leaf > .opening-title-content{
+ inset:10.6% 7.5% 18.6% 20.5%;
+}
+#reader-workspace .book-page-content .paper-running{
+ margin-bottom:6px;padding-bottom:4px;
+ font-family:system-ui,sans-serif;letter-spacing:.08em
+}
+#reader-workspace .paper-running > span:first-child{font-weight:750;color:var(--book-ink)}
+#reader-workspace .book-page-content .chapter-heading{margin-bottom:7px}
+#reader-workspace .book-page-content .chapter-heading > span:first-child{
+ font-family:system-ui,sans-serif;font-weight:700
+}
+#reader-workspace .book-page-content .chapter-heading h2{
+ font-family:system-ui,sans-serif;font-weight:750;
+ font-size:clamp(17px,2vw,27px);letter-spacing:0
+}
 #reader-workspace .book-page-content .verse-text,#reader-workspace .book-page-content .verse-line{line-height:1.4}
 #reader-workspace .book-page-content .verse-line{padding-bottom:1px}
-#reader-workspace .book-page-content .page-number{height:16px;padding-top:5px}
-#reader-workspace .book-page-content .chapter-heading{margin-bottom:7px}
-#reader-workspace .book-page-content .chapter-heading h2{font-size:clamp(17px,2vw,27px)}
+#reader-workspace .book-page-content .page-number{
+ height:13px;padding:0;line-height:1.15;font-variant-numeric:tabular-nums
+}
 #reader-workspace .book-leaf-shade{display:none!important}
 #reader-workspace .book-turn-spine-shadow{display:none!important}
 #reader-workspace .book-turn-strip.outermost .book-turn-crop>.paper-page{filter:none!important}
 #reader-workspace .book-turn-crop .book-leaf-shade{display:none!important}
-@media(max-width:960px){
-  :root #reader-workspace .book-shell[data-book-view="spread"] .book-spread{
-    aspect-ratio:1448/1086!important;
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  }
-  #reader-workspace .book-shell[data-book-view="spread"] .book-artwork>svg{width:100%!important;margin-left:0!important}
-  #reader-workspace .book-shell[data-book-view="spread"] .book-leaf-art{width:100%!important;left:0!important}
-  :root #reader-workspace .book-shell[data-book-view="spread"] .paper-page[data-leaf="right"]{display:flex!important}
-  :root #reader-workspace .book-shell[data-book-view="spread"] .paper-page[data-leaf="left"]>.book-page-content{
-    inset:10.6% 7.5% 18.6% 20.5%!important;
-  }
-  :root #reader-workspace .book-shell[data-book-view="spread"] .paper-page[data-leaf="right"]>.book-page-content{
-    inset:10.6% 20.5% 18.6% 7.5%!important;
-  }
-  :root #reader-workspace .book-shell[data-book-view="single"] .book-spread{
-    aspect-ratio:724/1086!important;
-    grid-template-columns:minmax(0,1fr)!important;
-  }
-  #reader-workspace .book-shell[data-book-view="single"]{
-    --phone-leaf-width:768;--phone-crop-start:0;
-    overflow-x:clip;overflow-y:visible;
-  }
-  #reader-workspace .book-shell[data-book-view="single"] .book-artwork>svg{
-    width:200%!important;margin-left:0!important;
-  }
-  #reader-workspace .book-shell[data-book-view="single"] .book-leaf-art{
-    width:100%!important;left:0!important;
-  }
-  :root #reader-workspace .book-shell[data-book-view="single"] .paper-page[data-leaf="left"]>.book-page-content{
-    inset:10.6% 4% 18.6% 20.5%!important;
-  }
+:root #reader-workspace .book-shell[data-book-view="spread"] .book-artwork > svg{
+ width:100%;margin-left:0
+}
+:root #reader-workspace .book-shell[data-book-view="spread"] .book-leaf-art{
+ width:100%;left:0
+}
+:root #reader-workspace .book-shell[data-book-view="spread"] .book-spread > .paper-page[data-leaf="right"]{
+ display:flex
+}
+:root #reader-workspace .book-shell[data-book-view="single"] .book-spread{
+ aspect-ratio:724/1086!important;
+ grid-template-columns:minmax(0,1fr)!important;
+}
+#reader-workspace .book-shell[data-book-view="single"]{
+ --phone-leaf-width:768;--phone-crop-start:0;
+ overflow-x:clip;overflow-y:visible;
+ width:min(100%,520px);margin-inline:auto
+}
+:root #reader-workspace .book-shell[data-book-view="single"] .book-artwork > svg{
+ width:200%;margin-left:0
+}
+:root #reader-workspace .book-shell[data-book-view="single"] .book-leaf-art{
+ width:100%;left:0
 }
 @media(max-width:700px){
   /* Bring the centre binding to the screen edge in the zoomed leaf view. */
   #reader-workspace .book-shell[data-book-view="single"]{
-    margin-inline:calc(50% - 50vw);
+    width:auto;margin-inline:calc(50% - 50vw);
   }
 }
 @media(max-width:520px){
-  #reader-workspace .book-shell[data-book-view="spread"] .chapter-heading h2{font-size:clamp(11px,2.9vw,17px)}
+  #reader-workspace .book-shell[data-book-view="spread"] .book-page-content .chapter-heading h2{font-size:clamp(11px,2.9vw,17px)}
   #reader-workspace .book-shell[data-book-view="spread"] .paper-running{font-size:6px!important;letter-spacing:.02em!important}
   #reader-workspace .book-shell[data-book-view="spread"] .book-page-content .verse-text,
   #reader-workspace .book-shell[data-book-view="spread"] .book-page-content .verse-line{line-height:1.32}

@@ -1,8 +1,7 @@
 import {esc,EN_BOOKS,PL_BOOKS,VERSIONS} from './core.mjs';
 import {palm,wordmark,veilMark} from './brand-assets.mjs?v=unveiled6';
-import {bookColour,bookColourChoices,bookCoverImage,syncBookColour} from './book-reader.mjs?v=unveiled16';
+import {bookColourChoices,bookCoverImage,syncBookColour} from './book-reader.mjs?v=unveiled16';
 import {veilSource,veilPanels} from './veil-art.mjs?v=unveiled8';
-import {openCenteredBook} from './cover-transition.mjs?v=unveiled36';
 
 const pictures={
  night:{file:'knights-night.png',title:'The Unveiled world',alt:'Two silver knights and the gold Unveiled Music knight against a black background'},
@@ -46,7 +45,6 @@ export function enhanceHome(ctx,root){
   <span><span class="eyebrow">UNVEILED / THE GARDEN</span><strong>Women’s Fellowship.</strong><span>Rooted in the Word. Growing together.</span></span>
   ${ctx.icon('arrow')}
  </a>`);
- root.querySelector('.home-welcome')?.insertAdjacentHTML('beforeend',`<button class="plain-link replay-opening" data-replay-veil>${ctx.icon('veil')} Replay opening</button>`);
  const grid=root.querySelector('.rhythm-grid');
  if(grid)grid.outerHTML=`<div class="home-pathways"><button class="word-feature" data-route="bible"><span class="word-feature-copy"><span class="eyebrow">01 / READ &amp; REFLECT</span><h3>${reading?'Pick up the Word.':'Open something eternal.'}</h3><p>${esc(location)}</p><span class="plain-link">Open your Bible ${ctx.icon('arrow')}</span></span><span class="mini-book-scene">${leatherCover(ctx,true)}</span></button><div class="home-quiet-paths"><button class="quiet-path" data-route="prayer"><span class="path-number">02</span><span class="path-symbol">${ctx.icon('heart')}</span><span><span class="small-label">PRAY &amp; REMEMBER</span><h3>Room for what’s on your heart.</h3><p>Your private prayer and reflection journal.</p></span>${ctx.icon('arrow')}</button><button class="quiet-path" data-route="games"><span class="path-number">03</span><span class="path-symbol">${ctx.icon('games')}</span><span><span class="small-label">PLAY &amp; DISCOVER</span><h3>A little play. A deeper truth.</h3><p>Discover body, soul and spirit.</p></span>${ctx.icon('arrow')}</button></div></div>`;
  const bottom=root.querySelector('.home-bottom-grid');
@@ -136,22 +134,21 @@ export function showBibleCover(ctx,root,openReader,prepareReader){
  const reading=ctx.read('reading',null),names=reading?.version==='bg'?PL_BOOKS:EN_BOOKS;
  root.innerHTML=`<section class="bible-cover-entry"><div class="cover-introduction"><p class="eyebrow">THE WORD, HELD CLOSE</p><h1>A book to<br>live by.</h1><p>Open the cover.<br>Make a little room for the Word.</p><div class="cover-reading-note">${ctx.icon('bookmark')}<span>${reading?'Your place is waiting.':'Begin wherever you are.'}<strong>${reading?esc((names[reading.book]||'John')+' '+(reading.chapter||1)):'66 books · English & Polish'}</strong></span></div><p class="cover-edition-note">KJV · ASV 1901 · Biblia Gdańska 1881</p></div><div class="closed-book-stage">${bookColourChoices(ctx)}<span class="book-pool-light" aria-hidden="true"></span><button class="open-cover-button" data-open-book aria-label="Open the Bible">${leatherCover(ctx)}</button><span class="cover-touch-note">TAP THE COVER TO READ</span></div></section><section class="cover-afterword"><div>${veilMark()}<p class="eyebrow">BEYOND THE VEIL</p><h2>The invitation<br>is to come closer.</h2><p>Read at your own pace. Change the type size, save a verse, and return to the place you left.</p></div></section>`;
  const coverButton=root.querySelector('[data-open-book]');
- coverButton.onclick=()=>{
+ coverButton.onclick=async()=>{
   coverButton.disabled=true;
-  const version=reading?.version||'kjv';
+  ctx.pendingPassage={book:0,chapter:1,verse:1,version:reading?.version||'kjv'};
+  ctx.readerPageView='spread';
+  ctx.bibleOpened=true;
   prepareReader();
-  return openCenteredBook(coverButton,bookColour(ctx),()=>{
-   if(ctx.route!=='bible'||!root.contains(coverButton))return;
-   ctx.pendingPassage={book:0,chapter:1,verse:1,version};
-   ctx.readerPageView='spread';
-   ctx.bibleOpened=true;
-   return openReader();
-  });
+  await openReader();
+  if(ctx.route==='bible'){
+   root.querySelector('.book-spread')?.scrollIntoView({block:'center',behavior:'instant'});
+  }
  };
 }
 
 export function initVisuals(ctx){
- let activeOpening=null,openingTimer,lastRoute,restoreEntrance;
+ let activeOpening=null,openingTimer,lastRoute;
  const entrances={home:'home',team:'home',fellowship:'fellowship',media:'media'};
  const reduce=matchMedia('(prefers-reduced-motion:reduce)');
  function syncReplay(){
@@ -164,10 +161,8 @@ export function initVisuals(ctx){
   clearTimeout(openingTimer);
   activeOpening?.remove();
   activeOpening=null;
-  restoreEntrance?.();
-  restoreEntrance=undefined;
  }
- function opening(route,waitForUnveil=false){
+ function opening(route){
   clearOpening();
   const theme=entrances[route];
   if(reduce.matches||!theme)return;
@@ -182,8 +177,7 @@ export function initVisuals(ctx){
   el.dataset.veilRoute=route;
   el.dataset.waiting='';
   el.innerHTML=`<div class="opening-art" aria-hidden="true">${veilPanels(theme,'opening')}</div>
-   <div class="opening-identity" aria-hidden="true">${identity}</div>
-   ${waitForUnveil?'<button class="unveil-entrance" type="button">Unveil</button>':''}`;
+   <div class="opening-identity" aria-hidden="true">${identity}</div>`;
   document.body.append(el);
   activeOpening=el;
   el.querySelector('.opening-identity').onanimationend=()=>{if(activeOpening===el)clearOpening();};
@@ -195,25 +189,8 @@ export function initVisuals(ctx){
   }
   const art=new Image();
   art.src=veilSource(theme);
-  if(waitForUnveil){
-   const button=el.querySelector('.unveil-entrance');
-   const background=[...document.querySelectorAll('.site-frame,#sidebar')];
-   const inert=background.map(node=>node.inert);
-   background.forEach(node=>{node.inert=true;});
-   restoreEntrance=()=>{
-    background.forEach((node,index)=>{node.inert=inert[index];});
-    document.querySelector('#main')?.focus({preventScroll:true});
-   };
-   button.focus({preventScroll:true});
-   button.addEventListener('click',()=>{
-    button.disabled=true;
-    openingTimer=setTimeout(reveal,480);
-    art.decode().then(reveal,reveal);
-   },{once:true});
-  }else{
-   openingTimer=setTimeout(reveal,480);
-   art.decode().then(reveal,reveal);
-  }
+  openingTimer=setTimeout(reveal,480);
+  art.decode().then(reveal,reveal);
  }
  document.addEventListener('click',event=>{
   const picture=event.target.closest('[data-brand-image]');
@@ -233,9 +210,8 @@ export function initVisuals(ctx){
   syncReplay();
   syncBookColour(ctx);
   if(ctx.route===lastRoute)return;
-  const firstHome=lastRoute===undefined&&ctx.route==='home';
   lastRoute=ctx.route;
-  opening(ctx.route,firstHome);
+  opening(ctx.route);
  }};
 }
 

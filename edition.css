@@ -32,14 +32,10 @@
 .opening-identity>.brand-wordmark{font-size:clamp(27px,5vw,42px)}
 .opening-identity>img{border-radius:50%;box-shadow:0 0 30px #ffe3ae6b}
 .opening-identity>span:last-child{font-size:9px;letter-spacing:.24em}
-.unveil-entrance{
-  position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + clamp(14px,3svh,27px));
-  transform:translateX(-50%);min-width:120px;min-height:44px;padding:10px 22px;
-  border:1px solid #e2c18a88;border-radius:8px;background:var(--veil-dark);color:#ffe8c1;
-  font-size:13px;letter-spacing:.14em;pointer-events:auto
+.opening-veil[data-veil-route="home"] .opening-identity{
+  align-content:end;gap:8px;
+  padding-block-end:calc(env(safe-area-inset-bottom,0px) + clamp(18px,4svh,42px))
 }
-.opening-veil:not([data-waiting]) .unveil-entrance{visibility:hidden}
-.opening-veil:has(.unveil-entrance)[data-waiting]{pointer-events:auto;touch-action:none}
 @keyframes veil-slide-left{
   0%,12%{transform:translateX(12%) rotateY(-4deg)}
   70%{opacity:1}

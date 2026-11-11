@@ -48,6 +48,10 @@
 }
 #reader-workspace .book-page-content .verse-text,#reader-workspace .book-page-content .verse-line{line-height:1.4}
 #reader-workspace .book-page-content .verse-line{padding-bottom:1px}
+#reader-workspace .book-page-content .verse-line sup{
+ font:inherit;font-weight:700;line-height:0;top:auto;
+ margin-inline-end:.35em;vertical-align:baseline
+}
 #reader-workspace .book-page-content .page-number{
  height:13px;padding:0;line-height:1.15;font-variant-numeric:tabular-nums
 }

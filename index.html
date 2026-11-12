@@ -1359,8 +1359,7 @@ body[data-page="prayer"] .journal-entry .assign-note-folder{margin-left:auto;bac
     const block=document.createElement('label');
     block.className='note-folder-field';block.textContent='Save in folder';
     block.innerHTML=`Save in folder<div class="note-folder-inline"><select name="note-folder" aria-label="Note folder">${folderOptions(library.notes[editingNoteId]||'')}</select><button type="button" class="note-folder-add" data-note-add-folder>+ Folder</button></div>`;
-    const textLabel=form.querySelector('label:has(textarea)');
-    if(textLabel)textLabel.before(block);else form.prepend(block);
+    form.querySelector('label:has(textarea)')?.before(block);
     block.querySelector('[data-note-add-folder]').onclick=()=>{
       const holder=document.createElement('div');holder.innerHTML=createForm();
       block.append(holder);
@@ -1507,6 +1506,183 @@ body[data-page="prayer"] .journal-entry .assign-note-folder{margin-left:auto;bac
     if(event.target.closest('#reader-workspace select'))queue();
   });
   queue();
+})();
+</script><style id="unveiled-sidebar-v50">
+/* Unveiled v50 — shaped subsection navigation inspired by the supplied dashboard.
+   Sidebar remains black; the active capsule uses the user's last Bible colour. */
+:root {
+  --unveiled-nav-accent:#6199ff;
+  --unveiled-nav-ink:#06111d;
+}
+body[data-page] #sidebar,
+body[data-page].nav-open #sidebar,
+:root[data-appearance="dark"] body[data-page] #sidebar {
+  --sidebar-edge:17px;
+  background:#050505!important;
+  border-right:1px solid #222!important;
+  box-shadow:none!important;
+  color:#e6e9ee!important;
+}
+body[data-page] #sidebar .wordmark {color:#f2f5fa!important;}
+body[data-page] #sidebar .wordmark small,
+body[data-page] #sidebar .nav-label {color:#9ca2ac!important;}
+body[data-page] #sidebar .sidebar-verse {border-top-color:#292929!important;}
+body[data-page] #sidebar .sidebar-verse p{color:#c7cdd5!important;}
+body[data-page] #sidebar .sidebar-bottom .your-space {
+  background:#121212!important;
+  border-color:#333!important;
+  color:#c8d1dd!important;
+  box-shadow:none!important;
+}
+body[data-page] #sidebar .sidebar-bottom .your-space small {color:#929ba8!important;}
+
+/* The tab is one large coloured capsule; its right side blends into the
+   sidebar edge with smoothly carved corners above and below. */
+body[data-page] #sidebar nav {
+  position:relative;
+  overflow:visible;
+  margin-right:calc(-1 * var(--sidebar-edge));
+  padding-right:0;
+  gap:5px;
+}
+body[data-page] #sidebar .nav-item {
+  position:relative;
+  isolation:isolate;
+  min-width:0;
+  min-height:43px;
+  padding:10px calc(var(--sidebar-edge) + 11px) 10px 13px!important;
+  margin:0;
+  border:0!important;
+  border-radius:14px 0 0 14px!important;
+  background:transparent!important;
+  color:#a8adb8!important;
+  box-shadow:none!important;
+  font-size:12px;
+  font-weight:500;
+  text-decoration:none;
+  transition:background .2s ease,color .2s ease,transform .2s ease;
+}
+body[data-page] #sidebar .nav-item:not(.active):hover {
+  background:#1b1b1f!important;
+  color:#fff!important;
+  transform:none!important;
+}
+body[data-page] #sidebar .nav-item.active,
+:root[data-appearance="dark"] body[data-page] #sidebar .nav-item.active {
+  background:var(--unveiled-nav-accent)!important;
+  color:var(--unveiled-nav-ink)!important;
+  font-weight:700!important;
+  border-radius:32px 0 0 32px!important;
+  transform:none!important;
+  z-index:1;
+}
+/* Override the older left-hand active indicator with the new curved right edge. */
+body[data-page] #sidebar .nav-item.active::before,
+body[data-page] #sidebar .nav-item.active::after {
+  content:""!important;
+  position:absolute!important;
+  left:auto!important;
+  right:0!important;
+  width:16px!important;
+  height:16px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:none;
+  pointer-events:none!important;
+  z-index:-1;
+}
+body[data-page] #sidebar .nav-item.active::before {
+  top:-16px!important;
+  bottom:auto!important;
+  background:radial-gradient(circle at top left,transparent 16px,var(--unveiled-nav-accent) 16.5px)!important;
+}
+body[data-page] #sidebar .nav-item.active::after {
+  top:auto!important;
+  bottom:-16px!important;
+  background:radial-gradient(circle at bottom left,transparent 16px,var(--unveiled-nav-accent) 16.5px)!important;
+}
+body[data-page] #sidebar .nav-item.active .icon,
+body[data-page] #sidebar .nav-item.active .nav-count {
+  color:var(--unveiled-nav-ink)!important;
+  opacity:.94!important;
+}
+body[data-page] #sidebar .nav-item.active .nav-count{font-weight:600;}
+body[data-page] #sidebar .nav-item:focus-visible {
+  outline:2px solid var(--unveiled-nav-accent);
+  outline-offset:2px;
+}
+@media(max-width:700px) {
+  body[data-page] #sidebar {--sidebar-edge:19px;}
+  body[data-page] #sidebar .nav-item {min-height:46px;font-size:13px;}
+}
+@media(prefers-reduced-motion:reduce) {
+  body[data-page] #sidebar .nav-item {transition:none;}
+}
+</style><script type="module" id="unveiled-sidebar-v50-js">
+// Sync the selected subsection capsule with the most recently chosen Bible.
+// Blue is the first-visit default. The preference is intentionally just a colour;
+// no private notes, account details or reading history are copied.
+(() => {
+  const palette={
+    navy:{accent:'#6199ff',ink:'#071529'},
+    blue:{accent:'#6199ff',ink:'#071529'},
+    red:{accent:'#ff7179',ink:'#23060c'},
+    green:{accent:'#4cdb9e',ink:'#092619'},
+    pink:{accent:'#ff80c0',ink:'#30101f'},
+    purple:{accent:'#c591ff',ink:'#210c39'}
+  };
+  const saveKey='unveiled.sidebar.last-bible-colour';
+  const legacyKey='unveiled.v1.book-colour';
+  const normalise=v=>String(v||'').toLowerCase()==='blue'?'navy':String(v||'').toLowerCase();
+  function readKey(key){
+    try{
+      const raw=localStorage.getItem(key);
+      if(!raw)return null;
+      let value=raw;
+      try{value=JSON.parse(raw);}catch{}
+      return typeof value==='string'&&palette[normalise(value)]?normalise(value):null;
+    }catch{return null;}
+  }
+  let current=readKey(saveKey)||readKey(legacyKey)||'navy';
+  function applyColour(colour,persist=false){
+    colour=normalise(colour);
+    if(!palette[colour])return;
+    if(colour===current&&!persist&&document.documentElement.style.getPropertyValue('--unveiled-nav-accent'))return;
+    current=colour;
+    const p=palette[colour];
+    document.documentElement.style.setProperty('--unveiled-nav-accent',p.accent);
+    document.documentElement.style.setProperty('--unveiled-nav-ink',p.ink);
+    if(persist){
+      try{localStorage.setItem(saveKey,JSON.stringify(colour));}catch{}
+    }
+  }
+  applyColour(current);
+  // An edition choice from Discovery OR inside the reader updates the highlight.
+  document.addEventListener('click',event=>{
+    const button=event.target.closest?.('button[data-book-colour]');
+    if(button&&palette[normalise(button.dataset.bookColour)]){
+      applyColour(button.dataset.bookColour,true);
+    }
+  },true);
+  // Signed-in device accounts can restore their Bible colour when the reader mounts.
+  const main=document.querySelector('#main');
+  if(main){
+    const syncActiveEdition=()=>{
+      if(document.body.dataset.page!=='bible')return;
+      const selected=main.querySelector('.book-colour-choices button[data-book-colour][aria-pressed="true"]');
+      if(selected&&normalise(selected.dataset.bookColour)!==current){
+        applyColour(selected.dataset.bookColour,true);
+      }
+    };
+    const watcher=new MutationObserver(syncActiveEdition);
+    watcher.observe(main,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-pressed']});
+    syncActiveEdition();
+  }
+  window.addEventListener('storage',event=>{
+    if(event.key===saveKey||event.key===legacyKey){
+      applyColour(readKey(saveKey)||readKey(legacyKey)||'navy');
+    }
+  });
 })();
 </script></head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
 <section id="persistent-player" class="persistent-player" data-mode="parked" aria-label="Unveiled video player">

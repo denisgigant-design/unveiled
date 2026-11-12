@@ -1124,172 +1124,390 @@ body[data-page="bible"] #reader-workspace .book-page-content .paper-running>span
 }
 
 </style>
-<script type="module" id="unveiled-bible-v48-js">
-// Unveiled v48 — navigation beside a collapsed gear, continuous running folios,
-// and a chapter label on every visible page. The original turning engine remains in use.
-const v48main=document.querySelector('#main');
-const v48PageBases=new Map();
-const v48Previous=new Map();
-const v48OriginalFolio=new WeakMap();
-const v48StorageKey="unveiled.v48.running-page-index";
-try{
-  const stored=JSON.parse(localStorage.getItem(v48StorageKey)||"{}");
-  for(const [layout,chapters] of Object.entries(stored)){
-    if(Array.isArray(chapters))v48PageBases.set(layout,new Map(chapters));
-  }
-}catch{}
-function v48SaveBases(){
-  try{
-    const snapshot=Object.fromEntries([...v48PageBases].map(([key,value])=>[key,[...value]]));
-    localStorage.setItem(v48StorageKey,JSON.stringify(snapshot));
-  }catch{}
+<style id="unveiled-v49-folder-styles">/* v49 — headings and folder-based notes; the photographed page texture stays intact. */
+body[data-page="bible"] #reader-workspace .page-number,
+body[data-page="bible"] #reader-workspace #page-status,
+body[data-page="bible"] #reader-workspace .book-turn-scene .page-number,
+body[data-page="bible"] #reader-workspace .book-measure .page-number {
+  display:none!important;
 }
-let v48Queued=false;
-const v48Chevron=dir=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${dir<0?'M15 5 8 12l7 7':'M9 5l7 7-7 7'}"/></svg>`;
-const v48ChapterKey=(book,chapter)=>`${book}:${chapter}`;
-const v48CanonicalChapterCounts=[50,40,27,36,34,24,21,4,31,24,22,25,29,36,10,13,10,42,150,31,12,8,66,52,5,48,12,14,3,9,1,4,7,3,3,3,2,14,4,28,16,24,21,28,16,16,13,6,6,4,4,5,3,6,4,3,1,13,5,5,3,5,1,1,1,22];
-// Each previous chapter contains at least one numbered leaf. This lower bound
-// prevents direct navigation to an unvisited book from restarting at folio 1.
-const v48ChapterMinimum=(book,chapter)=>
-  v48CanonicalChapterCounts.slice(0,book).reduce((sum,count)=>sum+count,0)+chapter-1;
+body[data-page="bible"] #reader-workspace .book-page-content .paper-running .reader-running-chapter {
+  font-weight:700;
+}
+/* Preserve the large original chapter heading on the first page of the chapter;
+   show the running reminder only on subsequent pages. */
+body[data-page="bible"] #reader-workspace .paper-page:has(.chapter-heading) .reader-running-chapter {display:none!important;}
+#site-dialog[data-variant="unveiled-folders"] {
+  background:linear-gradient(145deg,color-mix(in srgb,var(--bible-accent,#224f91) 30%,#080d15),#080c11 63%);
+  color:#eef4fa;
+  border:1px solid color-mix(in srgb,var(--bible-swatch,#6199ff) 54%,#424951);
+  border-radius:22px;
+  box-shadow:0 0 45px color-mix(in srgb,var(--bible-swatch,#6199ff) 14%,transparent),0 25px 90px #000a;
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+  max-width:720px;
+  padding:0 22px 24px;
+}
+#site-dialog[data-variant="unveiled-folders"] .dialog-bar {
+  background:transparent;
+  border-bottom:1px solid #ffffff22;
+  margin-bottom:17px;
+  padding:19px 0 14px;
+}
+#site-dialog[data-variant="unveiled-folders"] .dialog-bar h2{font:600 clamp(20px,3vw,27px)/1.3 system-ui,sans-serif;color:#eef4fa;}
+#site-dialog[data-variant="unveiled-folders"] .dialog-bar button{color:#fff;background:#ffffff12;border:1px solid #ffffff26;}
+.folder-picker,.folder-library{display:grid;gap:14px;}
+.folder-picker>p,.folder-hint,.folder-library>p{color:#bfcbd8;font-size:12px;line-height:1.65;}
+.folder-choice,
+.note-folder-field{display:grid;gap:7px;font-size:12px;color:#dce7f2;}
+.folder-choice select,.note-folder-field select,
+.folder-creator input,
+#site-dialog[data-variant="unveiled-folders"] input {
+  min-height:42px;width:100%;border-radius:11px;background:#ffffff0e;
+  border:1px solid #ffffff35;color:#eff8ff;padding:10px 12px;
+}
+.folder-choice option,.note-folder-field option {background:#152132;color:#f5f9ff;}
+.folder-creator {display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.folder-creator input{flex:1 1 130px;min-width:0;}
+.folder-glass-button{border:1px solid #ffffff38;border-radius:10px;padding:9px 12px;background:#ffffff12;color:#f3f7fc;min-height:40px;font-size:12px;white-space:nowrap;}
+.folder-glass-button.primary{border-color:var(--bible-swatch,#6199ff);background:color-mix(in srgb,var(--bible-accent,#244f91) 65%,#0b1725);font-weight:600;}
+.folder-actions{display:flex;justify-content:flex-end;gap:8px;align-items:center;flex-wrap:wrap;}
+.folder-tools-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.folder-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.folder-chip{border:1px solid #ffffff36;border-radius:999px;padding:7px 11px;background:#ffffff0e;color:#dee8f2;min-height:34px;font-size:12px;}
+.folder-chip[aria-pressed="true"]{border-color:var(--bible-swatch,#6199ff);background:color-mix(in srgb,var(--bible-accent,#244f91) 50%,transparent);color:#fff;}
+.folder-section{margin-top:13px;display:grid;gap:8px;}
+.folder-section>h3{display:flex;align-items:center;gap:8px;margin:0;font:600 14px/1.45 system-ui,sans-serif;color:#edf4fc;}
+.folder-section>h3 small{color:#a8c0d3;font-size:11px;font-weight:400;}
+.folder-section .saved-verse,
+#site-dialog[data-variant="unveiled-folders"] .saved-verse{border:1px solid #ffffff23;border-radius:12px;background:#ffffff08;padding:11px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.folder-section .saved-verse>button[data-passage]{flex:1 1 170px;min-width:0;text-align:left;background:transparent;color:#eef4fa;}
+.folder-assignment{flex:0 1 140px;min-width:90px;background:#ffffff11;color:#f0f5fc;border:1px solid #ffffff2e;border-radius:8px;padding:8px;font-size:11px;}
+.folder-assignment option{background:#152132;color:white;}
+.folder-empty{font-size:12px;color:#a7b7c8;line-height:1.5;margin:5px 0;}
+body[data-page="prayer"] .journal-folder-bar{display:grid;gap:9px;margin:0 0 17px;padding:13px;border:1px solid #ffffff2c;border-radius:15px;background:color-mix(in srgb,var(--bible-accent,#244f91) 11%,#07121ed9);backdrop-filter:blur(14px);}
+body[data-page="prayer"] .journal-folder-bar strong{font:600 13px system-ui,sans-serif;color:#e7f2fd;}
+body[data-page="prayer"] .journal-folder-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+body[data-page="prayer"] .journal-entry{border:1px solid #ffffff30;border-radius:15px;background:linear-gradient(140deg,#182c3bb5,#091523ce);backdrop-filter:blur(13px);color:#eef4fb;}
+body[data-page="prayer"] .journal-entry .entry-actions{gap:10px;flex-wrap:wrap;}
+body[data-page="prayer"] .note-folder-badge {display:inline-flex;font:600 11px system-ui,sans-serif;padding:4px 8px;color:#cfe5fa;border:1px solid #ffffff30;border-radius:999px;margin-left:7px;}
+body[data-page="prayer"] .journal-entry .assign-note-folder{margin-left:auto;background:transparent;color:#bcdaf5;font-size:11px;border:1px solid #ffffff40;padding:5px 8px;border-radius:8px;}
+#site-dialog:has(.entry-form) .note-folder-field{color:#dbe6f2;}
+#site-dialog .entry-form .note-folder-inline {display:flex;gap:8px;align-items:center;}
+#site-dialog .entry-form .note-folder-inline select{flex:1;min-width:0;}
+#site-dialog .entry-form .note-folder-add {padding:9px;font-size:12px;min-height:40px;border-radius:9px;color:#eff5fb;background:#203b4f;border:1px solid #ffffff38;}
+@media(max-width:600px){
+ #site-dialog[data-variant="unveiled-folders"]{width:calc(100% - 24px);padding-inline:13px;border-radius:16px;}
+ .folder-section .saved-verse>button[data-passage]{flex-basis:100%;}
+ .folder-assignment{flex:1 1 130px;}
+}
 
-const v48Adjacency=(fromBook,fromChapter,toBook,toChapter)=>
-  (fromBook===toBook&&toChapter===fromChapter+1) ||
-  (toBook===fromBook+1&&toChapter===1);
-const v48ReverseAdjacency=(fromBook,fromChapter,toBook,toChapter)=>
-  (fromBook===toBook&&toChapter===fromChapter-1) ||
-  (toBook===fromBook-1);
-
-function v48PatchReader(){
-  if(document.body.dataset.page!=='bible')return;
-  const host=v48main.querySelector('#reader-workspace');
-  if(!host)return;
-  const original=host.querySelector('.reader-glass-panel .page-controls');
-  const gearRow=host.querySelector('.reader-gear-row');
-  if(gearRow && original && !gearRow.querySelector('[data-quick-page]')){
-    const gear=gearRow.querySelector('.reader-gear-button');
-    if(gear){
-      const previous=document.createElement('button');
-      previous.type='button';previous.className='reader-quick-turn';previous.dataset.turn='-1';
-      previous.dataset.quickPage='previous';previous.setAttribute('aria-label','Previous Bible page');
-      previous.innerHTML=v48Chevron(-1);
-      const next=document.createElement('button');
-      next.type='button';next.className='reader-quick-turn';next.dataset.turn='1';
-      next.dataset.quickPage='next';next.setAttribute('aria-label','Next Bible page');
-      next.innerHTML=v48Chevron(1);
-      gear.before(previous);gear.after(next);
-    }
+/* Journal editing uses the same frosted panel language as the Bible. */
+#site-dialog:has(.entry-form):not([data-variant="media-player"]){
+  background:linear-gradient(148deg,color-mix(in srgb,var(--bible-accent,#244f91) 22%,#07101c),#09121d 70%)!important;
+  color:#e8f1f9!important;
+  border:1px solid color-mix(in srgb,var(--bible-swatch,#6199ff) 35%,#33475a)!important;
+  border-radius:22px!important;
+  box-shadow:0 18px 70px #0008,inset 0 1px #ffffff13!important;
+  backdrop-filter:blur(19px);
+}
+#site-dialog:has(.entry-form) .dialog-bar{background:transparent!important;border-color:#ffffff24!important;}
+#site-dialog:has(.entry-form) .dialog-bar h2{color:#f4f8fc!important;}
+#site-dialog:has(.entry-form) .entry-form label{color:#deedf8;}
+#site-dialog:has(.entry-form) .entry-form :is(input,select,textarea){background:#ffffff10;border:1px solid #ffffff32;border-radius:10px;color:#eff7fb;}
+#site-dialog:has(.entry-form) .entry-form select option{background:#142536;color:#f5f9ff;}
+</style><script type="module" id="unveiled-v49-reader-notes">// Unveiled v49: clean folios, contextual chapter reminders, and private folder organization.
+// Reader pagination and device-account bookmark saving still use the original app.
+(() => {
+  const main=document.querySelector('#main');
+  const dialog=document.querySelector('#site-dialog');
+  const dialogBody=document.querySelector('#dialog-content');
+  const dialogHeading=document.querySelector('#dialog-heading');
+  if(!main||!dialog||!dialogBody)return;
+  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const storageKey='unveiled.v49.folder-library';
+  const blank=()=>({folders:[],verses:{},notes:{}});
+  let library;
+  try{
+    const obj=JSON.parse(localStorage.getItem(storageKey)||'null');
+    library=obj&&Array.isArray(obj.folders)&&obj.verses&&obj.notes?obj:blank();
+  }catch{library=blank();}
+  function persist(){try{localStorage.setItem(storageKey,JSON.stringify(library));return true;}catch{return false;}}
+  const folders=()=>library.folders;
+  const folderName=id=>folders().find(f=>f.id===id)?.name||'Unfiled';
+  const folderOptions=(selected='',includeAll=false)=>`${includeAll?'<option value="all">All folders</option>':''}<option value="">Unfiled</option>${folders().map(f=>`<option value="${esc(f.id)}" ${selected===f.id?'selected':''}>${esc(f.name)}</option>`).join('')}`;
+  function addFolder(name){
+    const trimmed=String(name||'').trim().replace(/\s+/g,' ').slice(0,65);
+    if(!trimmed)return null;
+    const exists=folders().find(f=>f.name.toLocaleLowerCase()===trimmed.toLocaleLowerCase());
+    if(exists)return exists.id;
+    if(folders().length>=100)return null;
+    const id='f-'+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
+    folders().push({id,name:trimmed});persist();return id;
   }
-  // Keep the quick controls enabled/disabled in sync with the reader's existing
-  // navigation. Both new buttons are actual data-turn controls handled by reader.js.
-  if(original && gearRow){
-    for(const dir of [-1,1]){
-      const real=original.querySelector(`button[data-turn="${dir}"]`);
-      const quick=gearRow.querySelector(`button[data-quick-page][data-turn="${dir}"]`);
-      if(real&&quick && quick.disabled!==real.disabled)quick.disabled=real.disabled;
-    }
+  const passageKey=(version,book,chapter,verse)=>`${version}:${book}:${chapter}:${verse}`;
+  function currentVerse(){
+    const host=main.querySelector('#reader-workspace');
+    const selected=host?.querySelector('.verse-line.verse-selected[data-verse]');
+    if(!selected)return null;
+    const book=host.querySelector('#reader-book')?.value;
+    const chapter=host.querySelector('#reader-chapter')?.value;
+    const version=host.querySelector('#reader-version')?.value;
+    return {book,chapter,version,verse:selected.dataset.verse,
+      key:passageKey(version,book,chapter,selected.dataset.verse),
+      label:`${host.querySelector('#reader-book option:checked')?.textContent||'Bible'} ${chapter}:${selected.dataset.verse}`};
   }
-
-  // A chapter identifier is printed in the running heading on EVERY page,
-  // not just the opening sheet of a chapter.
-  const bookSelect=host.querySelector('#reader-book');
-  const chapterSelect=host.querySelector('#reader-chapter');
-  if(!bookSelect||!chapterSelect)return;
-  const book=Number(bookSelect.value),chapter=Number(chapterSelect.value)||1;
-  const chapterText=`CHAPTER ${chapter}`;
-  const numberedPages=[...host.querySelectorAll('.book-spread > .paper-page')];
-  for(const page of numberedPages){
-    const running=page.querySelector('.book-page-content .paper-running');
-    if(!running)continue;
-    let marker=running.querySelector('.reader-running-chapter');
-    if(!marker){
-      marker=document.createElement('span');marker.className='reader-running-chapter';
-      running.insertBefore(marker,running.lastElementChild);
-    }
-    if(marker.textContent!==chapterText)marker.textContent=chapterText;
+  function setModal(title,html){
+    dialog.dataset.variant='unveiled-folders';
+    dialogHeading.textContent=title;
+    dialogBody.innerHTML=html;
+    if(!dialog.open)dialog.showModal();
   }
-
-  // Page totals are derived from the actual reader pagination at this size.
-  // Cache the base for each chapter; consecutive chapters use the exact prior
-  // page count, rather than restarting at page 1.
-  const folios=numberedPages.map(page=>page.querySelector('.page-number')).filter(Boolean);
-  if(!folios.length)return;
-  const status=host.querySelector('#page-status')?.textContent||'';
-  const result=status.match(/of\s+(\d+)\s*$/i);
-  const total=Number(result?.[1]);
-  if(!(total>0))return;
-  const view=host.querySelector('.book-shell')?.dataset.bookView||'single';
-  const edition=host.querySelector('#reader-version')?.value||'kjv';
-  const size=host.querySelector('#reader-size-value')?.textContent||'8px';
-  const key=`${edition}|${view}|${size}|${Math.round(host.clientWidth/20)*20}`;
-  let bases=v48PageBases.get(key);
-  if(!bases){bases=new Map();v48PageBases.set(key,bases);}
-  const chapterKey=v48ChapterKey(book,chapter);
-  const hasFrontispiece=book===0&&chapter===1&&view==='spread';
-  const currentTotal=Math.max(1,total-(hasFrontispiece?1:0));
-  let entry=bases.get(chapterKey);
-  const previous=v48Previous.get(key);
-  if(!entry){
-    let base=v48ChapterMinimum(book,chapter);
-    if(book===0&&chapter===1)base=0;
-    else if(previous&&v48Adjacency(previous.book,previous.chapter,book,chapter)){
-      base=previous.base+previous.total;
-    }else if(previous&&v48ReverseAdjacency(previous.book,previous.chapter,book,chapter)){
-      // When navigating backward, use the already known chapter if possible.
-      base=Math.max(0,previous.base-currentTotal);
-    }else{
-      // Direct jumps can occur before intermediate chapters have been visited.
-      // Use known offsets where possible, rather than reset the folio to 1.
-      const candidates=[...bases.entries()].filter(([k])=>{
-        const [b,c]=k.split(':').map(Number);
-        return b<book||(b===book&&c<chapter);
-      });
-      if(candidates.length){
-        const [lastKey,last]=candidates[candidates.length-1];
-        base=Math.max(base,last.base+last.total);
+  function closeModal(){dialog.close();}
+  const createForm=(prefill='')=>`<div class="folder-creator"><input type="text" maxlength="65" data-new-folder-input aria-label="New folder name" placeholder="New folder name, e.g. Spirit" value="${esc(prefill)}"><button type="button" class="folder-glass-button" data-create-new-folder>+ Add folder</button></div>`;
+  function assignVerseToFolder(ref,button){
+    if(!ref)return;
+    const selected=library.verses[ref.key]||'';
+    setModal('Save verse to a folder',`<div class="folder-picker"><p><strong>${esc(ref.label)}</strong> — choose where to keep this verse. Saved verses remain available in your Bible bookmarks.</p><label class="folder-choice">Folder<select data-choose-folder>${folderOptions(selected)}</select></label>${createForm()}<div class="folder-actions"><button type="button" class="folder-glass-button" data-cancel-folder>Cancel</button><button type="button" class="folder-glass-button primary" data-save-verse-folder>Save verse</button></div></div>`);
+    dialogBody.querySelector('[data-create-new-folder]').onclick=()=>{
+      const input=dialogBody.querySelector('[data-new-folder-input]');
+      const id=addFolder(input.value);
+      if(!id){input.focus();return;}
+      dialogBody.querySelector('[data-choose-folder]').innerHTML=folderOptions(id);
+      input.value='';
+    };
+    dialogBody.querySelector('[data-cancel-folder]').onclick=closeModal;
+    dialogBody.querySelector('[data-save-verse-folder]').onclick=()=>{
+      const id=dialogBody.querySelector('[data-choose-folder]').value;
+      if(id)library.verses[ref.key]=id;else delete library.verses[ref.key];
+      persist();
+      closeModal();
+      // The existing reader retains responsibility for persisting the actual
+      // bookmark, including into a signed-in device account.
+      if(button.isConnected){
+        button.dataset.folderBypass='true';
+        button.click();
+        delete button.dataset.folderBypass;
+      }
+    };
+  }
+  let shownFolder='all';
+  function enhanceSavedVerses(){
+    if(!dialog.open||dialogHeading.textContent!=='Your saved verses')return;
+    if(dialogBody.querySelector('.folder-library'))return;
+    dialogBody.dataset.folderEnhanced='true';
+    dialog.dataset.variant='unveiled-folders';
+    const list=dialogBody.querySelector('.saved-verses');
+    const items=list?[...list.querySelectorAll('.saved-verse')]:[];
+    const wrapper=document.createElement('div');wrapper.className='folder-library';
+    const header=document.createElement('div');header.className='folder-tools-head';
+    header.innerHTML='<p class="folder-hint">Organize your saved verses into topics such as Spirit, Grace, and Faith.</p>';
+    const create=document.createElement('div');create.innerHTML=createForm();
+    const chips=document.createElement('div');chips.className='folder-chips';
+    const grouped=document.createElement('div');
+    wrapper.append(header,create,chips,grouped);
+    if(list){list.replaceChildren(wrapper);}else dialogBody.prepend(wrapper);
+    create.querySelector('[data-create-new-folder]').onclick=()=>{
+      const input=create.querySelector('[data-new-folder-input]');
+      const id=addFolder(input.value);
+      if(id){shownFolder=id;input.value='';refresh();}
+      else input.focus();
+    };
+    function refresh(){
+      chips.replaceChildren();grouped.replaceChildren();
+      const labels=[{id:'all',name:'All'},{id:'',name:'Unfiled'},...folders()];
+      for(const item of labels){
+        const chip=document.createElement('button');chip.type='button';chip.className='folder-chip';
+        chip.setAttribute('aria-pressed',String(shownFolder===item.id));chip.textContent=item.name;
+        chip.onclick=()=>{shownFolder=item.id;refresh();};chips.append(chip);
+      }
+      const folderIds=shownFolder==='all'?['',...folders().map(f=>f.id)]:[shownFolder];
+      for(const id of folderIds){
+        const own=items.filter(card=>{
+          const passage=card.querySelector('[data-passage]')?.dataset.passage||'';
+          const [book,chapter,verse,version]=passage.split(',');
+          return (library.verses[passageKey(version,book,chapter,verse)]||'')===id;
+        });
+        const section=document.createElement('section');section.className='folder-section';
+        section.innerHTML=`<h3>${esc(folderName(id))} <small>${own.length} ${own.length===1?'verse':'verses'}</small></h3>`;
+        if(!own.length){const empty=document.createElement('p');empty.className='folder-empty';empty.textContent='No verses in this folder yet.';section.append(empty);}
+        for(const card of own){
+          const passage=card.querySelector('[data-passage]')?.dataset.passage||'';
+          const [book,chapter,verse,version]=passage.split(',');
+          const key=passageKey(version,book,chapter,verse);
+          let selector=card.querySelector('.folder-assignment');
+          if(!selector){selector=document.createElement('select');selector.className='folder-assignment';selector.setAttribute('aria-label','Move verse to folder');card.append(selector);}
+          selector.innerHTML=folderOptions(library.verses[key]||'');
+          selector.onchange=()=>{
+            if(selector.value)library.verses[key]=selector.value;else delete library.verses[key];
+            persist();refresh();
+          };
+          section.append(card);
+        }
+        grouped.append(section);
       }
     }
-    entry={base,total:currentTotal};
-    bases.set(chapterKey,entry);
-    v48SaveBases();
-  }else if(entry.total!==currentTotal){
-    entry.total=currentTotal;
-    v48SaveBases();
+    refresh();
   }
-  v48Previous.set(key,{book,chapter,base:entry.base,total:currentTotal});
-  for(const node of folios){
-    let local=v48OriginalFolio.get(node);
-    if(local===undefined){
-      local=Number(node.textContent);
-      if(Number.isFinite(local))v48OriginalFolio.set(node,local);
+  let selectedJournalFolder='all';
+  let editingNoteId=null;
+  let pendingNoteSave=null;
+  function enhanceJournalEditor(){
+    const form=dialogBody.querySelector('.entry-form');
+    if(!form||form.dataset.folderEnhanced==='true'||!form.elements?.type||!form.elements?.title||!form.elements?.text)return;
+    form.dataset.folderEnhanced='true';
+    const block=document.createElement('label');
+    block.className='note-folder-field';block.textContent='Save in folder';
+    block.innerHTML=`Save in folder<div class="note-folder-inline"><select name="note-folder" aria-label="Note folder">${folderOptions(library.notes[editingNoteId]||'')}</select><button type="button" class="note-folder-add" data-note-add-folder>+ Folder</button></div>`;
+    const textLabel=form.querySelector('label:has(textarea)');
+    if(textLabel)textLabel.before(block);else form.prepend(block);
+    block.querySelector('[data-note-add-folder]').onclick=()=>{
+      const holder=document.createElement('div');holder.innerHTML=createForm();
+      block.append(holder);
+      holder.querySelector('[data-create-new-folder]').onclick=()=>{
+        const input=holder.querySelector('[data-new-folder-input]');
+        const id=addFolder(input.value);
+        if(!id){input.focus();return;}
+        block.querySelector('[name="note-folder"]').innerHTML=folderOptions(id);
+        holder.remove();
+      };
+    };
+  }
+  function enhanceJournalList(){
+    if(document.body.dataset.page!=='prayer')return;
+    const list=main.querySelector('.journal-list');
+    if(!list)return;
+    const signature=selectedJournalFolder+'|'+JSON.stringify(library.notes)+'|'+folders().map(f=>f.id+':'+f.name).join('|');
+    if(list.dataset.folderRenderSignature===signature)return;
+    list.dataset.folderRenderSignature=signature;
+    if(!main.querySelector('.journal-folder-bar')){
+      const bar=document.createElement('div');bar.className='journal-folder-bar';
+      bar.innerHTML=`<div class="journal-folder-tools"><strong>My note folders</strong><button type="button" class="folder-glass-button" data-add-note-folder>+ New folder</button></div><div class="folder-chips" data-journal-folder-tabs></div><div data-journal-folder-create hidden>${createForm()}</div>`;
+      list.before(bar);
+      const creator=bar.querySelector('[data-journal-folder-create]');
+      bar.querySelector('[data-add-note-folder]').onclick=()=>{creator.hidden=!creator.hidden;creator.querySelector('input')?.focus();};
+      creator.querySelector('[data-create-new-folder]').onclick=()=>{
+        const input=creator.querySelector('input');const id=addFolder(input.value);
+        if(id){selectedJournalFolder=id;creator.hidden=true;input.value='';enhanceJournalList();}else input.focus();
+      };
     }
-    if(!Number.isFinite(local))continue;
-    const global=String(entry.base+local);
-    if(node.textContent!==global)node.textContent=global;
+    const bar=main.querySelector('.journal-folder-bar');
+    const tabs=bar.querySelector('[data-journal-folder-tabs]');tabs.replaceChildren();
+    for(const f of [{id:'all',name:'All notes'},{id:'',name:'Unfiled'},...folders()]){
+      const b=document.createElement('button');b.type='button';b.className='folder-chip';b.textContent=f.name;
+      b.setAttribute('aria-pressed',String(selectedJournalFolder===f.id));
+      b.onclick=()=>{selectedJournalFolder=f.id;enhanceJournalList();};tabs.append(b);
+    }
+    for(const card of list.querySelectorAll('.journal-entry')){
+      const id=card.querySelector('[data-edit-entry]')?.dataset.editEntry||'';
+      const existing=card.querySelector('.note-folder-badge');
+      const label=folderName(library.notes[id]||'');
+      if(existing)existing.textContent=label;
+      else{
+        const badge=document.createElement('span');badge.className='note-folder-badge';badge.textContent=label;
+        card.querySelector('.entry-meta')?.append(badge);
+      }
+      if(!card.querySelector('[data-assign-note-folder]')){
+        const move=document.createElement('button');move.type='button';move.className='assign-note-folder';
+        move.dataset.assignNoteFolder=id;move.textContent='Move to folder';
+        card.querySelector('.entry-actions')?.append(move);
+      }
+      card.hidden=selectedJournalFolder!=='all'&&(library.notes[id]||'')!==selectedJournalFolder;
+    }
   }
-}
-function v48Queue(){
-  if(v48Queued)return;
-  v48Queued=true;
-  requestAnimationFrame(()=>{v48Queued=false;v48PatchReader();});
-}
-const v48Observer=new MutationObserver(records=>{
-  if(document.body.dataset.page!=='bible')return;
-  // Only repaint after structural changes, not after our own text updates.
-  if(records.some(record=>record.type==='childList' &&
-    [...record.addedNodes,...record.removedNodes].some(n=>
-      n.nodeType===1 && !(n.classList?.contains('reader-running-chapter')))))v48Queue();
-  if(records.some(record=>record.type==='attributes'&&record.attributeName==='disabled'))v48Queue();
-});
-v48Observer.observe(v48main,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});
-document.addEventListener('click',event=>{
-  if(event.target.closest('button[data-turn],button[data-book-view],button[data-font-step],button[data-book-colour]'))v48Queue();
-},true);
-document.addEventListener('change',event=>{
-  if(event.target.closest('#reader-workspace select'))v48Queue();
-});
-v48Queue();
-
+  function chooseNoteFolder(id){
+    setModal('Move note to folder',`<div class="folder-picker"><label class="folder-choice">Choose folder<select data-choose-folder>${folderOptions(library.notes[id]||'')}</select></label>${createForm()}<div class="folder-actions"><button type="button" class="folder-glass-button" data-cancel-folder>Cancel</button><button type="button" class="folder-glass-button primary" data-save-note-folder>Save folder</button></div></div>`);
+    dialogBody.querySelector('[data-create-new-folder]').onclick=()=>{
+      const input=dialogBody.querySelector('[data-new-folder-input]');const folder=addFolder(input.value);
+      if(folder){dialogBody.querySelector('[data-choose-folder]').innerHTML=folderOptions(folder);input.value='';}
+    };
+    dialogBody.querySelector('[data-cancel-folder]').onclick=closeModal;
+    dialogBody.querySelector('[data-save-note-folder]').onclick=()=>{
+      const folder=dialogBody.querySelector('[data-choose-folder]').value;
+      if(folder)library.notes[id]=folder;else delete library.notes[id];
+      persist();closeModal();enhanceJournalList();
+    };
+  }
+  function applyNoteSave(){
+    if(!pendingNoteSave)return;
+    const p=pendingNoteSave;
+    const after=[...main.querySelectorAll('[data-edit-entry]')].map(el=>el.dataset.editEntry);
+    const id=p.id||after.find(x=>!p.before.includes(x));
+    if(!id)return;
+    if(p.folder)library.notes[id]=p.folder;else delete library.notes[id];
+    persist();pendingNoteSave=null;enhanceJournalList();
+  }
+  // A single authoritative set of functional page-turn arrows beside the gear.
+  const chevron=dir=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${dir<0?'M15 5 8 12l7 7':'M9 5l7 7-7 7'}"/></svg>`;
+  function patchReader(){
+    if(document.body.dataset.page!=='bible')return;
+    const host=main.querySelector('#reader-workspace');if(!host)return;
+    const gearRow=host.querySelector('.reader-gear-row');
+    const original=host.querySelector('.reader-glass-panel .page-controls');
+    if(gearRow&&original&&!gearRow.querySelector('[data-quick-page]')){
+      const gear=gearRow.querySelector('.reader-gear-button');
+      if(gear){
+        const prev=document.createElement('button'),next=document.createElement('button');
+        for(const [button,dir,label] of [[prev,-1,'Previous Bible page'],[next,1,'Next Bible page']]){
+          button.type='button';button.className='reader-quick-turn';button.dataset.turn=String(dir);
+          button.dataset.quickPage=dir<0?'previous':'next';button.setAttribute('aria-label',label);
+          button.innerHTML=chevron(dir);
+        }
+        gear.before(prev);gear.after(next);
+      }
+    }
+    if(gearRow&&original)for(const dir of [-1,1]){
+      const native=original.querySelector(`button[data-turn="${dir}"]`);
+      const quick=gearRow.querySelector(`button[data-quick-page][data-turn="${dir}"]`);
+      if(native&&quick&&quick.disabled!==native.disabled)quick.disabled=native.disabled;
+    }
+    const chapter=Number(host.querySelector('#reader-chapter')?.value)||1;
+    for(const page of host.querySelectorAll('.book-spread > .paper-page')){
+      const running=page.querySelector('.book-page-content .paper-running');
+      if(!running)continue;
+      const originalTitle=page.querySelector('.chapter-heading');
+      const existing=running.querySelector('.reader-running-chapter');
+      if(originalTitle){existing?.remove();continue;}
+      if(!existing){
+        const marker=document.createElement('span');marker.className='reader-running-chapter';
+        marker.textContent=`CHAPTER ${chapter}`;running.insertBefore(marker,running.lastElementChild);
+      }else if(existing.textContent!==`CHAPTER ${chapter}`)existing.textContent=`CHAPTER ${chapter}`;
+    }
+  }
+  let queued=false;
+  function queue(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;patchReader();enhanceSavedVerses();enhanceJournalEditor();enhanceJournalList();applyNoteSave();});}
+  const observer=new MutationObserver(records=>{
+    if(records.some(r=>r.type==='childList' && [...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&!n.classList?.contains('reader-running-chapter')))||records.some(r=>r.type==='attributes'&&r.attributeName==='disabled'))queue();
+  });
+  observer.observe(main,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});
+  observer.observe(dialogBody,{childList:true,subtree:false});
+  observer.observe(document.body,{attributes:true,attributeFilter:['data-page']});
+  // Reset marker when the dialog is reused for a different feature.
+  dialog.addEventListener('close',()=>{delete dialogBody.dataset.folderEnhanced;if(dialog.dataset.variant==='unveiled-folders')dialog.dataset.variant='';});
+  document.addEventListener('click',event=>{
+    const btn=event.target.closest('#reader-workspace button[data-bookmark]');
+    if(btn&&!btn.dataset.folderBypass){
+      const ref=currentVerse();
+      if(ref){event.preventDefault();event.stopImmediatePropagation();assignVerseToFolder(ref,btn);return;}
+    }
+    const edit=event.target.closest('[data-edit-entry]');
+    if(edit)editingNoteId=edit.dataset.editEntry;
+    else if(event.target.closest('[data-new-entry], [data-prompt]'))editingNoteId=null;
+    const move=event.target.closest('[data-assign-note-folder]');
+    if(move){event.preventDefault();chooseNoteFolder(move.dataset.assignNoteFolder);}
+    if(event.target.closest('#reader-workspace button[data-turn],#reader-workspace button[data-font-step],#reader-workspace button[data-book-view]'))queue();
+  },true);
+  document.addEventListener('submit',event=>{
+    const form=event.target;
+    if(document.body.dataset.page!=='prayer'||!form.matches?.('.entry-form')||!form.elements?.type||!form.elements?.text)return;
+    pendingNoteSave={id:editingNoteId,folder:form.querySelector('[name="note-folder"]')?.value||'',before:[...main.querySelectorAll('[data-edit-entry]')].map(x=>x.dataset.editEntry)};
+    queueMicrotask(()=>{applyNoteSave();queue();});
+  },true);
+  document.addEventListener('change',event=>{
+    if(event.target.closest('#reader-workspace select'))queue();
+  });
+  queue();
+})();
 </script></head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
 <section id="persistent-player" class="persistent-player" data-mode="parked" aria-label="Unveiled video player">
   <div class="floating-player-bar"><strong data-dock-title></strong><a href="#media" data-route="media">Room</a><button type="button" class="icon-button" data-player-size aria-label="Minimize to bubble" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path class="minimize-glyph" d="M4 5l6 6m0-5v5H5m15 8-6-6m0 5v-5h5"/><path class="expand-glyph" d="M10 10 4 4m0 5V4h5m5 10 6 6m-5 0h5v-5"/></svg></button><button type="button" class="icon-button" data-close-player aria-label="Close mini-player">×</button></div>

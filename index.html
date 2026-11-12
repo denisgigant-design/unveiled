@@ -156,7 +156,7 @@ body[data-page="home"] .discover-bible:active { transform: translateY(-1px); }
 @media(prefers-reduced-motion: reduce) {
   body[data-page="home"] .discover-bible { transition: none; }
 }
-</style><script type="module" src="app.js?v=unveiled39"></script><script type="module">
+</style><script type="module" src="app.js?v=unveiled52"></script><script type="module">
 // Page-only adjustment: keep the original Unveiled app, assets and other rooms intact.
 const editions = [
   ['red','Red'],
@@ -1293,6 +1293,7 @@ body[data-page="prayer"] .journal-entry .assign-note-folder{margin-left:auto;bac
   }
   let shownFolder='all';
   function enhanceSavedVerses(){
+    return; // v52 owns the saved-verse folder UI.
     if(!dialog.open||dialogHeading.textContent!=='Your saved verses')return;
     if(dialogBody.querySelector('.folder-library'))return;
     dialogBody.dataset.folderEnhanced='true';
@@ -1485,7 +1486,7 @@ body[data-page="prayer"] .journal-entry .assign-note-folder{margin-left:auto;bac
   dialog.addEventListener('close',()=>{delete dialogBody.dataset.folderEnhanced;if(dialog.dataset.variant==='unveiled-folders')dialog.dataset.variant='';});
   document.addEventListener('click',event=>{
     const btn=event.target.closest('#reader-workspace button[data-bookmark]');
-    if(btn&&!btn.dataset.folderBypass){
+    if(false&&btn&&!btn.dataset.folderBypass){ // v52 owns verse saves
       const ref=currentVerse();
       if(ref){event.preventDefault();event.stopImmediatePropagation();assignVerseToFolder(ref,btn);return;}
     }
@@ -1733,186 +1734,28 @@ body[data-page="bible"] #reader-workspace [data-unified-save-toggle][aria-presse
  #site-dialog[data-variant="unveiled-folders"]{width:calc(100% - 28px)!important;max-height:76svh;}
 }
 </style>
-<script type="module" id="unveiled-reading-v51-js">
-/* v51 — highlight = saved verse; one reversible action, glass folders and reading resume. */
-(() => {
- const main=document.querySelector('#main');
- const dialog=document.querySelector('#site-dialog');
- if(!main||!dialog)return;
- const progressKey='unveiled.reader.last-passage.v51';
- const parseValue=raw=>{try{return JSON.parse(raw);}catch{return null;}};
- const readSaved=()=>{try{const v=parseValue(localStorage.getItem(progressKey));return valid(v)?v:null;}catch{return null;}};
- const valid=p=>p&&Number.isInteger(+p.book)&&+p.book>=0&&+p.book<=65&&Number.isInteger(+p.chapter)&&+p.chapter>=1&&+p.chapter<=150&&Number.isInteger(+p.verse)&&+p.verse>=1&&+p.verse<=200&&['kjv','asv','bg'].includes(p.version);
- const originalReadingExists=(()=>{try{return !!localStorage.getItem('unveiled.v1.reading');}catch{return false;}})();
- let lastPosition=readSaved(),lastSerialized=lastPosition?JSON.stringify(lastPosition):'';
- let route=document.body.dataset.page||null,entryHandled=false,restoring=false,explicitPassage=false;
- let scheduled=false,internalAction=false,lastHost=null;
- const host=()=>document.body.dataset.page==='bible'?main.querySelector('#reader-workspace'):null;
- const selectedVerse=()=>{
-   const area=host();const verse=area?.querySelector('.book-spread .verse-line.verse-selected[data-verse]');
-   if(!area||!verse)return null;
-   const book=area.querySelector('#reader-book')?.value,chapter=area.querySelector('#reader-chapter')?.value,version=area.querySelector('#reader-version')?.value;
-   if(book===undefined||!chapter||!version)return null;
-   return {area,element:verse,book:+book,chapter:+chapter,verse:+verse.dataset.verse,version};
- };
- const nativeSave=()=>{
-   const area=host();if(!area||!selectedVerse())return;
-   // Native handler preserves signed-in account encryption and backup support.
-   const button=document.createElement('button');button.type='button';button.hidden=true;
-   button.dataset.bookmark='';button.dataset.folderBypass='true';
-   area.append(button);
-   try{internalAction=true;button.click();}finally{button.remove();internalAction=false;}
- };
- const nativeRemove=ref=>{
-   const area=host();const launcher=area?.querySelector('button[data-saved]');
-   if(!ref||!launcher)return false;
-   // Use the original reader bookmark-management action, not a second store.
-   const wasOpen=dialog.open;
-   if(wasOpen)return false;
-   const oldScrollX=window.scrollX,oldScrollY=window.scrollY;
-   let removed=false;
-   try{
-     internalAction=true;
-     launcher.click();
-     const needle=[ref.book,ref.chapter,ref.verse,ref.version].join(',');
-     const link=[...dialog.querySelectorAll('.saved-verse button[data-passage]')].find(b=>b.dataset.passage===needle);
-     const del=link?.closest('.saved-verse')?.querySelector('button[data-remove-bookmark]');
-     if(del){del.click();removed=true;}
-   }finally{
-     if(dialog.open)dialog.close();
-     internalAction=false;
-     requestAnimationFrame(()=>window.scrollTo(oldScrollX,oldScrollY));
-   }
-   return removed;
- };
- const clearHighlight=()=>{
-   const clear=host()?.querySelector('#selected-tools button[data-highlight="none"]');
-   if(!clear)return;
-   try{internalAction=true;clear.click();}finally{internalAction=false;}
- };
- function toggleSave(){
-   const ref=selectedVerse();if(!ref)return;
-   if(ref.element.classList.contains('is-bookmarked')){
-     if(nativeRemove(ref))clearHighlight();
-   }else nativeSave();
-   schedule();
- }
- function selectedButton(){
-   const area=host(),ref=selectedVerse();if(!area||!ref)return;
-   const btn=area.querySelector('#selected-tools button[data-bookmark],#selected-tools button[data-unified-save-toggle]');
-   if(!btn)return;
-   if(btn.hasAttribute('data-bookmark')){
-     btn.removeAttribute('data-bookmark');btn.dataset.unifiedSaveToggle='';
-   }
-   const saved=ref.element.classList.contains('is-bookmarked');
-   const label=saved?'Saved verse':'Save verse';
-   if(btn.dataset.unifiedLabel!==label){
-     const svg=btn.querySelector('svg')?.outerHTML||'<span aria-hidden="true">▣</span>';
-     btn.innerHTML=`${svg}<span>${label}</span>`;
-     btn.dataset.unifiedLabel=label;
-     btn.setAttribute('aria-label',saved?'Remove saved verse and highlight':'Save this verse');
-     btn.setAttribute('aria-pressed',String(saved));
-   }
- }
- function colourDialog(){
-   if(!dialog.open||dialog.dataset.variant!=='unveiled-folders')return;
-   const style=getComputedStyle(document.body);
-   for(const key of ['--bible-swatch','--bible-accent','--bible-glow']){
-     const value=style.getPropertyValue(key).trim();
-     if(value&&dialog.style.getPropertyValue(key)!==value)dialog.style.setProperty(key,value);
-   }
- }
- function capturePosition(){
-   const area=host();if(!area||!entryHandled||restoring)return;
-   // Device accounts already persist private reading state internally.
-   if(document.querySelector('.avatar-button > span[aria-hidden="true"]'))return;
-   const book=Number(area.querySelector('#reader-book')?.value);
-   const chapter=Number(area.querySelector('#reader-chapter')?.value);
-   const version=area.querySelector('#reader-version')?.value;
-   const verseElement=area.querySelector('.book-spread > .paper-page:not(.opening-title-leaf):not(.quiet-page) .verse-line[data-verse]');
-   const verse=Number(verseElement?.dataset.verse);
-   const p={book,chapter,verse,version};
-   if(!valid(p))return;
-   const signature=JSON.stringify(p);
-   if(signature===lastSerialized)return;
-   lastPosition=p;lastSerialized=signature;
-   try{localStorage.setItem(progressKey,signature);}catch{}
- }
- function restoreAtEntry(){
-   const area=host();if(!area||entryHandled||restoring)return;
-   const chosen=lastPosition||(!originalReadingExists?{book:0,chapter:1,verse:1,version:'kjv'}:null);
-   entryHandled=true;
-   // A direct click on a saved verse, search result or passage is intentional;
-   // never override that destination with the previous reading position.
-   if(explicitPassage){explicitPassage=false;return;}
-   if(!chosen)return;
-   // Signed-in accounts have their own private reading progress; prefer it.
-   if(document.querySelector('.avatar-button > span[aria-hidden="true"]'))return;
-   const book=Number(area.querySelector('#reader-book')?.value),chapter=Number(area.querySelector('#reader-chapter')?.value);
-   const version=area.querySelector('#reader-version')?.value;
-   const verses=[...area.querySelectorAll('.book-spread > .paper-page .verse-line[data-verse]')].map(x=>Number(x.dataset.verse));
-   if(book===chosen.book&&chapter===chosen.chapter&&version===chosen.version&&verses.includes(chosen.verse))return;
-   restoring=true;
-   const link=document.createElement('button');link.type='button';link.hidden=true;
-   link.dataset.passage=[chosen.book,chosen.chapter,chosen.verse,chosen.version].join(',');
-   link.dataset.internalResume='';
-   document.body.append(link);
-   try{link.click();}finally{link.remove();}
-   // Route render is async. Do not snapshot the temporary loading screen.
-   requestAnimationFrame(()=>{restoring=false;schedule();});
- }
- function patch(){
-   const now=document.body.dataset.page||null;
-   if(now!==route){route=now;entryHandled=false;restoring=false;lastHost=null;}
-   colourDialog();
-   const area=host();if(!area)return;
-   if(area!==lastHost){lastHost=area;}
-   restoreAtEntry();
-   selectedButton();
-   capturePosition();
- }
- function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;patch();});}
- // Event capture keeps the original click handlers, while treating highlighting
- // as an immediate save. No extra folder picker appears when choosing a colour.
- document.addEventListener('click',event=>{
-   if(internalAction)return;
-   const target=event.target;
-   const userPassage=target.closest?.('[data-passage]');
-   if(userPassage&&!userPassage.hasAttribute('data-internal-resume')){
-     explicitPassage=true;entryHandled=false;
-   }
-   const toggle=target.closest?.('#reader-workspace button[data-unified-save-toggle]');
-   if(toggle){event.preventDefault();event.stopImmediatePropagation();toggleSave();return;}
-   const hl=target.closest?.('#reader-workspace button[data-highlight]');
-   if(hl){
-     if(hl.dataset.highlight==='none'){
-       const ref=selectedVerse();
-       if(ref?.element.classList.contains('is-bookmarked')){
-         event.preventDefault();event.stopImmediatePropagation();
-         nativeRemove(ref);clearHighlight();schedule();return;
-       }
-     }else {
-       queueMicrotask(()=>{
-         const ref=selectedVerse();
-         if(ref&&!ref.element.classList.contains('is-bookmarked'))nativeSave();
-         schedule();
-       });
-     }
-   }
-   if(target.closest?.('#reader-workspace button[data-turn],#reader-workspace button[data-book-view],#reader-workspace button[data-font-step]'))schedule();
- },true);
- const observer=new MutationObserver(records=>{
-   if(records.some(r=>r.type==='childList'||(r.type==='attributes'&&r.attributeName==='data-page')))schedule();
- });
- observer.observe(document.body,{attributes:true,attributeFilter:['data-page']});
- observer.observe(main,{childList:true,subtree:true});
- observer.observe(document.querySelector('#dialog-content'),{childList:true,subtree:false});
- document.addEventListener('change',event=>{if(event.target.closest?.('#reader-workspace select'))schedule();});
- dialog.addEventListener('close',()=>schedule());
- window.addEventListener('pagehide',capturePosition);
- schedule();
-})();
-</script>
+
+<style id="unveiled-verse-v52-css">
+/* Compact temporary picker, matching the active book; keep Bible visible. */
+#site-dialog[data-variant="unveiled-quick-save"]{width:min(360px,calc(100vw - 30px));max-height:min(75svh,570px);overflow:auto;padding:15px;border-radius:17px;background:rgba(16,23,35,.78)!important;border:1px solid var(--bible-swatch,#6199ff)!important;box-shadow:0 16px 48px #0007;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#eef5ff;}
+#site-dialog[data-variant="unveiled-quick-save"]::backdrop{background:rgba(0,0,0,.13)!important;}
+#site-dialog[data-variant="unveiled-quick-save"] .dialog-bar{padding:0 0 9px;margin-bottom:8px;}
+.verse-save-quick,.verse-folder-home,.verse-folder-detail{display:grid;gap:11px;}
+.verse-picker-reference{font-weight:700;margin:0;color:var(--bible-swatch,#83b2f5);}
+.verse-picker-instruction,.verse-folder-home .folder-hint{margin:0;color:#cbd7e6;font-size:13px;}
+.verse-folder-choices,.verse-folder-tiles{display:grid;gap:7px;}
+.verse-folder-pick,.verse-folder-tile{width:100%;display:flex;align-items:center;gap:11px;min-height:48px;text-align:left;padding:11px 13px;color:#ecf5ff;border:1px solid #ffffff2d;border-radius:12px;background:#ffffff0d;cursor:pointer;}
+.verse-folder-pick span:nth-child(2),.verse-folder-title{flex:1;font-weight:600;overflow-wrap:anywhere;}
+.verse-folder-pick:hover,.verse-folder-tile:hover{border-color:var(--bible-swatch,#83b2f5);background:color-mix(in srgb,var(--bible-accent,#244f91) 35%,#ffffff13);}
+.verse-new-folder{display:flex;gap:7px;align-items:center;}
+.verse-new-folder input{min-width:0;flex:1;border-radius:9px;border:1px solid #ffffff40;color:#fff;background:#ffffff12;padding:11px;font:inherit;font-size:13px;}
+.verse-new-folder button{border:1px solid #ffffff55;border-radius:9px;background:var(--bible-accent,#244f91);color:white;padding:10px;white-space:nowrap;}
+.verse-folder-count{font-size:12px;background:#ffffff21;border-radius:40px;min-width:26px;text-align:center;padding:4px 7px;}
+#site-dialog[data-variant="unveiled-folders"] .verse-folder-detail>.saved-verse{display:flex;align-items:center;gap:9px;}
+#site-dialog[data-variant="unveiled-folders"] .verse-folder-detail>.saved-verse>button:first-child{flex:1;display:grid;gap:5px;min-width:0;text-align:left;background:transparent;color:inherit;border:0;}
+#site-dialog[data-variant="unveiled-folders"] .verse-folder-detail>.saved-verse>button:last-child{min-width:31px;min-height:31px;color:#fff;border:1px solid #ffffff33;background:#ffffff11;border-radius:9px;}
+@media(max-width:520px){.verse-folder-tiles{gap:6px}.verse-folder-tile{min-height:44px}}
+</style>
 </head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
 <section id="persistent-player" class="persistent-player" data-mode="parked" aria-label="Unveiled video player">
   <div class="floating-player-bar"><strong data-dock-title></strong><a href="#media" data-route="media">Room</a><button type="button" class="icon-button" data-player-size aria-label="Minimize to bubble" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path class="minimize-glyph" d="M4 5l6 6m0-5v5H5m15 8-6-6m0 5v-5h5"/><path class="expand-glyph" d="M10 10 4 4m0 5V4h5m5 10 6 6m-5 0h5v-5"/></svg></button><button type="button" class="icon-button" data-close-player aria-label="Close mini-player">×</button></div>

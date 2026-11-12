@@ -4,6 +4,7 @@ import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,b
 import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled38';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
 import {simpleBookMark} from './opening-art.mjs?v=unveiled36';
+import {createVerseLibrary} from './verse-library.mjs?v=unveiled52';
 const cache=new Map();
 const printArea='.book-spread > .paper-page:not(.opening-title-leaf) > .book-page-content';
 const textSize={min:1,max:32,step:1,initial:18};
@@ -13,9 +14,10 @@ export async function loadBible(version){
  return cache.get(version);
 }
 export function createReader(ctx){
- ctx.readerPageView='spread'; // Every Bible opening defaults to two visible pages.
+ ctx.readerPageView=ctx.read('reader-view','spread'); // Keep each reader's chosen page mode.
  const readingState=()=>({book:42,chapter:1,page:0,version:'kjv',...ctx.read('reading',{})});
  let root,bible,run=0,selected=0,busy=false,pages=[],s=readingState();
+ const library=createVerseLibrary(ctx,()=>{if(ctx.route==='bible'&&bible&&root)draw();});
  const names=()=>s.version==='bg'?PL_BOOKS:EN_BOOKS;
  const step=()=>bookViewMode(ctx)==='single'?1:2;
  const settings=()=>{
@@ -26,6 +28,7 @@ export function createReader(ctx){
   return {size:clampSize(saved?.size??defaultSize),theme:'night'};
  };
  const key=v=>`${s.version}:${s.book}:${s.chapter}:${v}`;
+ const selectedRecord=()=>({version:s.version,book:s.book,chapter:s.chapter,verse:selected,text:bible?.[s.book]?.chapters?.[s.chapter-1]?.[selected-1]||''});
  const hasFrontispiece=()=>s.book===0&&s.chapter===1&&step()===2;
  const openingPages=measured=>hasFrontispiece()?[[],...measured]:measured;
  let pendingAnchor=null,pendingEnd=false;
@@ -41,7 +44,7 @@ export function createReader(ctx){
   return inChapter||Boolean(adjacentChapter(bible,s.book,s.chapter,dir));
  }
  function paperMarkup(){
-  const highlights=ctx.read('highlights',{}),saved=ctx.read('bookmarks',[]);
+  library.ensure();const saved=library.records();
   return Array.from({length:step()},(_,side)=>{
    const index=s.page+side,page=pages[index],leaf=side?'right':'left';
    const leafArt=bookLeafArtwork(leaf);
@@ -50,8 +53,9 @@ export function createReader(ctx){
     <div class="book-page-content"><span class="small-label">TAKE A MOMENT</span><p>Read. Reflect.<br>Let the Word take root.</p><span>✧</span></div>
    </article>`;
    const verses=page.map(verse=>{
-    const bookmarked=saved.some(mark=>mark.version===s.version&&mark.book===s.book&&mark.chapter===s.chapter&&mark.verse===verse.v);
-    const colour=highlights[key(verse.v)];
+    const entry=library.get({version:s.version,book:s.book,chapter:s.chapter,verse:verse.v});
+    const bookmarked=Boolean(entry);
+    const colour=entry?.highlight;
     return `<button class="verse-line ${selected===verse.v?'verse-selected':''} ${bookmarked?'is-bookmarked':''}"
      data-verse="${verse.v}" data-offset="${verse.start||0}" aria-label="Verse ${verse.v}${verse.start?' continued':''}: ${esc(verse.text)}">
      <sup>${verse.v}</sup><span class="${colour?'highlight highlight-'+esc(colour):''}">${esc(verse.text)}</span></button>`;
@@ -116,7 +120,7 @@ export function createReader(ctx){
    paint();
   }
   pendingAnchor=null;pendingEnd=false;
-  s.anchor=ending?currentAnchor():place;
+  s.anchor=(ending||pagesOnly)?currentAnchor():place;
   ctx.save('reading',s);
  }
  function changeSize(value){
@@ -156,7 +160,7 @@ export function createReader(ctx){
   <span id="page-status" aria-live="polite">${pageStatus()}</span>
   <button class="round-button" data-turn="1" aria-label="Next page" ${pageAvailable(1)?'':'disabled'}>${ctx.icon('chevron')}</button>
  </div>
- <div id="selected-tools">${selected?`<div class="verse-selection"><span>${names()[s.book]} ${s.chapter}:${selected}</span><div class="highlight-colours">${['gold','green','blue','pink'].map(c=>`<button class="colour-dot ${c}" data-highlight="${c}" aria-label="Highlight ${c}"></button>`).join('')}<button class="colour-dot clear" data-highlight="none" aria-label="Remove highlight">×</button></div><button class="small-button reader-word-study" data-word-study>${ctx.icon('book')} Study words</button><button class="small-button" data-bookmark>${ctx.icon('bookmark')} Save verse</button><button class="icon-button" data-copy aria-label="Copy selected verse">${ctx.icon('copy')}</button><button class="icon-button" data-deselect aria-label="Clear verse selection">×</button></div>`:selectionTip}</div>
+ <div id="selected-tools">${selected?`<div class="verse-selection"><span>${names()[s.book]} ${s.chapter}:${selected}</span><div class="highlight-colours">${['gold','green','blue','pink'].map(c=>`<button class="colour-dot ${c}" data-highlight="${c}" aria-label="Highlight ${c}"></button>`).join('')}<button class="colour-dot clear" data-highlight="none" aria-label="Remove highlight">×</button></div><button class="small-button reader-word-study" data-word-study>${ctx.icon('book')} Study words</button><button class="small-button" data-bookmark aria-pressed="${!!library.get(selectedRecord())}">${ctx.icon('bookmark')} ${library.get(selectedRecord())?'Saved verse':'Save verse'}</button><button class="icon-button" data-copy aria-label="Copy selected verse">${ctx.icon('copy')}</button><button class="icon-button" data-deselect aria-label="Clear verse selection">×</button></div>`:selectionTip}</div>
  <p class="fine-print reader-source">Larger text makes more pages. Your place is remembered.<br>KJV · ASV 1901 · Biblia Gdańska 1881. Verse numbering follows the selected edition. <button class="plain-link" data-about>Text sources</button></p>
 </section>`;
   const host=root.querySelector('#reader-workspace');
@@ -177,7 +181,7 @@ export function createReader(ctx){
      if(choice==='spread'&&matchMedia('(max-width:600px)').matches&&settings().size>12){
       ctx.save('reader-settings',{...settings(),size:12});
      }
-     paginateCurrent();ctx.readerPageView=choice;draw();
+     paginateCurrent();ctx.readerPageView=choice;ctx.save('reader-view',choice);draw();
     }
     return;
    }
@@ -185,13 +189,18 @@ export function createReader(ctx){
    if(b.dataset.fontStep)changeSize(settings().size+textSize.step*(+b.dataset.fontStep));
    if(b.dataset.verse){selected=+b.dataset.verse;pendingAnchor={verse:selected,offset:+b.dataset.offset||0};draw();}
    if(b.hasAttribute('data-deselect')){selected=0;draw();}
-   if(b.dataset.highlight){const all=ctx.read('highlights',{});if(b.dataset.highlight==='none')delete all[key(selected)];else all[key(selected)]=b.dataset.highlight;ctx.save('highlights',all);draw();ctx.toast('Highlight saved.');}
+   if(b.dataset.highlight){
+    if(!selected)return;
+    const verse=selectedRecord();
+    if(b.dataset.highlight==='none'){if(library.get(verse))library.remove(verse);}
+    else library.picker(verse,b.dataset.highlight);
+    return;
+   }
    if(b.hasAttribute('data-bookmark')){
-    const all=ctx.read('bookmarks',[]);
-    if(!all.some(mark=>mark.version===s.version&&mark.book===s.book&&mark.chapter===s.chapter&&mark.verse===selected)){
-     all.unshift({version:s.version,book:s.book,chapter:s.chapter,verse:selected,text:bible[s.book].chapters[s.chapter-1][selected-1]});
-     ctx.save('bookmarks',all);ctx.toast('Verse saved.');draw();
-    }else ctx.toast('This verse is already saved.');
+    if(!selected)return;
+    const verse=selectedRecord();
+    if(library.get(verse))library.remove(verse);else library.picker(verse);
+    return;
    }
    if(b.hasAttribute('data-copy')){
     const text=`${bible[s.book].chapters[s.chapter-1][selected-1]} — ${names()[s.book]} ${s.chapter}:${selected} (${VERSIONS[s.version].short})`;
@@ -238,17 +247,7 @@ export function createReader(ctx){
    await animateBookTurn(root.querySelector('.book-spread'),oldPages,count,dir,angle);
   }finally{busy=false;}
  }
- function bookmarks(){
-  const all=ctx.read('bookmarks',[]);
-  ctx.modal('Your saved verses',all.length?
-   `<div class="saved-verses">${all.map((b,i)=>`<div class="saved-verse"><button data-passage="${b.book},${b.chapter},${b.verse},${b.version}"><span class="small-label">${VERSIONS[b.version].short}</span><strong>${(b.version==='bg'?PL_BOOKS:EN_BOOKS)[b.book]} ${b.chapter}:${b.verse}</strong><span>${esc(b.text)}</span></button><button class="icon-button" data-remove-bookmark="${i}" aria-label="Remove saved verse">×</button></div>`).join('')}</div>`:
-   '<div class="empty-state"><h3>Keep a verse close.</h3><p>Select a verse in the reader and choose Save verse.</p></div>',
-   body=>body.addEventListener('click',event=>{
-    const b=event.target.closest('[data-remove-bookmark]');
-    if(b){ctx.save('bookmarks',all.filter((_,i)=>i!==+b.dataset.removeBookmark));bookmarks();draw();}
-   })
-  );
- }
+ function bookmarks(){library.overview();}
  function preferences(){
   const o=settings();
   ctx.modal('Bible text size',
@@ -334,7 +333,8 @@ export function createReader(ctx){
    return loadBible(VERSIONS[s.version]?s.version:'kjv').catch(()=>{});
   },
   reset(){
-   run++;s=readingState();bible=null;pages=[];selected=0;pendingAnchor=null;pendingEnd=false;ctx.readerPageView='spread';
+   library.ensure(); // One-time clean slate for each browser/account; not on every refresh.
+   run++;s=readingState();bible=null;pages=[];selected=0;pendingAnchor=null;pendingEnd=false;ctx.readerPageView=ctx.read('reader-view','spread');
    ctx.bibleOpened=false;ctx.pendingPassage=null;ctx.readerSearchRequested=false;
   }
  };

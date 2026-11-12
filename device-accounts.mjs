@@ -1,7 +1,7 @@
 import {esc} from './core.mjs';
 
 const prefix='unveiled.v1.device-account.';
-const profileFields=new Set(['reading','reader-settings','book-colour','highlights','bookmarks','journal','missions','links']);
+const profileFields=new Set(['reading','reader-settings','reader-view','book-colour','highlights','bookmarks','verse-folders','verse-library-v52','last-route','journal','missions','links']);
 const encoder=new TextEncoder(),decoder=new TextDecoder();
 
 function encodeBytes(bytes){
@@ -18,6 +18,52 @@ export function createDeviceAccounts({
  onSaveError=()=>{}
 }={}){
  let session,changing=false;
+ const rememberIdKey=prefix+'remember-id';
+ // CryptoKey is nonextractable; IndexedDB stores it by structured clone on this browser.
+ function sessionDB(){return new Promise((resolve,reject)=>{
+  if(!globalThis.indexedDB){reject(Error('IndexedDB unavailable'));return;}
+  const request=indexedDB.open('unveiled-session-v52',1);
+  request.onupgradeneeded=()=>request.result.createObjectStore('keys');
+  request.onerror=()=>reject(request.error);
+  request.onsuccess=()=>resolve(request.result);
+ });}
+ async function remember(current){
+  try{
+   const db=await sessionDB();
+   await new Promise((resolve,reject)=>{
+    const tx=db.transaction('keys','readwrite');tx.objectStore('keys').put(current.key,'active');
+    tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);
+   });db.close();getStorage().setItem(rememberIdKey,current.id);
+  }catch(error){onSaveError(error);}
+ }
+ async function forgetRemembered(){
+  try{getStorage().removeItem(rememberIdKey);}catch{}
+  try{
+   const db=await sessionDB();
+   await new Promise((resolve,reject)=>{
+    const tx=db.transaction('keys','readwrite');tx.objectStore('keys').delete('active');
+    tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);
+   });db.close();
+  }catch{}
+ }
+ async function resume(){
+  let id;try{id=getStorage().getItem(rememberIdKey);}catch{return false;}
+  if(!id||session||!available)return false;
+  const entry=recordFor(id);if(!entry){await forgetRemembered();return false;}
+  const release=await reserve(id);if(!release)return false;
+  try{
+   const db=await sessionDB();
+   const key=await new Promise((resolve,reject)=>{
+    const tx=db.transaction('keys','readonly'),request=tx.objectStore('keys').get('active');
+    request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
+   });db.close();if(!key)throw Error('Missing unlock key');
+   const plain=await crypto.subtle.decrypt(cipher(id,decodeBytes(entry.iv)),key,decodeBytes(entry.sealed));
+   const data=JSON.parse(decoder.decode(plain));
+   if(!data||Array.isArray(data)||typeof data!=='object')throw Error('Invalid profile');
+   session={id,name:entry.name,salt:entry.salt,key,release,data,dirty:false,pending:null};
+   return true;
+  }catch{release();await forgetRemembered();return false;}
+ }
  const random=size=>crypto.getRandomValues(new Uint8Array(size));
  const available=Boolean(crypto?.subtle&&locks?.request);
  function recordFor(id){
@@ -91,7 +137,7 @@ export function createDeviceAccounts({
    const release=await reserve(id);
    if(!release)throw Error('Choose Create account again.');
    const next={id,name,salt:encodeBytes(salt),key,release,data:{},dirty:false,pending:null};
-   try{await write(next);session=next;}
+   try{await write(next);session=next;await remember(next);}
    catch{release();throw Error('This browser could not save the account. Check its storage settings.');}
   });
  }
@@ -107,6 +153,7 @@ export function createDeviceAccounts({
    const data=JSON.parse(decoder.decode(clear));
    if(!data||Array.isArray(data)||typeof data!=='object')throw Error();
    session={id,name:entry.name,salt:entry.salt,key,release,data,dirty:false,pending:null};
+   await remember(session);
   }catch{
    release();
    throw Error('The account could not be opened. Check your passphrase.');
@@ -118,10 +165,11 @@ export function createDeviceAccounts({
   try{await flush(current);}
   catch{throw Error('This browser could not save your changes. Export a backup from Your personal space.');}
   session=null;
+  await forgetRemembered();
   current.release();
  }
  return {
-  available,list,
+  available,list,resume,
   create:(name,passphrase)=>transition(()=>create(name,passphrase)),
   signIn:(id,passphrase)=>transition(()=>signIn(id,passphrase)),
   signOut:()=>transition(signOut),

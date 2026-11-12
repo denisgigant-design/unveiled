@@ -613,7 +613,7 @@ function restoreDefaultBibleLayout() {
   const mode=mobileBible.matches?'single':'spread';
   const button=host.querySelector(`button[data-book-view="${mode}"]`);
   if(button && button.getAttribute('aria-pressed')!=='true')button.click();
-  setReaderFontSize(mode==='single'?8:5);
+  setReaderFontSize(mode==='single'?(mobileBible.matches?8:11):5);
 }
 
 function updateBibleLayout() {
@@ -652,7 +652,7 @@ document.addEventListener('click',event=>{
   }
   const view=event.target.closest('#reader-workspace button[data-book-view]');
   if(view){
-    const font=view.dataset.bookView==='single'?8:5;
+    const font=view.dataset.bookView==='single'?(mobileBible.matches?8:11):5;
     queueMicrotask(()=>{setReaderFontSize(font);queueBibleLayout();});
   }
 },true);
@@ -822,7 +822,123 @@ window.addEventListener('load',()=>ensureEntryAtTop());
 // The site can enter with its route already rendered before this module runs.
 onRouteArrival();
 if(activeRoute==='home'||activeRoute==='bible')ensureEntryAtTop();
-</script></head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
+</script><style id="unveiled-desktop-v46">
+/* Unveiled v46: desktop reader width, breakpoint-aware type, and dark navigation. */
+/* Bible room uses a black subsection sidebar; other sections retain their own style. */
+body[data-page="bible"] .sidebar,
+body[data-page="bible"].nav-open .sidebar {
+  background:#000!important;
+  border-right:1px solid #202020!important;
+  box-shadow:none!important;
+}
+body[data-page="bible"] .sidebar .nav-item.active {
+  background:color-mix(in srgb,var(--bible-swatch) 14%,#090909)!important;
+  border-color:color-mix(in srgb,var(--bible-swatch) 22%,#1b1b1b)!important;
+  color:#fff!important;
+}
+/* Discovery is black only within the content area, not the menu and top-bar.
+   The white account/emblem disk becomes a black disk with a visible pale mark. */
+body[data-page="home"] .topbar .avatar-button,
+:root[data-appearance="dark"] body[data-page="home"] .topbar .avatar-button {
+  background:#000!important;color:#f6f7f9!important;
+  border:1px solid #9ca3ac!important;border-radius:50%!important;
+  box-shadow:none!important;
+}
+body[data-page="home"] .topbar .avatar-button .brand-seal,
+body[data-page="home"] .topbar .avatar-button svg {
+  color:#f6f7f9!important;
+}
+/* Contain everything to the actual reading column, not the full desktop viewport. */
+body[data-page="bible"] .site-frame,
+body[data-page="bible"] #main,
+body[data-page="bible"] #reader-workspace,
+body[data-page="bible"] #reader-workspace .book-luminosity,
+body[data-page="bible"] #reader-workspace .book-shell,
+body[data-page="bible"] #reader-workspace .reader-glass-panel {
+  box-sizing:border-box!important;min-width:0!important;
+}
+body[data-page="bible"] #main {
+  width:100%!important;max-width:100%!important;
+  padding-inline:clamp(12px,2.4vw,40px)!important;
+}
+body[data-page="bible"] #reader-workspace {
+  width:100%!important;max-width:min(100%,1160px)!important;
+  min-width:0!important;margin-inline:auto!important;
+}
+body[data-page="bible"] #reader-workspace .book-luminosity{
+  width:100%!important;max-width:100%!important;min-width:0!important;
+}
+body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"] {
+  display:block!important;width:100%!important;max-width:100%!important;
+  min-width:0!important;margin-inline:auto!important;
+}
+:root body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"] .book-spread {
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+/* The old 960px crop rule is meant for single pages, never double-page desktop. */
+:root body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"] .book-artwork>svg,
+:root body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"] .book-clasp-guard>svg {
+  width:100%!important;max-width:100%!important;margin-left:0!important;
+}
+:root body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"] .book-spread>.paper-page[data-leaf="right"] {
+  display:flex!important;
+}
+body[data-page="bible"] #reader-workspace .reader-glass-panel {
+  width:100%!important;max-width:100%!important;
+  overflow-wrap:anywhere;
+}
+body[data-page="bible"] #reader-workspace .reader-glass-primary,
+body[data-page="bible"] #reader-workspace .reader-glass-footer,
+body[data-page="bible"] #reader-workspace .reader-glass-extras {
+  min-width:0!important;max-width:100%!important;
+}
+body[data-page="bible"] #reader-workspace .reader-glass-primary select {
+  min-width:0!important;max-width:100%!important;text-overflow:ellipsis;
+}
+/* Compact desktop / tablet-desktop mode (side menu remains visible). */
+@media(min-width:701px) and (max-width:1199px){
+  body[data-page="bible"] #main {
+    padding-inline:clamp(14px,2vw,24px)!important;
+  }
+  body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"] {
+    width:100%!important;
+  }
+  body[data-page="bible"] #reader-workspace .reader-glass-panel {
+    padding-inline:clamp(12px,1.6vw,20px)!important;
+  }
+  body[data-page="bible"] #reader-workspace .reader-glass-primary {
+    grid-template-columns:24px minmax(0,1.2fr) minmax(60px,.56fr) minmax(0,1.3fr)!important;
+    gap:8px!important;
+  }
+  body[data-page="bible"] #reader-workspace .reader-glass-footer {
+    flex-wrap:wrap!important;justify-content:center!important;
+    gap:10px 18px!important;
+  }
+  body[data-page="bible"] #reader-workspace .reader-glass-extras {
+    justify-content:center!important;gap:8px!important;
+  }
+  body[data-page="bible"] #reader-workspace .reader-glass-extras .page-controls{
+    flex:0 1 auto!important;
+  }
+}
+/* Full desktop gets generous width and coherent spacing. */
+@media(min-width:1200px){
+  body[data-page="bible"] #reader-workspace {max-width:min(100%,1260px)!important;}
+  body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"]{
+    max-width:1160px!important;
+  }
+  body[data-page="bible"] #reader-workspace .reader-glass-panel{
+    max-width:1160px!important;
+  }
+}
+@media(max-width:700px){
+  body[data-page="bible"] #main{padding-inline:10px!important;}
+  body[data-page="bible"] #reader-workspace .reader-glass-primary select{
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+}
+</style></head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
 <section id="persistent-player" class="persistent-player" data-mode="parked" aria-label="Unveiled video player">
   <div class="floating-player-bar"><strong data-dock-title></strong><a href="#media" data-route="media">Room</a><button type="button" class="icon-button" data-player-size aria-label="Minimize to bubble" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path class="minimize-glyph" d="M4 5l6 6m0-5v5H5m15 8-6-6m0 5v-5h5"/><path class="expand-glyph" d="M10 10 4 4m0 5V4h5m5 10 6 6m-5 0h5v-5"/></svg></button><button type="button" class="icon-button" data-close-player aria-label="Close mini-player">×</button></div>
   <div class="persistent-screen"></div>

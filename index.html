@@ -504,6 +504,11 @@ body[data-page="bible"] #reader-workspace #selected-tools:has(.verse-selection){
 const bibleMain = document.querySelector('#main');
 const bibleDialog = document.querySelector('#site-dialog');
 const mobileBible = matchMedia('(max-width:700px)');
+// Explicit type scale: desktop 2-page 8px / 1-page 11px;
+// mobile 2-page 5px / 1-page 8px.
+const bibleTextForView = view => view==='single'
+  ? (mobileBible.matches ? 8 : 11)
+  : (mobileBible.matches ? 5 : 8);
 let previousBibleRoute = null;
 let initialModeSet = false;
 let manuallyViewingCover = false;
@@ -584,6 +589,11 @@ function arrangeBibleControls(host) {
   extra.append(navigation);
   toolbar.remove();
   gearRow.insertAdjacentElement('afterend',panel);
+  // Verse actions are contextual: show them immediately below the Bible,
+  // before the gear and broader appearance settings. Keep the same node,
+  // so the original reader still updates selections and highlights.
+  const verseTools=host.querySelector('#selected-tools');
+  if(verseTools)book.insertAdjacentElement('afterend',verseTools);
   colours.querySelectorAll('button[data-book-colour]').forEach(button=>{
     const title=button.dataset.bookColour==='navy'?'Blue':button.dataset.bookColour;
     button.setAttribute('aria-label',title[0].toUpperCase()+title.slice(1)+' Bible');
@@ -613,7 +623,7 @@ function restoreDefaultBibleLayout() {
   const mode=mobileBible.matches?'single':'spread';
   const button=host.querySelector(`button[data-book-view="${mode}"]`);
   if(button && button.getAttribute('aria-pressed')!=='true')button.click();
-  setReaderFontSize(mode==='single'?(mobileBible.matches?8:11):5);
+  setReaderFontSize(bibleTextForView(mode));
 }
 
 function updateBibleLayout() {
@@ -652,7 +662,7 @@ document.addEventListener('click',event=>{
   }
   const view=event.target.closest('#reader-workspace button[data-book-view]');
   if(view){
-    const font=view.dataset.bookView==='single'?(mobileBible.matches?8:11):5;
+    const font=bibleTextForView(view.dataset.bookView);
     queueMicrotask(()=>{setReaderFontSize(font);queueBibleLayout();});
   }
 },true);
@@ -938,7 +948,99 @@ body[data-page="bible"] #reader-workspace .reader-glass-primary select {
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
 }
-</style></head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
+</style>
+<style id="unveiled-bible-v47">
+/* V47: centred book within the usable reading column, no left-edge bias. */
+body[data-page="bible"] #main {
+  min-width:0!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+body[data-page="bible"] #reader-workspace {
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  width:100%!important;
+  min-width:0!important;
+  margin-inline:auto!important;
+}
+body[data-page="bible"] #reader-workspace > :is(.book-luminosity,.reader-gear-row,.reader-glass-panel,#selected-tools) {
+  box-sizing:border-box!important;
+  min-width:0!important;
+  max-width:100%!important;
+  align-self:center!important;
+}
+body[data-page="bible"] #reader-workspace .book-luminosity {
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  justify-items:center!important;
+  width:100%!important;
+  margin-inline:auto!important;
+}
+body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"],
+body[data-page="bible"] #reader-workspace .book-shell[data-book-view="single"] {
+  position:relative!important;
+  left:auto!important;right:auto!important;
+  transform:none!important;
+  margin-inline:auto!important;
+  min-width:0!important;
+  justify-self:center!important;
+}
+body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"] {
+  width:min(100%,1120px)!important;
+  max-width:100%!important;
+}
+body[data-page="bible"] #reader-workspace .book-shell[data-book-view="single"] {
+  width:min(100%,620px)!important;
+  max-width:100%!important;
+}
+/* Below the book, the interactive verse action has priority over settings. */
+body[data-page="bible"] #reader-workspace #selected-tools:has(.verse-selection){
+  display:block!important;
+  order:0;
+  width:min(100%,1120px)!important;
+  max-width:100%!important;
+  margin:10px auto 12px!important;
+}
+body[data-page="bible"] #reader-workspace .reader-glass-panel{
+  order:1;
+  width:min(100%,1120px)!important;
+  max-width:100%!important;
+  margin-inline:auto!important;
+}
+body[data-page="bible"] #reader-workspace .reader-gear-row{
+  order:1;
+  width:min(100%,1120px)!important;
+  max-width:100%!important;
+  margin-inline:auto!important;
+}
+/* Keep the running tip and source hidden (the original design did so). */
+body[data-page="bible"] #reader-workspace #selected-tools:not(:has(.verse-selection)) {display:none!important;}
+@media(min-width:701px) {
+  body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"] {
+    width:min(100%,1120px)!important;
+  }
+  body[data-page="bible"] #reader-workspace .book-shell[data-book-view="single"] {
+    width:min(100%,620px)!important;
+  }
+  body[data-page="bible"] #reader-workspace .reader-glass-panel{
+    margin-left:auto!important;margin-right:auto!important;
+  }
+  /* Desktop-site browser scaling must not crop the left half of the book. */
+  body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"] :is(.book-artwork,.book-clasp-guard)>svg {
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin-left:0!important;
+  }
+}
+@media(max-width:700px){
+  body[data-page="bible"] #reader-workspace .book-shell[data-book-view="spread"]{width:100%!important;}
+  body[data-page="bible"] #reader-workspace .book-shell[data-book-view="single"]{width:min(100%,520px)!important;}
+  body[data-page="bible"] #reader-workspace #selected-tools:has(.verse-selection){margin-block:8px 11px!important;}
+}
+</style>
+</head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
 <section id="persistent-player" class="persistent-player" data-mode="parked" aria-label="Unveiled video player">
   <div class="floating-player-bar"><strong data-dock-title></strong><a href="#media" data-route="media">Room</a><button type="button" class="icon-button" data-player-size aria-label="Minimize to bubble" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path class="minimize-glyph" d="M4 5l6 6m0-5v5H5m15 8-6-6m0 5v-5h5"/><path class="expand-glyph" d="M10 10 4 4m0 5V4h5m5 10 6 6m-5 0h5v-5"/></svg></button><button type="button" class="icon-button" data-close-player aria-label="Close mini-player">×</button></div>
   <div class="persistent-screen"></div>

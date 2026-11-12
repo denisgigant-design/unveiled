@@ -1040,7 +1040,257 @@ body[data-page="bible"] #reader-workspace #selected-tools:not(:has(.verse-select
   body[data-page="bible"] #reader-workspace #selected-tools:has(.verse-selection){margin-block:8px 11px!important;}
 }
 </style>
-</head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
+<style id="unveiled-bible-v48">
+/* Unveiled v48 — precise, minimal book navigation and running headings. */
+body[data-page="bible"] #reader-workspace .reader-glass-extras > [data-settings],
+body[data-page="bible"] #reader-workspace .reader-glass-extras > .return-to-cover,
+body[data-page="bible"] #reader-workspace .reader-glass-extras .page-controls,
+body[data-page="bible"] #reader-workspace .reader-glass-extras .reader-actions [data-settings] {
+  display:none!important;
+}
+body[data-page="bible"] #reader-workspace .reader-glass-extras{
+  justify-content:flex-end!important;
+  min-height:42px;
+  padding-top:10px;
+}
+body[data-page="bible"] #reader-workspace .reader-gear-row{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex-wrap:nowrap!important;
+  gap:clamp(6px,1.2vw,12px)!important;
+  min-height:58px;
+  padding-left:clamp(10px,1.8vw,22px)!important;
+}
+body[data-page="bible"] #reader-workspace .reader-gear-row[hidden]{display:none!important;}
+body[data-page="bible"] #reader-workspace:has(.book-shell[data-book-view="single"]) .reader-gear-row{
+  justify-content:center!important;
+  padding-inline:0!important;
+}
+body[data-page="bible"] #reader-workspace .reader-quick-turn{
+  width:42px;
+  height:42px;
+  min-width:42px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:1px solid color-mix(in srgb,var(--bible-swatch) 65%,#a3a8b4 20%);
+  border-radius:50%;
+  background:linear-gradient(140deg,color-mix(in srgb,var(--bible-accent) 28%,#080a13),#070b13);
+  color:#f7fbff;
+  box-shadow:0 0 11px color-mix(in srgb,var(--bible-swatch) 19%,transparent);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+body[data-page="bible"] #reader-workspace .reader-quick-turn svg{
+  width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+body[data-page="bible"] #reader-workspace .reader-quick-turn:disabled{
+  opacity:.32;cursor:default;box-shadow:none;
+}
+body[data-page="bible"] #reader-workspace .reader-quick-turn:not(:disabled):active{
+  transform:scale(.93);
+}
+body[data-page="bible"] #reader-workspace .reader-gear-row .reader-gear-button{
+  flex:none;width:54px;height:54px;
+}
+body[data-page="bible"] #reader-workspace .book-page-content .paper-running{
+  display:flex!important;justify-content:space-between!important;
+  align-items:center!important;gap:5px!important;
+}
+body[data-page="bible"] #reader-workspace .book-page-content .paper-running .reader-running-chapter{
+  flex:0 1 auto;min-width:0;text-align:center;white-space:nowrap;
+  font:700 clamp(6px,.72vw,10px)/1.1 system-ui,sans-serif;
+  letter-spacing:.06em;color:var(--book-ink,#f5f4f2)!important;
+}
+body[data-page="bible"] #reader-workspace .book-page-content .paper-running>span:first-child,
+body[data-page="bible"] #reader-workspace .book-page-content .paper-running>span:last-child{
+  flex:0 1 auto;
+}
+@media(max-width:700px){
+  body[data-page="bible"] #reader-workspace .reader-quick-turn{
+    width:40px;height:40px;min-width:40px;
+  }
+  body[data-page="bible"] #reader-workspace .reader-gear-row .reader-gear-button{
+    width:50px;height:50px;
+  }
+  body[data-page="bible"] #reader-workspace .book-page-content .paper-running .reader-running-chapter{
+    font-size:clamp(5px,1.25vw,8px);letter-spacing:.02em;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  body[data-page="bible"] #reader-workspace .reader-quick-turn{transition:none;}
+}
+
+</style>
+<script type="module" id="unveiled-bible-v48-js">
+// Unveiled v48 — navigation beside a collapsed gear, continuous running folios,
+// and a chapter label on every visible page. The original turning engine remains in use.
+const v48main=document.querySelector('#main');
+const v48PageBases=new Map();
+const v48Previous=new Map();
+const v48OriginalFolio=new WeakMap();
+const v48StorageKey="unveiled.v48.running-page-index";
+try{
+  const stored=JSON.parse(localStorage.getItem(v48StorageKey)||"{}");
+  for(const [layout,chapters] of Object.entries(stored)){
+    if(Array.isArray(chapters))v48PageBases.set(layout,new Map(chapters));
+  }
+}catch{}
+function v48SaveBases(){
+  try{
+    const snapshot=Object.fromEntries([...v48PageBases].map(([key,value])=>[key,[...value]]));
+    localStorage.setItem(v48StorageKey,JSON.stringify(snapshot));
+  }catch{}
+}
+let v48Queued=false;
+const v48Chevron=dir=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${dir<0?'M15 5 8 12l7 7':'M9 5l7 7-7 7'}"/></svg>`;
+const v48ChapterKey=(book,chapter)=>`${book}:${chapter}`;
+const v48CanonicalChapterCounts=[50,40,27,36,34,24,21,4,31,24,22,25,29,36,10,13,10,42,150,31,12,8,66,52,5,48,12,14,3,9,1,4,7,3,3,3,2,14,4,28,16,24,21,28,16,16,13,6,6,4,4,5,3,6,4,3,1,13,5,5,3,5,1,1,1,22];
+// Each previous chapter contains at least one numbered leaf. This lower bound
+// prevents direct navigation to an unvisited book from restarting at folio 1.
+const v48ChapterMinimum=(book,chapter)=>
+  v48CanonicalChapterCounts.slice(0,book).reduce((sum,count)=>sum+count,0)+chapter-1;
+
+const v48Adjacency=(fromBook,fromChapter,toBook,toChapter)=>
+  (fromBook===toBook&&toChapter===fromChapter+1) ||
+  (toBook===fromBook+1&&toChapter===1);
+const v48ReverseAdjacency=(fromBook,fromChapter,toBook,toChapter)=>
+  (fromBook===toBook&&toChapter===fromChapter-1) ||
+  (toBook===fromBook-1);
+
+function v48PatchReader(){
+  if(document.body.dataset.page!=='bible')return;
+  const host=v48main.querySelector('#reader-workspace');
+  if(!host)return;
+  const original=host.querySelector('.reader-glass-panel .page-controls');
+  const gearRow=host.querySelector('.reader-gear-row');
+  if(gearRow && original && !gearRow.querySelector('[data-quick-page]')){
+    const gear=gearRow.querySelector('.reader-gear-button');
+    if(gear){
+      const previous=document.createElement('button');
+      previous.type='button';previous.className='reader-quick-turn';previous.dataset.turn='-1';
+      previous.dataset.quickPage='previous';previous.setAttribute('aria-label','Previous Bible page');
+      previous.innerHTML=v48Chevron(-1);
+      const next=document.createElement('button');
+      next.type='button';next.className='reader-quick-turn';next.dataset.turn='1';
+      next.dataset.quickPage='next';next.setAttribute('aria-label','Next Bible page');
+      next.innerHTML=v48Chevron(1);
+      gear.before(previous);gear.after(next);
+    }
+  }
+  // Keep the quick controls enabled/disabled in sync with the reader's existing
+  // navigation. Both new buttons are actual data-turn controls handled by reader.js.
+  if(original && gearRow){
+    for(const dir of [-1,1]){
+      const real=original.querySelector(`button[data-turn="${dir}"]`);
+      const quick=gearRow.querySelector(`button[data-quick-page][data-turn="${dir}"]`);
+      if(real&&quick && quick.disabled!==real.disabled)quick.disabled=real.disabled;
+    }
+  }
+
+  // A chapter identifier is printed in the running heading on EVERY page,
+  // not just the opening sheet of a chapter.
+  const bookSelect=host.querySelector('#reader-book');
+  const chapterSelect=host.querySelector('#reader-chapter');
+  if(!bookSelect||!chapterSelect)return;
+  const book=Number(bookSelect.value),chapter=Number(chapterSelect.value)||1;
+  const chapterText=`CHAPTER ${chapter}`;
+  const numberedPages=[...host.querySelectorAll('.book-spread > .paper-page')];
+  for(const page of numberedPages){
+    const running=page.querySelector('.book-page-content .paper-running');
+    if(!running)continue;
+    let marker=running.querySelector('.reader-running-chapter');
+    if(!marker){
+      marker=document.createElement('span');marker.className='reader-running-chapter';
+      running.insertBefore(marker,running.lastElementChild);
+    }
+    if(marker.textContent!==chapterText)marker.textContent=chapterText;
+  }
+
+  // Page totals are derived from the actual reader pagination at this size.
+  // Cache the base for each chapter; consecutive chapters use the exact prior
+  // page count, rather than restarting at page 1.
+  const folios=numberedPages.map(page=>page.querySelector('.page-number')).filter(Boolean);
+  if(!folios.length)return;
+  const status=host.querySelector('#page-status')?.textContent||'';
+  const result=status.match(/of\s+(\d+)\s*$/i);
+  const total=Number(result?.[1]);
+  if(!(total>0))return;
+  const view=host.querySelector('.book-shell')?.dataset.bookView||'single';
+  const edition=host.querySelector('#reader-version')?.value||'kjv';
+  const size=host.querySelector('#reader-size-value')?.textContent||'8px';
+  const key=`${edition}|${view}|${size}|${Math.round(host.clientWidth/20)*20}`;
+  let bases=v48PageBases.get(key);
+  if(!bases){bases=new Map();v48PageBases.set(key,bases);}
+  const chapterKey=v48ChapterKey(book,chapter);
+  const hasFrontispiece=book===0&&chapter===1&&view==='spread';
+  const currentTotal=Math.max(1,total-(hasFrontispiece?1:0));
+  let entry=bases.get(chapterKey);
+  const previous=v48Previous.get(key);
+  if(!entry){
+    let base=v48ChapterMinimum(book,chapter);
+    if(book===0&&chapter===1)base=0;
+    else if(previous&&v48Adjacency(previous.book,previous.chapter,book,chapter)){
+      base=previous.base+previous.total;
+    }else if(previous&&v48ReverseAdjacency(previous.book,previous.chapter,book,chapter)){
+      // When navigating backward, use the already known chapter if possible.
+      base=Math.max(0,previous.base-currentTotal);
+    }else{
+      // Direct jumps can occur before intermediate chapters have been visited.
+      // Use known offsets where possible, rather than reset the folio to 1.
+      const candidates=[...bases.entries()].filter(([k])=>{
+        const [b,c]=k.split(':').map(Number);
+        return b<book||(b===book&&c<chapter);
+      });
+      if(candidates.length){
+        const [lastKey,last]=candidates[candidates.length-1];
+        base=Math.max(base,last.base+last.total);
+      }
+    }
+    entry={base,total:currentTotal};
+    bases.set(chapterKey,entry);
+    v48SaveBases();
+  }else if(entry.total!==currentTotal){
+    entry.total=currentTotal;
+    v48SaveBases();
+  }
+  v48Previous.set(key,{book,chapter,base:entry.base,total:currentTotal});
+  for(const node of folios){
+    let local=v48OriginalFolio.get(node);
+    if(local===undefined){
+      local=Number(node.textContent);
+      if(Number.isFinite(local))v48OriginalFolio.set(node,local);
+    }
+    if(!Number.isFinite(local))continue;
+    const global=String(entry.base+local);
+    if(node.textContent!==global)node.textContent=global;
+  }
+}
+function v48Queue(){
+  if(v48Queued)return;
+  v48Queued=true;
+  requestAnimationFrame(()=>{v48Queued=false;v48PatchReader();});
+}
+const v48Observer=new MutationObserver(records=>{
+  if(document.body.dataset.page!=='bible')return;
+  // Only repaint after structural changes, not after our own text updates.
+  if(records.some(record=>record.type==='childList' &&
+    [...record.addedNodes,...record.removedNodes].some(n=>
+      n.nodeType===1 && !(n.classList?.contains('reader-running-chapter')))))v48Queue();
+  if(records.some(record=>record.type==='attributes'&&record.attributeName==='disabled'))v48Queue();
+});
+v48Observer.observe(v48main,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});
+document.addEventListener('click',event=>{
+  if(event.target.closest('button[data-turn],button[data-book-view],button[data-font-step],button[data-book-colour]'))v48Queue();
+},true);
+document.addEventListener('change',event=>{
+  if(event.target.closest('#reader-workspace select'))v48Queue();
+});
+v48Queue();
+
+</script></head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
 <section id="persistent-player" class="persistent-player" data-mode="parked" aria-label="Unveiled video player">
   <div class="floating-player-bar"><strong data-dock-title></strong><a href="#media" data-route="media">Room</a><button type="button" class="icon-button" data-player-size aria-label="Minimize to bubble" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path class="minimize-glyph" d="M4 5l6 6m0-5v5H5m15 8-6-6m0 5v-5h5"/><path class="expand-glyph" d="M10 10 4 4m0 5V4h5m5 10 6 6m-5 0h5v-5"/></svg></button><button type="button" class="icon-button" data-close-player aria-label="Close mini-player">×</button></div>
   <div class="persistent-screen"></div>

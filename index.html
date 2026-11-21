@@ -156,7 +156,7 @@ body[data-page="home"] .discover-bible:active { transform: translateY(-1px); }
 @media(prefers-reduced-motion: reduce) {
   body[data-page="home"] .discover-bible { transition: none; }
 }
-</style><script type="module" src="app.js?v=unveiled52"></script><script type="module">
+</style><script type="module" src="app.js?v=unveiled6pol"></script><script type="module">
 // Page-only adjustment: keep the original Unveiled app, assets and other rooms intact.
 const editions = [
   ['red','Red'],
@@ -567,7 +567,7 @@ function arrangeBibleControls(host) {
     const textNode=[...label.childNodes].find(node=>node.nodeType===Node.TEXT_NODE&&node.textContent.trim());
     if(textNode){const description=document.createElement('span');description.className='reader-glass-label';description.textContent=textNode.textContent.trim();textNode.replaceWith(description);}
   });
-  const shortLabels={kjv:'KJV · King James Version',asv:'ASV · American Standard',bg:'BG · Biblia Gdańska'};
+  const shortLabels={kjv:'KJV · King James Version',asv:'ASV · American Standard',bg:'BG · Biblia Gdańska',ubg:'UBG · Uwspółcześniona Biblia Gdańska',nbg:'NBG · Nowa Biblia Gdańska'};
   translation.querySelectorAll('option').forEach(option=>{
     if(shortLabels[option.value])option.textContent=shortLabels[option.value];
   });
@@ -1756,14 +1756,64 @@ body[data-page="bible"] #reader-workspace [data-unified-save-toggle][aria-presse
 #site-dialog[data-variant="unveiled-folders"] .verse-folder-detail>.saved-verse>button:last-child{min-width:31px;min-height:31px;color:#fff;border:1px solid #ffffff33;background:#ffffff11;border-radius:9px;}
 @media(max-width:520px){.verse-folder-tiles{gap:6px}.verse-folder-tile{min-height:44px}}
 </style>
-</head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
+<style id="unveiled-chapter-initial-v6">
+/* Apply the identical opening letter to the real paper and offscreen pagination copy. */
+#reader-workspace .verse-line .chapter-initial {display:inline!important;font-family:Georgia,'Times New Roman',serif!important;font-size:2.5em!important;font-weight:700!important;line-height:.95!important;vertical-align:baseline!important;letter-spacing:-.025em;margin-inline-end:.035em;color:inherit!important;}
+</style></head><body><div id="ambient-scene" aria-hidden="true"></div><a class="skip-link" href="#main">Skip to content</a><aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside><div id="nav-scrim" class="nav-scrim" hidden></div><div class="site-frame"><header class="topbar" id="topbar"></header><main id="main" tabindex="-1"></main><footer class="site-footer"><span>UNVEILED <i>·</i> Beyond the veil. Into the light.</span><button class="plain-link" data-about>About & sources</button></footer></div>
 <section id="persistent-player" class="persistent-player" data-mode="parked" aria-label="Unveiled video player">
   <div class="floating-player-bar"><strong data-dock-title></strong><a href="#media" data-route="media">Room</a><button type="button" class="icon-button" data-player-size aria-label="Minimize to bubble" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path class="minimize-glyph" d="M4 5l6 6m0-5v5H5m15 8-6-6m0 5v-5h5"/><path class="expand-glyph" d="M10 10 4 4m0 5V4h5m5 10 6 6m-5 0h5v-5"/></svg></button><button type="button" class="icon-button" data-close-player aria-label="Close mini-player">×</button></div>
   <div class="persistent-screen"></div>
   <p class="floating-player-status" data-dock-status role="status"></p>
 </section>
 <dialog id="site-dialog" aria-labelledby="dialog-heading"><div class="dialog-bar"><h2 id="dialog-heading"></h2><button class="icon-button" data-close aria-label="Close dialog">×</button></div><div id="dialog-content"></div></dialog><div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./unveiled-home-v4.js?v=4" defer></script>
+<style id="unveiled-original-knights-v5">
+/* V5: original Discovery artwork only; no iframe, no substitute book meshes. */
+html.uv5-home,html.uv5-home body{height:100%!important;max-height:100%!important;overflow:hidden!important;overscroll-behavior:none!important}
+html.uv5-home .site-frame,html.uv5-home #main{overflow:hidden!important;overscroll-behavior:none!important;min-height:0!important}
+body[data-page="home"] .site-footer{display:none!important}
+body[data-page="home"] #main{padding:0!important}
+body[data-page="home"] .discover-gallery.uv5-stage{position:fixed!important;left:var(--stage-x,0px)!important;top:var(--stage-y,0px)!important;width:var(--stage-w,100vw)!important;height:var(--stage-h,100dvh)!important;max-width:none!important;max-height:none!important;display:block!important;overflow:hidden!important;isolation:isolate;background:#000!important;touch-action:none!important;overscroll-behavior:none!important;margin:0!important;padding:0!important;z-index:1;user-select:none;-webkit-user-select:none}
+body[data-page="home"] .uv5-stage .discover-knights{position:absolute!important;left:50%!important;top:var(--knight-y,4%)!important;width:var(--knight-w,100%)!important;height:var(--knight-h,65%)!important;transform:translateX(-50%);background:transparent!important;pointer-events:none;z-index:1!important}
+body[data-page="home"] .uv5-stage .discover-knights img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;max-width:none!important;max-height:none!important;pointer-events:none}
+body[data-page="home"] .uv5-stage .discover-bibles{position:absolute!important;top:var(--book-y,56%)!important;left:50%!important;width:var(--row-w,100%)!important;max-width:none!important;height:var(--book-h,28%)!important;transform:translateX(-50%)!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));align-items:start!important;gap:0!important;margin:0!important;padding:0!important;z-index:2!important;overflow:visible!important;touch-action:none!important}
+body[data-page="home"] .uv5-stage .discover-bible{height:100%!important;min-height:0!important;margin:0!important;padding:0!important;gap:0!important;transition:none!important;transform:translate3d(0,var(--rise,0px),0) scale(var(--zoom,1)) rotate(var(--tilt,0deg))!important;transform-origin:center 75%;will-change:transform;z-index:var(--depth,2)!important;touch-action:none!important;-webkit-tap-highlight-color:transparent;cursor:pointer;overflow:visible!important}
+body[data-page="home"] .uv5-stage .discover-bible::before{opacity:.50;filter:blur(12px);width:108%;height:80%}
+body[data-page="home"] .uv5-stage .discover-bible img{width:124%!important;height:calc(var(--book-h,150px) - 17px)!important;object-fit:contain!important;pointer-events:none!important;user-select:none;-webkit-user-drag:none;filter:drop-shadow(0 9px 11px #0009)}
+body[data-page="home"] .uv5-stage .discover-bible span{font-size:clamp(10px,1.1vw,14px)!important;margin:0!important;line-height:17px!important;pointer-events:none}
+.uv5-stage *{touch-action:none!important;-webkit-touch-callout:none}
+.uv5-stage .uv5-hint{position:absolute;bottom:max(9px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#a3a3a3;font:10px/1.2 system-ui,sans-serif;letter-spacing:.09em;pointer-events:none;z-index:3;margin:0}
+@media(max-width:700px){body[data-page="home"] .uv5-stage .discover-bible img{width:141%!important}}
+
+</style>
+<script id="unveiled-cover-wave-v5">
+(()=>{
+'use strict';
+const root=document.documentElement,main=document.getElementById('main'), reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(!main)return;
+let stage=null,books=[],knights=null,raf=0,last=0,start=0,fitQueued=false,lastInput=0,active=false,px=0,down=null,releaseAt=0,scrollPos=null,suppressUntil=0;
+function home(){return document.body.dataset.page==='home'||(!document.body.dataset.page&&(!location.hash||location.hash==='#home'));}
+function fit(){fitQueued=false;if(!stage?.isConnected)return;const r=main.getBoundingClientRect(),v=window.visualViewport,w=v?.width||innerWidth,h=v?.height||innerHeight;const x=Math.max(0,Math.min(w-1,r.left)),y=Math.max(0,Math.min(h-1,r.top));const sw=Math.max(1,Math.min(w,r.right)-x),sh=Math.max(1,h-y);const ratio=knights?.naturalWidth&&knights?.naturalHeight?knights.naturalWidth/knights.naturalHeight:1.7;const portrait=sw/sh<1;const rowW=Math.min(sw,sh*(portrait?1.8:2.8));const bookH=Math.min(sh*.39,rowW*.275);const imageW=Math.min(sw,sh*.76*ratio);const imageH=imageW/ratio;const overlap=Math.min(bookH*.47,imageH*.34);const total=imageH+bookH-overlap;const imageY=Math.max(3,(sh-total)*.45),bookY=imageY+imageH-overlap;for(const [k,val] of Object.entries({'stage-x':x,'stage-y':y,'stage-w':sw,'stage-h':sh,'knight-y':imageY,'knight-w':imageW,'knight-h':imageH,'row-w':rowW,'book-y':bookY,'book-h':bookH}))stage.style.setProperty('--'+k,val+'px');}
+function queueFit(){if(!fitQueued){fitQueued=true;requestAnimationFrame(fit)}}
+function stop(){if(raf)cancelAnimationFrame(raf);raf=0;stage=null;books=[];knights=null;down=null;active=false;scrollPos=null;root.classList.remove('uv5-home')}
+function reconcile(){const next=home()&&main.querySelector('.discover-gallery');if(!next){if(stage)stop();return}if(next===stage)return;stop();stage=next;stage.classList.add('uv5-stage');root.classList.add('uv5-home');knights=stage.querySelector('.discover-knights img');if(knights){knights.draggable=false;knights.addEventListener('load',queueFit,{once:true})}books=[...stage.querySelectorAll('.discover-bible[data-book-colour]')].map((el,i)=>{const img=el.querySelector('img');if(img)img.draggable=false;return{el,i,y:reduced?0:100,v:0,z:1,vz:0}});const hint=document.createElement('p');hint.className='uv5-hint';hint.textContent=matchMedia('(pointer:coarse)').matches?'Swipe across the Bibles · Tap to read':'Move across the Bibles · Click to read';stage.append(hint);start=last=lastInput=performance.now();releaseAt=0;fit();window.scrollTo(0,0);raf=requestAnimationFrame(animate)}
+function centre(b){const row=b.el.parentElement.getBoundingClientRect();return row.left+(b.i+.5)*row.width/books.length;}
+function animate(now){raf=0;if(!stage?.isConnected||!home()){stop();return}const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;if(releaseAt&&now>=releaseAt){active=false;releaseAt=0}const h=stage.clientHeight,row=books[0]?.el.parentElement.getBoundingClientRect();let x=px,influence=active;if(!reduced&&!down&&now-lastInput>4000&&row){x=row.left+row.width*(.1+.8*(Math.sin((now-start)*.00082)+1)/2);influence=true}const sigma=Math.max(24,(row?.width||stage.clientWidth)*.19),amp=Math.min(h*.23,Math.max(32,(row?.height||110)*.68));for(const b of books){const d=(centre(b)-x)/sigma, lift=influence?Math.exp(-d*d):0;const intro=!reduced&&now-start<120+(4-b.i)*95;const target=intro?Math.min(h*.32,165):-amp*lift,zoom=1+.08*lift;const step=dt/4;for(let j=0;j<4;j++){b.v+=((target-b.y)*70-b.v*12.5)*step;b.y+=b.v*step;b.vz+=((zoom-b.z)*70-b.vz*12.5)*step;b.z+=b.vz*step}b.el.style.setProperty('--rise',b.y.toFixed(2)+'px');b.el.style.setProperty('--zoom',b.z.toFixed(4));b.el.style.setProperty('--tilt',Math.max(-3,Math.min(3,b.v*.015)).toFixed(2)+'deg');b.el.style.setProperty('--depth',String(2+Math.round(lift*10)))}raf=requestAnimationFrame(animate)}
+function set(x){px=x;active=true;lastInput=performance.now();releaseAt=0;scrollPos=null}
+function pick(x,y){return document.elementFromPoint(x,y)?.closest('.discover-bible[data-book-colour]')}
+function begin(e){if(!stage?.contains(e.target)||e.isPrimary===false||e.button!==0)return;down={id:e.pointerId,x:e.clientX,y:e.clientY,drag:false,book:pick(e.clientX,e.clientY)};set(e.clientX);try{stage.setPointerCapture(e.pointerId)}catch{}if(e.cancelable)e.preventDefault()}
+function move(e){if(!stage)return;if(down?.id===e.pointerId){if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>8)down.drag=true;set(e.clientX);if(e.cancelable)e.preventDefault()}else if(e.pointerType==='mouse'&&stage.contains(e.target)){set(e.clientX)}else if(e.pointerType==='mouse'&&!down){active=false;lastInput=performance.now()}}
+function end(e){if(!down||down.id!==e.pointerId)return;const d=down;down=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>8)d.drag=true;set(e.clientX);releaseAt=e.pointerType==='mouse'?0:performance.now()+650;suppressUntil=performance.now()+800;if(e.cancelable)e.preventDefault();if(!d.drag&&d.book?.isConnected)d.book.click()}
+function cancel(){down=null;active=false;releaseAt=0}
+// Capture native follow-up clicks before the reader's own delegated listeners. A programmatic or keyboard click is allowed.
+document.addEventListener('click',e=>{if(stage?.contains(e.target)&&e.detail!==0&&performance.now()<suppressUntil){e.preventDefault();e.stopImmediatePropagation()}},true);
+document.addEventListener('pointerdown',begin,{capture:true,passive:false});document.addEventListener('pointermove',move,{capture:true,passive:false});document.addEventListener('pointerup',end,{capture:true,passive:false});document.addEventListener('pointercancel',cancel,true);window.addEventListener('blur',cancel);
+// Wheel / trackpad moves the wave instead of the document.
+window.addEventListener('wheel',e=>{if(!stage||!home()||!stage.contains(e.target))return;if(e.cancelable)e.preventDefault();const r=books[0]?.el.parentElement.getBoundingClientRect();if(!r)return;const delta=(Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY)*(e.deltaMode===1?16:e.deltaMode===2?100:1);if(scrollPos===null)scrollPos=Math.min(r.right,Math.max(r.left,e.clientX));scrollPos=Math.max(r.left,Math.min(r.right,scrollPos+delta*.65));px=scrollPos;active=true;lastInput=performance.now();releaseAt=lastInput+900},{capture:true,passive:false});
+window.addEventListener('touchmove',e=>{if(stage&&home()&&stage.contains(e.target)&&e.cancelable)e.preventDefault()},{capture:true,passive:false});window.addEventListener('scroll',()=>{if(stage&&home()&&(scrollX||scrollY))window.scrollTo(0,0)},{passive:true});
+new MutationObserver(reconcile).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['data-page']});window.addEventListener('hashchange',reconcile);window.addEventListener('resize',queueFit);window.visualViewport?.addEventListener('resize',queueFit);reconcile();
+})();
+
+</script>
 </body></html>
 
 

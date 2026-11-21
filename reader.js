@@ -1,16 +1,17 @@
-import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference} from './core.mjs';
+import {EN_BOOKS,PL_BOOKS,VERSIONS,esc,adjacentChapter,parseReference,chapterVerseHTML} from './core.mjs';
 import {pageForAnchor} from './book-layout.mjs?v=unveiled31';
-import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled38';
+import {measureBook,animateBookTurn,bindBookSwipe,bookColour,bookColourChoices,bookViewMode,bookViewChoices,paperHeading} from './book-reader.mjs?v=unveiled6pol';
 import {bookArtwork,bookLeafArtwork,openBookImage} from './book-art.mjs?v=unveiled38';
 import {openWordStudy} from './word-study.mjs?v=unveiled18';
 import {simpleBookMark} from './opening-art.mjs?v=unveiled36';
 import {createVerseLibrary} from './verse-library.mjs?v=unveiled52';
+import {POLISH,loadPolish,importPolish,downloadPage} from './polish-bibles.mjs?v=6';
 const cache=new Map();
 const printArea='.book-spread > .paper-page:not(.opening-title-leaf) > .book-page-content';
 const textSize={min:1,max:32,step:1,initial:18};
 const clampSize=value=>Math.max(textSize.min,Math.min(textSize.max,Number(value)||textSize.initial));
 export async function loadBible(version){
- if(!cache.has(version))cache.set(version,fetch(`data/${version}.json`).then(r=>{if(!r.ok)throw Error();return r.json();}).catch(e=>{cache.delete(version);throw e;}));
+ if(!cache.has(version))cache.set(version,(POLISH[version]?loadPolish(version):fetch(`data/${version}.json`).then(r=>{if(!r.ok)throw Error();return r.json();})).catch(e=>{cache.delete(version);throw e;}));
  return cache.get(version);
 }
 export function createReader(ctx){
@@ -18,7 +19,7 @@ export function createReader(ctx){
  const readingState=()=>({book:42,chapter:1,page:0,version:'kjv',...ctx.read('reading',{})});
  let root,bible,run=0,selected=0,busy=false,pages=[],s=readingState();
  const library=createVerseLibrary(ctx,()=>{if(ctx.route==='bible'&&bible&&root)draw();});
- const names=()=>s.version==='bg'?PL_BOOKS:EN_BOOKS;
+ const names=()=>VERSIONS[s.version]?.lang==='pl'?PL_BOOKS:EN_BOOKS;
  const step=()=>bookViewMode(ctx)==='single'?1:2;
  const settings=()=>{
   const saved=ctx.read('reader-settings',{});
@@ -58,7 +59,7 @@ export function createReader(ctx){
     const colour=entry?.highlight;
     return `<button class="verse-line ${selected===verse.v?'verse-selected':''} ${bookmarked?'is-bookmarked':''}"
      data-verse="${verse.v}" data-offset="${verse.start||0}" aria-label="Verse ${verse.v}${verse.start?' continued':''}: ${esc(verse.text)}">
-     <sup>${verse.v}</sup><span class="${colour?'highlight highlight-'+esc(colour):''}">${esc(verse.text)}</span></button>`;
+     <sup>${verse.v}</sup><span class="${colour?'highlight highlight-'+esc(colour):''}">${chapterVerseHTML(verse)}</span></button>`;
    }).join('');
    return `<article class="paper-page" data-leaf="${leaf}">${leafArt}
     <div class="book-page-content">
@@ -83,7 +84,7 @@ export function createReader(ctx){
     const page=root?.querySelector(printArea);
     if(!page)return null;
     const newPages=measureBook(bible[next.book].chapters[next.chapter-1],page,settings(),{
-     book:(s.version==='bg'?PL_BOOKS:EN_BOOKS)[next.book],
+     book:(VERSIONS[s.version]?.lang==='pl'?PL_BOOKS:EN_BOOKS)[next.book],
      edition:VERSIONS[s.version].short,chapter:next.chapter
     });
     if(!newPages)return null;
@@ -161,12 +162,12 @@ export function createReader(ctx){
   <button class="round-button" data-turn="1" aria-label="Next page" ${pageAvailable(1)?'':'disabled'}>${ctx.icon('chevron')}</button>
  </div>
  <div id="selected-tools">${selected?`<div class="verse-selection"><span>${names()[s.book]} ${s.chapter}:${selected}</span><div class="highlight-colours">${['gold','green','blue','pink'].map(c=>`<button class="colour-dot ${c}" data-highlight="${c}" aria-label="Highlight ${c}"></button>`).join('')}<button class="colour-dot clear" data-highlight="none" aria-label="Remove highlight">×</button></div><button class="small-button reader-word-study" data-word-study>${ctx.icon('book')} Study words</button><button class="small-button" data-bookmark aria-pressed="${!!library.get(selectedRecord())}">${ctx.icon('bookmark')} ${library.get(selectedRecord())?'Saved verse':'Save verse'}</button><button class="icon-button" data-copy aria-label="Copy selected verse">${ctx.icon('copy')}</button><button class="icon-button" data-deselect aria-label="Clear verse selection">×</button></div>`:selectionTip}</div>
- <p class="fine-print reader-source">Larger text makes more pages. Your place is remembered.<br>KJV · ASV 1901 · Biblia Gdańska 1881. Verse numbering follows the selected edition. <button class="plain-link" data-about>Text sources</button></p>
+ <p class="fine-print reader-source">Larger text makes more pages. Your place is remembered.<br>${POLISH[s.version]?`${esc(POLISH[s.version].notice)} · <a href="${POLISH[s.version].source}" target="_blank" rel="noopener">Źródło / Source</a>`:"KJV · ASV 1901 · Biblia Gdańska 1881"}. Verse numbering follows the selected edition. <button class="plain-link" data-about>Text sources</button></p>
 </section>`;
   const host=root.querySelector('#reader-workspace');
   host.addEventListener('change',event=>{
    if(event.target.id==='reader-version'){
-    s.anchor=currentAnchor();s.version=event.target.value;s.page=0;selected=0;ctx.save('reading',s);render(root);
+    s.anchor={verse:currentAnchor().verse,offset:0};s.version=event.target.value;s.page=0;selected=0;ctx.save('reading',s);render(root);
    }else if(event.target.id==='reader-book'||event.target.id==='reader-chapter'){
     if(event.target.id==='reader-book'){s.book=+event.target.value;s.chapter=1;}
     else s.chapter=+event.target.value;
@@ -295,10 +296,20 @@ export function createReader(ctx){
   }
   if(!VERSIONS[s.version])s.version='kjv';
   root.innerHTML='<div class="page-heading"><div><p class="eyebrow">OPEN THE WORD</p><h1>A book to live by.</h1></div></div><div class="loading-panel">Opening your Bible…</div>';
+  if(POLISH[s.version])root.querySelector('.loading-panel').textContent=`Downloading ${POLISH[s.version].name} on first use…`;
   let loaded;
   try{loaded=await loadBible(s.version);}
   catch{
-   if(generation===run&&ctx.route==='bible')root.querySelector('.loading-panel').innerHTML='<p>The Bible text could not be loaded.</p><button class="button" data-route="bible">Try again</button>';
+   if(generation===run&&ctx.route==='bible'){
+    const panel=root.querySelector('.loading-panel');if(!panel)return;
+    const version=s.version;
+    if(POLISH[version]){
+     panel.innerHTML=`<p>${esc(POLISH[version].name)} could not download automatically.</p><p>Download the complete JSON edition, then import it here. It will be cached on this device.</p><p><a class="button" target="_blank" rel="noopener" href="${downloadPage(version)}">Download ${VERSIONS[version].short} JSON</a></p><label class="import-button">Import JSON<input type="file" accept=".json,application/json"></label><p role="status"></p><button class="button" data-try>Retry download</button> <button class="button outline" data-back>Read another edition</button>`;
+     panel.querySelector('input').onchange=async e=>{const file=e.target.files[0];if(!file)return;const status=panel.querySelector('[role=status]');status.textContent='Checking complete Bible…';try{const data=await importPolish(version,file);cache.set(version,Promise.resolve(data));if(generation===run&&ctx.route==='bible')render(root);}catch(err){status.textContent='Import failed: '+err.message;}};
+     panel.querySelector('[data-try]').onclick=()=>render(root);
+     panel.querySelector('[data-back]').onclick=()=>{s.version='bg';s.anchor={verse:1,offset:0};ctx.save('reading',s);render(root);};
+    }else panel.innerHTML='<p>The Bible text could not be loaded.</p><button class="button" data-route="bible">Try again</button>';
+   }
    return;
   }
   if(generation!==run||ctx.route!=='bible'||!ctx.bibleOpened)return;

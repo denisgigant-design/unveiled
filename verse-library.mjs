@@ -6,7 +6,7 @@ export function createVerseLibrary(ctx,onChange) {
   const folders=()=>ctx.read('verse-folders',[]);
   const get=v=>records().find(b=>key(b)===key(v));
   const folderName=id=>folders().find(f=>f.id===id)?.name||'General';
-  const passageName=v=>`${(v.version==='bg'?PL_BOOKS:EN_BOOKS)[v.book]} ${v.chapter}:${v.verse}`;
+  const passageName=v=>`${(VERSIONS[v.version]?.lang==='pl'?PL_BOOKS:EN_BOOKS)[v.book]} ${v.chapter}:${v.verse}`;
   const colours=['gold','green','blue','pink'];
 
   function ensure() {

@@ -1,5 +1,5 @@
 import {paginateMeasured,balanceFinalSpread} from './book-layout.mjs?v=unveiled31';
-import {esc} from './core.mjs';
+import {esc,chapterVerseHTML} from './core.mjs';
 import {syncBookArtwork} from './book-art.mjs?v=unveiled38';
 
 export function paperHeading(book, edition, chapter) {
@@ -26,7 +26,7 @@ export function measureBook(verses, actual, options, {book, edition, chapter}) {
   const heading=wrapper.querySelector('.chapter-heading'),body=wrapper.querySelector('.verse-text');
   const measure=(parts,index)=>{
     heading.style.display=index===0?'':'none';
-    body.innerHTML=parts.map(p=>`<button class="verse-line"><sup>${p.v}</sup><span>${esc(p.text)}</span></button>`).join('');
+    body.innerHTML=parts.map(p=>`<button class="verse-line"><sup>${p.v}</sup><span>${chapterVerseHTML(p)}</span></button>`).join('');
     const last=body.lastElementChild,top=content.getBoundingClientRect().top;
     return {used:(last?.getBoundingClientRect().bottom||body.getBoundingClientRect().top)-top,
       capacity:body.getBoundingClientRect().bottom-top-2};

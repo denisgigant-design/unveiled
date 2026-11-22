@@ -1814,7 +1814,7 @@ new MutationObserver(reconcile).observe(document.body,{childList:true,subtree:tr
 })();
 
 </script>
-<style id="unveiled-verse-spotlight-v8-css">
+<style id="unveiled-verse-spotlight-v9-css">
 #uv-light-overlay{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:2147481000;pointer-events:none!important;opacity:0;transition:opacity var(--uv-fade,650ms) cubic-bezier(.22,.7,.2,1);overflow:hidden;}
 #uv-light-overlay[hidden],#uv-light-tools[hidden],#uv-light-editor[hidden]{display:none!important}
 #uv-light-tools{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(max(12px,env(safe-area-inset-bottom)) + 44px);z-index:2147481002;display:flex;gap:6px;align-items:center;font:500 12px/1.2 system-ui,sans-serif;color:#f4eee0;pointer-events:auto;}
@@ -1826,9 +1826,22 @@ new MutationObserver(reconcile).observe(document.body,{childList:true,subtree:tr
 #uv-light-editor header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}#uv-light-editor h2{font:400 23px/1.1 Georgia,serif;margin:0;}#uv-light-editor p{margin:7px 0 12px;color:#c4c3bd;}#uv-light-editor .uv-light-row{display:grid;grid-template-columns:1fr auto;gap:3px 8px;padding:8px 0;border-top:1px solid #ffffff13;align-items:center;}#uv-light-editor output{font-variant-numeric:tabular-nums;color:#e5c990;}#uv-light-editor input[type=range]{grid-column:1/-1;width:100%;margin:0;accent-color:#d6bd87;touch-action:pan-y;}#uv-light-editor input[type=color]{height:30px;width:45px;border:0;background:none;}#uv-light-editor .uv-light-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}#uv-light-editor .uv-light-toggle{display:flex;align-items:center;gap:8px;margin:9px 0;}#uv-light-editor input[type=checkbox]{accent-color:#d6bd87;}
 @media(prefers-reduced-motion:reduce){#uv-light-overlay{transition:none!important}}
 
-/* Shift only the painted number, not the inline text flow or pagination metrics. */
-#reader-workspace .verse-line{overflow:visible!important}
-#reader-workspace .verse-line>sup{position:relative!important;left:clamp(-7px,-.65em,-2px)!important;overflow:visible!important}
+/* Reserve a real, in-flow number gutter on every live, measured and turning page. */
+#reader-workspace .verse-line {
+  --uv-number-gutter: clamp(17px, 2.1vw, 26px);
+  position:relative!important; display:block!important; box-sizing:border-box!important;
+  padding-inline-start:var(--uv-number-gutter)!important;
+  text-indent:0!important; margin-inline-start:0!important;
+  overflow:visible!important; min-width:0!important;
+}
+#reader-workspace .verse-line>sup {
+  position:absolute!important; inset-inline-start:0!important; left:0!important; right:auto!important;
+  top:0!important; bottom:auto!important; transform:none!important;
+  width:calc(var(--uv-number-gutter) - 4px)!important;
+  padding:0!important; margin:0!important; text-indent:0!important;
+  text-align:right!important; white-space:nowrap!important; display:block!important;
+  font-variant-numeric:tabular-nums; font-size:0.75em!important; line-height:inherit!important; overflow:visible!important;
+}
 #reader-workspace .uv-spot-toggle[aria-pressed=true],#uv-light-tools button[aria-pressed=true]{border-color:#e6cf99!important;background:#332b20!important;color:#fff2cf!important}
 #uv-light-tools{flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 24px)}
 #uv-light-tools [data-uv-nav][hidden],#uv-light-tools #uv-light-mode[hidden]{display:none!important}
@@ -1889,13 +1902,7 @@ function pageButton(dir){return main.querySelector(`#reader-workspace button[dat
 function turn(dir){const b=pageButton(dir);if(!b||b.disabled)return;pending={dir,from:pageKey()};clearTimeout(pendingTimer);pendingTimer=setTimeout(()=>{pending=null;schedule()},3500);b.click();schedule();}
 function navigate(dir){if(!enabled||pending)return;const all=lines(),distinct=all.filter((el,i)=>i===0||refKey([el])!==refKey([all[i-1]])),idx=distinct.findIndex(el=>refKey([el])===focusKey);if(mode==='verse'&&idx>=0&&distinct[idx+dir])focus(distinct[idx+dir]);else turn(dir);}
 function menu(){const selection=main.querySelector('#selected-tools .verse-selection');if(!selection)return;let b=selection.querySelector('.uv-spot-toggle');if(!b){b=document.createElement('button');b.type='button';b.className='small-button uv-spot-toggle';b.textContent='Spotlight';const colors=selection.querySelector('.highlight-colours');if(colors)colors.before(b);else selection.append(b);}const state=String(enabled);if(b.getAttribute('aria-pressed')!==state)b.setAttribute('aria-pressed',state);}
-function patchCurl(){// Keep the ornate mask, extending it only around the shifted number gutter.
- const scene=main.querySelector('#reader-workspace .book-turn-scene');if(!scene)return;
- for(const clip of scene.querySelectorAll('clipPath[clipPathUnits="objectBoundingBox"]')){if(clip.querySelector('[data-uv-number-gutter]'))continue;const id=clip.id;if(!id)continue;const clone=[...scene.querySelectorAll('.book-turn-crop>.paper-page')].find(el=>(el.style.clipPath||el.style.webkitClipPath||'').includes(id));if(!clone)continue;
- // An object-box strip adds the minimum extra margin next to the print. The physical curl strips still clip their own edges.
- const live=[...main.querySelectorAll('#reader-workspace .book-spread > .paper-page')].find(el=>el.dataset.leaf===clone.dataset.leaf)||main.querySelector('#reader-workspace .book-spread > .paper-page');const r=live?.getBoundingClientRect();if(!r?.width||!r.height)continue;const nums=[...live.querySelectorAll('.verse-line>sup')].map(el=>el.getBoundingClientRect()).filter(n=>n.width&&n.height);if(!nums.length)continue;
- const x=Math.max(0,(Math.min(...nums.map(n=>n.left))-r.left-1)/r.width),right=Math.min(1,(Math.max(...nums.map(n=>n.right))-r.left+1)/r.width),y=Math.max(0,(Math.min(...nums.map(n=>n.top))-r.top-2)/r.height),bottom=Math.min(1,(Math.max(...nums.map(n=>n.bottom))-r.top+2)/r.height);if(right>x&&bottom>y)svg('rect',{'data-uv-number-gutter':'',x,y,width:right-x,height:bottom-y},clip);
- }}
+function patchCurl(){ /* Number gutter now lives inside the original page crop. */ }
 function rect(r,p=0,dx=0,dy=0,w=innerWidth,h=innerHeight){const x=Math.max(0,r.left-p+dx),y=Math.max(0,r.top-p+dy),right=Math.min(w,r.right+p+dx),bottom=Math.min(h,r.bottom+p+dy);return right>x&&bottom>y?{x,y,w:right-x,h:bottom-y}:null;}
 function rectPath(r){const q=Math.min(5,r.w/2,r.h/2),x=r.x,y=r.y,w=r.w,h=r.h;return `M${x+q} ${y}H${x+w-q}Q${x+w} ${y} ${x+w} ${y+q}V${y+h-q}Q${x+w} ${y+h} ${x+w-q} ${y+h}H${x+q}Q${x} ${y+h} ${x} ${y+h-q}V${y+q}Q${x} ${y} ${x+q} ${y}Z`;}
 function show(on){if(on===active)return;active=on;overlay.style.setProperty('--uv-fade',(on?settings.fadeIn:settings.fadeOut)+'ms');overlay.style.opacity=on?'1':'0';atmosphere.style.display=on?'':'none';if(!on){cancelAnimationFrame(trackFrame);trackFrame=0;painted=null;target=null;lastSignature='';}}

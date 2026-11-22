@@ -1,0 +1,14 @@
+UNVEILED — POLISH BIBLE EDITIONS
+Upload ubg.json and nbg.json to the existing repository root, alongside polish-bibles.mjs and index.html. Both files are original exports with filenames changed only. The existing reader loads them from the repository.
+
+UBG — Uwspółcześniona Biblia Gdańska (2017)
+© 2017 Gate of Hope Foundation
+
+The publisher authorizes all copying and distribution of this work both in part and in its entirety, under the condition that it is done completely free of charge and that the content remains completely unchanged. Distribution for commercial purposes requires written permission from the Foundation.
+Source: https://sourceforge.net/projects/biblesuper/files/All%20Bibles%20-%20JSON/PL-Polish/pol_ubg.json/download
+
+NBG — NOWEJ BIBLII GDANSKIEJ (2012)
+Prawa autorskie nie zastrzezone. Powielanie, kopiowanie i propagowanie tekstu NBG jak najbardziej wskazane (bez zadnych dodatków w tekscie, czy uzupelnien Pisma).
+
+Zainteresowanych drukiem calosci Pisma prosimy o kontakt ze STB.
+Source: https://sourceforge.net/projects/biblesuper/files/All%20Bibles%20-%20JSON/PL-Polish/pol_nbg.json/download
